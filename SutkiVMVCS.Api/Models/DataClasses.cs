@@ -9,6 +9,7 @@ public class Apartment
     public int RoomsCount { get; set; }
     public bool IsActive { get; set; }
     public decimal Area { get; set; }
+    public bool IsDeleted { get; set; }
 }
 
 public class Booking
@@ -41,4 +42,12 @@ public class ApartmentAmenitie
 {
     public int ApartmentId { get; set; }
     public int AmenityId { get; set; }
+}
+
+public class ApartmentGallery
+{
+    public int Id { get; set; }
+    public int ApartmentId { get; set; }
+    public string ImagePath { get; set; } = "";
+    public bool IsMain {  get; set; }
 }

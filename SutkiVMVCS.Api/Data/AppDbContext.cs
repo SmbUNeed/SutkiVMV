@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<Amenitie> Amenities => Set<Amenitie>();
     public DbSet<Client> Clients => Set<Client>();
     public DbSet<ApartmentAmenitie> ApartmentsAmenities => Set<ApartmentAmenitie>();
+    public DbSet<ApartmentGallery> ApartmentsGallery => Set<ApartmentGallery>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

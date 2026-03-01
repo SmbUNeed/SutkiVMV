@@ -22,7 +22,7 @@ namespace SutkiVMV.Api.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("SutkiVMVCS.Models.Amenitie", b =>
+            modelBuilder.Entity("SutkiVMV.Models.Amenitie", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -39,7 +39,7 @@ namespace SutkiVMV.Api.Migrations
                     b.ToTable("Amenities");
                 });
 
-            modelBuilder.Entity("SutkiVMVCS.Models.Apartment", b =>
+            modelBuilder.Entity("SutkiVMV.Models.Apartment", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -61,6 +61,9 @@ namespace SutkiVMV.Api.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
                     b.Property<decimal>("PricePerNight")
                         .HasColumnType("numeric");
 
@@ -76,7 +79,7 @@ namespace SutkiVMV.Api.Migrations
                     b.ToTable("Apartments");
                 });
 
-            modelBuilder.Entity("SutkiVMVCS.Models.ApartmentAmenitie", b =>
+            modelBuilder.Entity("SutkiVMV.Models.ApartmentAmenitie", b =>
                 {
                     b.Property<int>("ApartmentId")
                         .HasColumnType("integer");
@@ -89,7 +92,30 @@ namespace SutkiVMV.Api.Migrations
                     b.ToTable("ApartmentsAmenities");
                 });
 
-            modelBuilder.Entity("SutkiVMVCS.Models.Booking", b =>
+            modelBuilder.Entity("SutkiVMV.Models.ApartmentGallery", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ApartmentId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ImagePath")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsMain")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ApartmentsGallery");
+                });
+
+            modelBuilder.Entity("SutkiVMV.Models.Booking", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -124,7 +150,7 @@ namespace SutkiVMV.Api.Migrations
                     b.ToTable("Bookings");
                 });
 
-            modelBuilder.Entity("SutkiVMVCS.Models.Client", b =>
+            modelBuilder.Entity("SutkiVMV.Models.Client", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()

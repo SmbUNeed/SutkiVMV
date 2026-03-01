@@ -39,7 +39,7 @@ public class ApartmentsController : ControllerBase
 
         if (apartment == null) return NotFound(new { message = $"Квартира с id={id} не найден(а)" });
 
-        _context.Apartments.Remove(apartment);
+        apartment.IsDeleted = true;
 
         await _context.SaveChangesAsync();
 
@@ -49,11 +49,25 @@ public class ApartmentsController : ControllerBase
     [HttpDelete("by_title/{title}")]
     public async Task<ActionResult> DeleteApartmentByTitle(string title)
     {
-        Apartment? apartment = await _context.Apartments.FirstOrDefaultAsync(a => a.Title == title);
+        Apartment? apartment = await _context.Apartments.FirstOrDefaultAsync(a => a.Title.Trim().ToLower() == title.Trim().ToLower());
 
         if (apartment == null) return NotFound(new { message = $"Квартира {title} не найден(а)" });
 
-        _context.Apartments.Remove(apartment);
+        apartment.IsDeleted = true;
+
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    [HttpPatch("{id}")]
+    public async Task<ActionResult> RestoreApartment(int id)
+    {
+        Apartment? apartment = await _context.Apartments.FindAsync(id);
+
+        if (apartment == null) return NotFound(new { message = $"Квартира с id={id} не найден(а)" });
+
+        apartment.IsDeleted = false;
 
         await _context.SaveChangesAsync();
 
