@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace SutkiVMVCS.Api.Migrations
+namespace SutkiVMV.Api.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration

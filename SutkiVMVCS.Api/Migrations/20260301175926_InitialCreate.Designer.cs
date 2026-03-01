@@ -5,11 +5,11 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using SutkiVMVCS.Data;
+using SutkiVMV.Data;
 
 #nullable disable
 
-namespace SutkiVMVCS.Api.Migrations
+namespace SutkiVMV.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20260301175926_InitialCreate")]

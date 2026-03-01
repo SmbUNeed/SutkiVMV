@@ -1,4 +1,4 @@
-﻿namespace SutkiVMVCS.Models;
+﻿namespace SutkiVMV.Models;
 public class Apartment
 {
     public int Id { get; set; }

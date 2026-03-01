@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SutkiVMVCS.Models;
+using SutkiVMV.Models;
 
-namespace SutkiVMVCS.Data;
+namespace SutkiVMV.Data;
 
-internal class AppDbContext : DbContext
+public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
