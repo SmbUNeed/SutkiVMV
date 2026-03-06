@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SutkiVMV - Аренда квартир в Минеральных Водах</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- ИСПРАВЛЕНО: был <link rel="script"> — так скрипт не подключается -->
+</head>
+<body>
+
+    <header class="header">
+        <div class="container header-content">
+            <div class="logo">Sutki<span>VMV</span></div>
+            <div class="contacts-header">
+                <a href="tel:+79283597478"><i class="fa-solid fa-phone"></i> +7 (928) 359-74-78</a>
+                <span>
+                    <i class="fa-brands fa-whatsapp"></i> /
+                    <a href="https://t.me/PaWellRe" class="fa-brands fa-telegram"></a>
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <!-- Фильтры -->
+        <section class="controls-section">
+            <div class="filters">
+                <div class="filter-group">
+                    <label>Гости</label>
+                    <input type="number" id="guests" min="1" max="10" placeholder="Кол-во">
+                </div>
+                <div class="filter-group">
+                    <label>Цена (₽ / сутки)</label>
+                    <div class="price-inputs">
+                        <input type="number" id="priceMin" placeholder="От">
+                        <input type="number" id="priceMax" placeholder="До">
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label>Удобства</label>
+                    <select id="amenities">
+                        <option value="">Все</option>
+                        <option value="Wi-Fi">Wi-Fi</option>
+                        <option value="Кондиционер">Кондиционер</option>
+                        <option value="Парковка">Парковка</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="sorting">
+                <label>Сортировка:</label>
+                <select id="sortSelect">
+                    <option value="default">Рекомендованные</option>
+                    <option value="price_asc">Сначала дешевле</option>
+                    <option value="price_desc">Сначала дороже</option>
+                    <option value="area_desc">Больше площадь</option>
+                </select>
+            </div>
+        </section>
+
+        <!-- Сетка квартир (заполняется из JS) -->
+        <section class="apartments-grid" id="apartmentsGrid">
+            <p style="color:#888;">Загрузка квартир...</p>
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-info">
+                <h4>SutkiVMV</h4>
+                <p>Комфортная аренда квартир посуточно в Минеральных Водах.</p>
+            </div>
+            <div class="footer-contacts">
+                <h4>Свяжитесь с нами</h4>
+                <p>Email: info@sutkivmv.ru</p>
+                <p>Телефон: +7 (928) 359-74-78</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Модальное окно квартиры -->
+    <div class="modal-overlay" id="apartmentModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="modal-body">
+
+                <!-- Левая колонка: галерея и описание -->
+                <div class="modal-left">
+                    <div class="gallery" id="modalGallery">
+                        <img src="" alt="Фото квартиры" class="main-img">
+                        <div class="thumbnails"></div>
+                    </div>
+                    <h2 id="modalTitle"></h2>
+                    <p class="modal-specs"></p>
+                    <div class="modal-description">
+                        <h3>Описание</h3>
+                        <p></p>
+                    </div>
+                </div>
+
+                <!-- Правая колонка: бронирование -->
+                <div class="modal-right">
+                    <div class="booking-widget">
+                        <h3>Бронирование</h3>
+                        <p class="booking-price"><strong></strong> / сутки</p>
+
+                        <!-- Календарь (генерируется JS) -->
+                        <div class="calendar-container" id="bookingCalendar"></div>
+
+                        <!-- Итог по выбранным датам -->
+                        <div class="booking-summary" id="bookingSummary" style="display:none;
+                            justify-content:space-between; padding:8px 0; font-size:0.95rem;">
+                        </div>
+
+                        <!-- Форма -->
+                        <div class="booking-form">
+                            <!-- ИСПРАВЛЕНО: добавлены id для считывания значений в JS -->
+                            <input type="text" id="clientName"  placeholder="Ваше имя">
+                            <input type="tel"  id="clientPhone" placeholder="Ваш телефон">
+                            <button class="btn-primary btn-block" id="btnBook">
+                                Забронировать
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ИСПРАВЛЕНО: script подключается правильно, в конце body -->
+    <script src="script.js"></script>
+</body>
+</html>

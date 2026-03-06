@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>SutkiVMV API Test</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; line-height: 1.6; }
+        .section { border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 8px; }
+        input { display: block; margin: 10px 0; padding: 8px; width: 100%; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; }
+        button:hover { background: #0056b3; }
+        pre { background: #f4f4f4; padding: 10px; border-radius: 4px; overflow-x: auto; min-height: 40px; }
+        .error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Тестирование Bookings API</h1>
+
+    <div class="section">
+        <h3>1. Список броней по ID квартиры</h3>
+        <input type="number" id="aptIdInput" placeholder="Введите ID квартиры (например, 1)">
+        <button onclick="getBookings()">Загрузить брони</button>
+        <div id="getListStatus"></div>
+        <pre id="bookingsResult">Здесь появится ответ от API...</pre>
+    </div>
+
+    <div class="section">
+        <h3>2. Создать новое бронирование</h3>
+        <input type="number" id="newAptId" placeholder="ID квартиры">
+        <label>Дата заезда:</label>
+        <input type="date" id="startDate">
+        <label>Дата выезда:</label>
+        <input type="date" id="endDate">
+        <input type="text" id="customerName" placeholder="Имя клиента (если есть в модели)">
+        
+        <button onclick="createBooking()">Забронировать</button>
+        <div id="postStatus"></div>
+    </div>
+	
+	<div class="section">
+        <h3>3. Добавить квартиру</h3>
+        <input type="text" id="newApartmentName" placeholder="Название">
+        <input type="text" id="newApartmentAddress" placeHolder="Адрес">
+        <input type="text" id="newApartmentDescription" placeHolder="Описание">
+        <input type="number" id="newApartmentPrice" placeholder="Цена за сутки">
+        <input type="number" id="newApartmentRooms" placeholder="Количество комнат">
+        <input type="number" id="newApartmentArea" placeholder="Квадратура">
+        <input type="radio" id="activateButton" placeholder="Активировать">
+
+        <button onclick="createApartment()">Создать</button>
+        <div id="postApartmentStatus"></div>
+    </div>
+
+    <div class="section">
+        <h3>4. Все квартиры</h3>
+
+        <button onclick="GetApartments()">Показать</button>
+        <div id="allApartments"></div>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:5048/api"; // Замените на ваш порт!
+
+        // Функция для получения списка
+        async function getBookings() {
+            const id = document.getElementById('aptIdInput').value;
+            const display = document.getElementById('bookingsResult');
+            
+            try {
+                const response = await fetch(`${API_URL}/bookings/by-apartment/${id}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    display.innerText = JSON.stringify(data, null, 2);
+                } else {
+                    display.innerText = `Ошибка ${response.status}: ${data.message || 'Неизвестная ошибка'}`;
+                }
+            } catch (err) {
+                display.innerText = "Ошибка: Сервер не отвечает. Проверьте CORS или запущен ли проект.";
+            }
+        }
+
+        // Функция для отправки данных (POST)
+        async function createBooking() {
+            const statusDiv = document.getElementById('postStatus');
+            
+            const bookingData = {
+                apartmentId: parseInt(document.getElementById('newAptId').value),
+                startDate: document.getElementById('startDate').value,
+                endDate: document.getElementById('endDate').value,
+                // Добавьте другие поля вашей модели Booking здесь
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/bookings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bookingData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    statusDiv.innerHTML = '<span style="color: green;">Успешно создано!</span>';
+                    console.log(result);
+                } else {
+                    statusDiv.innerHTML = `<span class="error">Ошибка: ${result.message}</span>`;
+                }
+            } catch (err) {
+                statusDiv.innerHTML = '<span class="error">Ошибка соединения</span>';
+            }
+        }
+
+        async function createApartment(){
+            const statusDiv = document.getElementById('postApartmentStatus');
+            
+            const apartmentData = {
+                name: document.getElementById('newApartmentName').value,
+                address: document.getElementById('newApartmentAddress').value,
+                description: document.getElementById('newApartmentDescription').value,
+                pricePerNight: parseInt(document.getElementById('newApartmentPrice').value),
+                roomsCount: parseInt(document.getElementById('newApartmentRooms').value),
+                area: parseInt(document.getElementById('newApartmentArea').value),
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/apartments/new`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(apartmentData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    statusDiv.innerHTML = '<span style="color: green;">Успешно создано!</span>';
+                    console.log(result);
+                } else {
+                    statusDiv.innerHTML = `<span class="error">Ошибка: ${result.message}</span>`;
+                }
+            } catch (err) {
+                statusDiv.innerHTML = '<span class="error">Ошибка соединения</span>';
+            }
+        }
+
+        async function GetApartments() {
+            const display = document.getElementById('allApartments');
+            
+            try {
+                const response = await fetch(`${API_URL}/apartments/all`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    display.innerText = JSON.stringify(data, null, 2);
+                } else {
+                    display.innerText = `Ошибка ${response.status}: ${data.message || 'Неизвестная ошибка'}`;
+                }
+            } catch (err) {
+                display.innerText = "Ошибка: Сервер не отвечает. Проверьте CORS или запущен ли проект.";
+            }
+        }
+    </script>
+</body>
+</html>
