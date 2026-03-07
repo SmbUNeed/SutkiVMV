@@ -480,3 +480,21 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+### JetBrains/IntelliJ IDEA ###
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+gen/
+
+# Игнорируем специфические файлы настроек пользователя
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/dictionaries
+.idea/shelf
+
+# Если используете Rider или другие инструменты JetBrains
+.idea/.idea.*/

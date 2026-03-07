@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- JWT аутентификация -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.3" />
+
+    <!-- EF Core — нужен явно, чтобы AddDbContext был доступен в Program.cs -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.3" />
+
+    <!-- EF Core Design — только для dotnet ef migrations, не попадает в релиз -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.3">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+
+    <!-- PostgreSQL провайдер (тянет Microsoft.EntityFrameworkCore как зависимость,
+         но явная ссылка выше гарантирует резолюцию метода AddDbContext) -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+
+    <!-- Swagger UI -->
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="7.3.1" />
+  </ItemGroup>
+
+</Project>
