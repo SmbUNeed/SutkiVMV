@@ -66,7 +66,7 @@ public class BookingsController : ControllerBase
     // POST /api/bookings — создание брони администратором
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<AdminBookingDto>> Create(CreateBookingDto dto)
+    public async Task<ActionResult<AdminBookingDto>> Create(CreateBookingDto dto, CancellationToken ct)
     {
         if (dto.StartDate >= dto.EndDate)
             return BadRequest(new { message = "Дата заезда должна быть раньше даты выезда" });
@@ -101,7 +101,7 @@ public class BookingsController : ControllerBase
         };
 
         _context.Bookings.Add(booking);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
 
         return Ok(new AdminBookingDto
         {
@@ -122,7 +122,7 @@ public class BookingsController : ControllerBase
     // PATCH /api/bookings/{id}/status — изменить статус (confirm / cancel)
     [HttpPatch("{id:int}/status")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult> ChangeStatus(int id, [FromBody] ChangeStatusDto dto)
+    public async Task<ActionResult> ChangeStatus(int id, [FromBody] ChangeStatusDto dto, CancellationToken ct)
     {
         var booking = await _context.Bookings.FindAsync(id);
         if (booking == null) return NotFound();
@@ -132,14 +132,14 @@ public class BookingsController : ControllerBase
             return BadRequest(new { message = $"Недопустимый статус. Допустимы: {string.Join(", ", allowed)}" });
 
         booking.Status = dto.Status;
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
         return NoContent();
     }
 
     // PATCH /api/bookings/{id}/cancel — быстрая отмена (обратная совместимость)
     [HttpPatch("{id:int}/cancel")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult> Cancel(int id)
+    public async Task<ActionResult> Cancel(int id, CancellationToken ct)
     {
         var booking = await _context.Bookings.FindAsync(id);
         if (booking == null) return NotFound();
@@ -147,13 +147,13 @@ public class BookingsController : ControllerBase
             return BadRequest(new { message = "Бронирование уже отменено" });
 
         booking.Status = "Cancelled";
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
         return NoContent();
     }
 
     [HttpPatch("{id:int}/confirm")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult> Confirm(int id)
+    public async Task<ActionResult> Confirm(int id, CancellationToken ct)
     {
         var booking = await _context.Bookings.FindAsync(id);
         if (booking == null) return NotFound();
@@ -161,7 +161,7 @@ public class BookingsController : ControllerBase
             return BadRequest(new { message = "Бронирование уже подтверждено" });
 
         booking.Status = "Confirmed";
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
         return NoContent();
     }
 
@@ -181,10 +181,4 @@ public class BookingsController : ControllerBase
         Status = b.Status,
         CreatedAt = b.CreatedAt
     };
-}
-
-/// <summary>DTO для смены статуса брони.</summary>
-public class ChangeStatusDto
-{
-    public string Status { get; set; } = "";
 }

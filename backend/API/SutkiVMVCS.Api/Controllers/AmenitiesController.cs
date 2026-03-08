@@ -25,26 +25,26 @@ public class AmenitiesController : ControllerBase
     // POST /api/amenities
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<AmenityDto>> Create(CreateAmenityDto dto)
+    public async Task<ActionResult<AmenityDto>> Create(CreateAmenityDto dto, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(dto.Name))
             return BadRequest(new { message = "Название удобства не может быть пустым" });
 
         var amenity = new Amenity { Name = dto.Name.Trim(), Icon = dto.Icon.Trim() };
         _context.Amenities.Add(amenity);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
         return Ok(new AmenityDto { Id = amenity.Id, Name = amenity.Name, Icon = amenity.Icon });
     }
 
     // DELETE /api/amenities/{id}
     [HttpDelete("{id:int}")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult> Delete(int id)
+    public async Task<ActionResult> Delete(int id, CancellationToken ct)
     {
         var amenity = await _context.Amenities.FindAsync(id);
         if (amenity == null) return NotFound();
         _context.Amenities.Remove(amenity);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
         return NoContent();
     }
 }

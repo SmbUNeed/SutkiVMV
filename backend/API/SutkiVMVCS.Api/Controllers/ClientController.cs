@@ -51,34 +51,42 @@ public class ClientsController : ControllerBase
 
     // POST /api/clients
     [HttpPost]
-    public async Task<ActionResult<ClientDto>> Create(Client client)
+    [HttpPost]
+    public async Task<ActionResult<ClientDto>> Create(CreateClientDto dto, CancellationToken ct)
     {
+        var client = new Client
+        {
+            FullName = dto.FullName.Trim(),
+            PhoneNumber = dto.PhoneNumber.Trim(),
+            Email = dto.Email.Trim()
+            // UserId — не принимаем извне
+        };
         _context.Clients.Add(client);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
         return Ok(ToDto(client));
     }
 
     // PUT /api/clients/{id}
     [HttpPut("{id:int}")]
-    public async Task<ActionResult> Update(int id, Client updated)
+    public async Task<ActionResult> Update(int id, Client updated, CancellationToken ct)
     {
         var client = await _context.Clients.FindAsync(id);
         if (client == null) return NotFound();
         client.FullName = updated.FullName;
         client.PhoneNumber = updated.PhoneNumber;
         client.Email = updated.Email;
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
         return NoContent();
     }
 
     // DELETE /api/clients/{id}
     [HttpDelete("{id:int}")]
-    public async Task<ActionResult> Delete(int id)
+    public async Task<ActionResult> Delete(int id, CancellationToken ct)
     {
         var client = await _context.Clients.FindAsync(id);
         if (client == null) return NotFound();
         _context.Clients.Remove(client);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
         return NoContent();
     }
 

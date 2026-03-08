@@ -16,15 +16,15 @@ public class PhotosController : ControllerBase
 
     private static readonly string[] AllowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
 
-    public PhotosController(AppDbContext context, string uploadRoot)
+    public PhotosController(AppDbContext context, UploadSettings upload)
     {
         _context = context;
-        _uploadRoot = uploadRoot;
+        _uploadRoot = upload.UploadPath;
     }
 
     // POST api/apartments/{aptId}/photos
     [HttpPost]
-    public async Task<ActionResult> Upload(int aptId,
+    public async Task<ActionResult> Upload(int aptId, CancellationToken ct,
         [FromForm] IFormFileCollection files,
         [FromForm] int mainPhotoIndex = 0)
     {
@@ -79,13 +79,13 @@ public class PhotosController : ControllerBase
         if (saved == 0)
             return BadRequest(new { message = "Ни один файл не прошёл проверку типа" });
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
         return Ok(new { message = $"Загружено фото: {saved}" });
     }
 
     // DELETE api/apartments/{aptId}/photos/{photoId}
     [HttpDelete("{photoId:int}")]
-    public async Task<ActionResult> Delete(int aptId, int photoId)
+    public async Task<ActionResult> Delete(int aptId, int photoId, CancellationToken ct)
     {
         var photo = await _context.ApartmentGallery
             .FirstOrDefaultAsync(g => g.Id == photoId && g.ApartmentId == aptId);
@@ -99,14 +99,14 @@ public class PhotosController : ControllerBase
 
         bool wasMain = photo.IsMain;
         _context.ApartmentGallery.Remove(photo);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
 
         // Назначаем следующее фото главным
         if (wasMain)
         {
             var next = await _context.ApartmentGallery
                 .FirstOrDefaultAsync(g => g.ApartmentId == aptId);
-            if (next != null) { next.IsMain = true; await _context.SaveChangesAsync(); }
+            if (next != null) { next.IsMain = true; await _context.SaveChangesAsync(ct); }
         }
 
         return NoContent();
@@ -114,7 +114,7 @@ public class PhotosController : ControllerBase
 
     // PATCH api/apartments/{aptId}/photos/{photoId}/set-main
     [HttpPatch("{photoId:int}/set-main")]
-    public async Task<ActionResult> SetMain(int aptId, int photoId)
+    public async Task<ActionResult> SetMain(int aptId, int photoId, CancellationToken ct)
     {
         var photo = await _context.ApartmentGallery
             .FirstOrDefaultAsync(g => g.Id == photoId && g.ApartmentId == aptId);
@@ -125,7 +125,7 @@ public class PhotosController : ControllerBase
             .ExecuteUpdateAsync(s => s.SetProperty(g => g.IsMain, false));
 
         photo.IsMain = true;
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
         return NoContent();
     }
 }

@@ -23,7 +23,7 @@ public class ApartmentsController : ControllerBase
             .Include(a => a.ApartmentAmenities).ThenInclude(aa => aa.Amenity)
             .Include(a => a.Bookings)
             .AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Id == id);
+            .FirstOrDefaultAsync(a => a.Id == id && !a.IsDeleted); // ← добавить
 
         return apt == null ? NotFound() : Ok(ToDto(apt));
     }
@@ -75,17 +75,29 @@ public class ApartmentsController : ControllerBase
     // POST /api/apartments/new
     [HttpPost("new")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<Apartment>> Create(Apartment apartment)
+    public async Task<ActionResult<ApartmentDto>> Create(CreateApartmentDto dto, CancellationToken ct)
     {
+        var apartment = new Apartment
+        {
+            Title = dto.Title,
+            Address = dto.Address,
+            Description = dto.Description,
+            Guests = dto.Guests,
+            PricePerNight = dto.PricePerNight,
+            RoomsCount = dto.RoomsCount,
+            Area = dto.Area,
+            IsActive = dto.IsActive
+            // Id, IsDeleted — не трогаем, БД сама
+        };
         _context.Apartments.Add(apartment);
-        await _context.SaveChangesAsync();
-        return Ok(apartment);
+        await _context.SaveChangesAsync(ct);
+        return Ok(ToDto(apartment));
     }
 
     // PUT /api/apartments/{id}
     [HttpPut("{id:int}")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult> Update(int id, Apartment updated)
+    public async Task<ActionResult> Update(int id, Apartment updated, CancellationToken ct)
     {
         var apt = await _context.Apartments.FindAsync(id);
         if (apt == null || apt.IsDeleted) return NotFound();
@@ -99,14 +111,14 @@ public class ApartmentsController : ControllerBase
         apt.Area = updated.Area;
         apt.IsActive = updated.IsActive;
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
         return NoContent();
     }
 
     // POST /api/apartments/{id}/amenities  — задать список удобств (полная замена)
     [HttpPost("{id:int}/amenities")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult> SetAmenities(int id, SetAmenitiesDto dto)
+    public async Task<ActionResult> SetAmenities(int id, SetAmenitiesDto dto, CancellationToken ct)
     {
         var apt = await _context.Apartments.FindAsync(id);
         if (apt == null) return NotFound();
@@ -128,33 +140,33 @@ public class ApartmentsController : ControllerBase
                 });
         }
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
         return NoContent();
     }
 
     // PATCH /api/apartments/restore/{id}
     [HttpPatch("restore/{id:int}")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult> Restore(int id)
+    public async Task<ActionResult> Restore(int id, CancellationToken ct)
     {
         var apt = await _context.Apartments.FindAsync(id);
         if (apt == null) return NotFound();
         apt.IsDeleted = false;
         apt.IsActive = true;
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
         return NoContent();
     }
 
     // DELETE /api/apartments/{id}
     [HttpDelete("{id:int}")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult> Delete(int id)
+    public async Task<ActionResult> Delete(int id, CancellationToken ct)
     {
         var apt = await _context.Apartments.FindAsync(id);
         if (apt == null) return NotFound();
         apt.IsDeleted = true;
         apt.IsActive = false;
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
         return NoContent();
     }
 

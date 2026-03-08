@@ -1,10 +1,11 @@
-using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using SutkiVMV.Data;
+using System.Text;
+using Telegram.Bot;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +19,6 @@ var uploadRelPath = builder.Configuration["Storage:UploadPath"]
 var uploadAbsPath = Path.GetFullPath(
     Path.Combine(builder.Environment.ContentRootPath, uploadRelPath));
 Directory.CreateDirectory(uploadAbsPath);
-builder.Services.AddSingleton<string>(_ => uploadAbsPath); // регистрируем путь в DI
 
 // ── JWT Authentication ────────────────────────────────────────────────
 var jwtKey = builder.Configuration["Jwt:Key"]
@@ -38,7 +38,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
-
+builder.Services.AddSingleton(new UploadSettings(uploadAbsPath));
 // ── MVC ───────────────────────────────────────────────────────────────
 builder.Services.AddControllers()
     .AddJsonOptions(o =>
@@ -83,12 +83,24 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+// Program.cs
+builder.Services.AddSingleton<ITelegramBotClient>(sp =>
+    new TelegramBotClient(sp.GetRequiredService<IConfiguration>()["TelegramBot:Token"]!));
+
+// Сервисы используют его из DI — не создают сами
+builder.Services.AddSingleton<ITelegramService, TelegramService>();
+builder.Services.AddHostedService<TelegramBotWorker>();
 
 // ── CORS ──────────────────────────────────────────────────────────────
+var allowedOrigin = builder.Configuration["AllowedOrigin"]
+    ?? "http://localhost";
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
-        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+    options.AddPolicy("Frontend", policy =>
+        policy.WithOrigins(allowedOrigin)
+              .AllowAnyMethod()
+              .AllowAnyHeader());
 });
 
 // ─────────────────────────────────────────────────────────────────────
@@ -112,7 +124,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowAll");
+app.UseCors("Frontend");
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -120,3 +132,4 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+public record UploadSettings(string UploadPath);

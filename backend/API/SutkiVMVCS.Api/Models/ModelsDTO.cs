@@ -1,7 +1,8 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace SutkiVMV.ModelsDTO;
 
 // ── Apartment ──────────────────────────────────────────────────────────
-
 public class ApartmentDto
 {
     public int     Id            { get; set; }
@@ -20,7 +21,17 @@ public class ApartmentDto
     public List<AmenityDto>    Amenities { get; set; } = [];
     public List<BookingDto>     Bookings  { get; set; } = [];
 }
-
+public class CreateApartmentDto
+{
+    [Required, MaxLength(200)] public string Title { get; set; } = "";
+    [Required, MaxLength(300)] public string Address { get; set; } = "";
+    public string Description { get; set; } = "";
+    [Range(1, 50)] public int Guests { get; set; }
+    [Range(0, 100000)] public decimal PricePerNight { get; set; }
+    [Range(1, 20)] public int RoomsCount { get; set; }
+    [Range(1, 10000)] public decimal Area { get; set; }
+    public bool IsActive { get; set; } = true;
+}
 public class GalleryItemDto
 {
     public int    Id        { get; set; }
@@ -29,36 +40,29 @@ public class GalleryItemDto
 }
 
 // ── Amenities ──────────────────────────────────────────────────────────
-
 public class AmenityDto
 {
     public int    Id   { get; set; }
     public string Name { get; set; } = "";
     public string Icon { get; set; } = "fa-check";
 }
-
 public class CreateAmenityDto
 {
     public string Name { get; set; } = "";
     public string Icon { get; set; } = "fa-check";
 }
-
 public class SetAmenitiesDto
 {
     public List<int> AmenityIds { get; set; } = [];
 }
 
 // ── Booking ────────────────────────────────────────────────────────────
-
-/// <summary>Компактный DTO для встраивания в ApartmentDto (список занятых дат).</summary>
 public class BookingDto
 {
     public DateTime StartDate { get; set; }
     public DateTime EndDate   { get; set; }
     public string   Status    { get; set; } = "";
 }
-
-/// <summary>Входящий DTO для создания брони администратором.</summary>
 public class CreateBookingDto
 {
     public int      ApartmentId { get; set; }
@@ -66,16 +70,10 @@ public class CreateBookingDto
     public DateTime StartDate   { get; set; }
     public DateTime EndDate     { get; set; }
 }
-
-/// <summary>Входящий DTO для создания брони залогиненным пользователем.</summary>
-public class UserCreateBookingDto
+public class ChangeStatusDto
 {
-    public int      ApartmentId { get; set; }
-    public DateTime StartDate   { get; set; }
-    public DateTime EndDate     { get; set; }
+    public string Status { get; set; } = "";
 }
-
-/// <summary>Полный DTO брони для личного кабинета.</summary>
 public class BookingDetailDto
 {
     public int      Id             { get; set; }
@@ -89,8 +87,6 @@ public class BookingDetailDto
     public DateTime CreatedAt      { get; set; }
     public int      Nights         => (EndDate - StartDate).Days;
 }
-
-/// <summary>Расширенный DTO брони для административной панели.</summary>
 public class AdminBookingDto
 {
     public int      Id             { get; set; }
@@ -106,9 +102,13 @@ public class AdminBookingDto
     public DateTime CreatedAt      { get; set; }
     public int      Nights         => (EndDate - StartDate).Days;
 }
-
+public class UserCreateBookingDto
+{
+    public int      ApartmentId { get; set; }
+    public DateTime StartDate   { get; set; }
+    public DateTime EndDate     { get; set; }
+}
 // ── Client ─────────────────────────────────────────────────────────────
-
 public class ClientDto
 {
     public int    Id          { get; set; }
@@ -117,9 +117,20 @@ public class ClientDto
     public string Email       { get; set; } = "";
     public int?   UserId      { get; set; }
 }
+public class CreateClientDto
+{
+    [Required, MaxLength(200)] public string FullName { get; set; } = "";
+    [Required, MaxLength(20)] public string PhoneNumber { get; set; } = "";
+    [EmailAddress] public string Email { get; set; } = "";
+}
+public class UpdateProfileDto
+{
+    public string  FullName    { get; set; } = "";
+    public string  PhoneNumber { get; set; } = "";
+    public string? NewPassword { get; set; }
+}
 
 // ── Auth ───────────────────────────────────────────────────────────────
-
 public class RegisterDto
 {
     public string FullName    { get; set; } = "";
@@ -127,19 +138,16 @@ public class RegisterDto
     public string Email       { get; set; } = "";
     public string Password    { get; set; } = "";
 }
-
 public class LoginDto
 {
     public string Email    { get; set; } = "";
     public string Password { get; set; } = "";
 }
-
 public class AuthResponseDto
 {
     public string  Token { get; set; } = "";
     public UserDto User  { get; set; } = null!;
 }
-
 public class UserDto
 {
     public int    Id          { get; set; }
@@ -148,11 +156,4 @@ public class UserDto
     public string PhoneNumber { get; set; } = "";
     public string Role        { get; set; } = "";
     public int?   ClientId    { get; set; }
-}
-
-public class UpdateProfileDto
-{
-    public string  FullName    { get; set; } = "";
-    public string  PhoneNumber { get; set; } = "";
-    public string? NewPassword { get; set; }
 }

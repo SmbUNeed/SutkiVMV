@@ -18,18 +18,20 @@ public class AuthController : ControllerBase
 {
     private readonly AppDbContext    _context;
     private readonly IConfiguration _config;
+    private readonly ITelegramService _telegramService;
 
-    public AuthController(AppDbContext context, IConfiguration config)
+    public AuthController(AppDbContext context, IConfiguration config, ITelegramService telegramService)
     {
         _context = context;
         _config  = config;
+        _telegramService = telegramService;
     }
 
     // ──────────────────────────────────────────────────
     // POST api/auth/register
     // ──────────────────────────────────────────────────
     [HttpPost("register")]
-    public async Task<ActionResult<AuthResponseDto>> Register(RegisterDto dto)
+    public async Task<ActionResult<AuthResponseDto>> Register(RegisterDto dto, CancellationToken ct)
     {
         dto.Email = dto.Email.Trim().ToLowerInvariant();
 
@@ -48,7 +50,7 @@ public class AuthController : ControllerBase
             CreatedAt    = DateTime.UtcNow
         };
         _context.Users.Add(user);
-        await _context.SaveChangesAsync(); // нужен Id для клиента
+        await _context.SaveChangesAsync(ct); // нужен Id для клиента
 
         // Создаём связанный Client (для системы бронирований)
         var client = new Client
@@ -59,7 +61,7 @@ public class AuthController : ControllerBase
             UserId      = user.Id
         };
         _context.Clients.Add(client);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
 
         return Ok(BuildAuthResponse(user, client));
     }
@@ -110,7 +112,7 @@ public class AuthController : ControllerBase
     // ──────────────────────────────────────────────────
     [HttpPut("me")]
     [Authorize]
-    public async Task<ActionResult<UserDto>> UpdateProfile(UpdateProfileDto dto)
+    public async Task<ActionResult<UserDto>> UpdateProfile(UpdateProfileDto dto, CancellationToken ct)
     {
         var userId = GetUserId();
         var user   = await _context.Users.FindAsync(userId);
@@ -134,7 +136,7 @@ public class AuthController : ControllerBase
             client.PhoneNumber = dto.PhoneNumber.Trim();
         }
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
         return Ok(ToUserDto(user, client));
     }
 
@@ -182,7 +184,7 @@ public class AuthController : ControllerBase
     // ──────────────────────────────────────────────────
     [HttpPost("book")]
     [Authorize]
-    public async Task<ActionResult> Book(UserCreateBookingDto dto)
+    public async Task<ActionResult> Book(UserCreateBookingDto dto, CancellationToken ct)
     {
         if (dto.StartDate >= dto.EndDate)
             return BadRequest(new { message = "Дата заезда должна быть раньше даты выезда" });
@@ -216,7 +218,14 @@ public class AuthController : ControllerBase
             CreatedAt   = DateTime.UtcNow.ToUniversalTime()
         };
         _context.Bookings.Add(booking);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(ct);
+
+        await _telegramService.SendBookingNotificationAsync(
+        $"🔔 <b>Новое бронирование!</b>\n" +
+        $"🏠 Объект: {apartment.Title}\n" +
+        $"📅 Даты: {dto.StartDate:dd.MM} - {dto.EndDate:dd.MM}\n" +
+        $"Номер телефона: {client.PhoneNumber}", booking.Id);
+
         return Ok(booking);
     }
 
