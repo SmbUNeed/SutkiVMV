@@ -498,3 +498,5 @@ gen/
 
 # Если используете Rider или другие инструменты JetBrains
 .idea/.idea.*/
+
+appsettings.json
