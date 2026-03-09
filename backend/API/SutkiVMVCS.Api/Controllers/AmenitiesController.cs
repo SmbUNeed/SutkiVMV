@@ -47,4 +47,19 @@ public class AmenitiesController : ControllerBase
         await _context.SaveChangesAsync(ct);
         return NoContent();
     }
+
+    [HttpPost("batch")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult> CreateBatch([FromBody] List<CreateAmenityDto> dtos, CancellationToken ct)
+    {
+        foreach (var dto in dtos)
+        {
+            if (!await _context.Amenities.AnyAsync(a => a.Name == dto.Name, ct))
+            {
+                _context.Amenities.Add(new Amenity { Name = dto.Name, Icon = dto.Icon });
+            }
+        }
+        await _context.SaveChangesAsync(ct);
+        return Ok();
+    }
 }
