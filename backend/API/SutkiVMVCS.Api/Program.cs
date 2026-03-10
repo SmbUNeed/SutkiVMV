@@ -92,13 +92,13 @@ builder.Services.AddSingleton<ITelegramService, TelegramService>();
 builder.Services.AddHostedService<TelegramBotWorker>();
 
 // ── CORS ──────────────────────────────────────────────────────────────
-var allowedOrigin = builder.Configuration["AllowedOrigin"]
-    ?? "http://localhost";
+var allowedOrigins = (builder.Configuration["AllowedOrigin"] ?? "http://localhost")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries);
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
-        policy.WithOrigins(allowedOrigin)
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyMethod()
               .AllowAnyHeader());
 });
