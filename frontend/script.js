@@ -17,7 +17,7 @@ let selectedAmenities = new Set();
 // ── Хелпер URL для изображений ──────────────────────────
 function imgUrl(path) {
     if (!path) return null;
-    if (path.startsWith('http')) return path;
+    if (path.startsWith('https')) return path;
     return API_BASE + path;
 }
 
