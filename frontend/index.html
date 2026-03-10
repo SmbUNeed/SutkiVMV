@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,41 +16,36 @@
             <a href="tel:+79283597478"><i class="fa-solid fa-phone"></i> +7 (928) 359-74-78</a>
             <a href="https://t.me/PaWellRe" target="_blank"><i class="fa-brands fa-telegram"></i> Telegram</a>
         </div>
-        <div id="headerUser"></div>
+        <div class="header-right">
+            <button class="theme-toggle" id="themeToggle" title="Сменить тему" aria-label="Сменить тему">
+                <i class="fa-solid fa-moon icon-moon"></i>
+                <i class="fa-solid fa-sun icon-sun"></i>
+            </button>
+            <div id="headerUser"></div>
+        </div>
     </div>
 </header>
 
 <main class="container">
-    <section class="controls-section">
-        <div class="filters">
-            <div class="filter-group">
-                <label>Гости</label>
-                <input type="number" id="guests" min="1" max="10" placeholder="Сколько" style="width:110px;">
-            </div>
-            <div class="filter-group">
-                <label>Цена (₽ / ночь)</label>
-                <div class="price-inputs">
-                    <input type="number" id="priceMin" placeholder="От" style="width:90px;">
-                    <input type="number" id="priceMax" placeholder="До" style="width:90px;">
-                </div>
-            </div>
-            <div class="filter-group">
-                <label>Удобство</label>
-                <select id="amenityFilter" style="width:160px;">
-                    <option value="">Любое</option>
+    <!-- Controls bar -->
+    <div class="controls-bar">
+        <div class="controls-bar-left">
+            <button class="btn-filter-open" id="btnFilterOpen" onclick="openFilterPanel()">
+                <i class="fa-solid fa-sliders"></i> Фильтры
+                <span class="filter-badge" id="filterBadge"></span>
+            </button>
+            <div class="sort-wrapper">
+                <i class="fa-solid fa-arrow-up-wide-short"></i>
+                <select id="sortSelect" onchange="applyFilters()">
+                    <option value="default">Рекомендованные</option>
+                    <option value="price_asc">Сначала дешевле</option>
+                    <option value="price_desc">Сначала дороже</option>
+                    <option value="area_desc">Больше площадь</option>
                 </select>
             </div>
         </div>
-        <div class="sorting">
-            <label>Сортировка</label>
-            <select id="sortSelect" style="width:200px;">
-                <option value="default">Рекомендованные</option>
-                <option value="price_asc">Сначала дешевле</option>
-                <option value="price_desc">Сначала дороже</option>
-                <option value="area_desc">Больше площадь</option>
-            </select>
-        </div>
-    </section>
+        <span class="results-count" id="resultsCount"></span>
+    </div>
 
     <section class="apartments-grid" id="apartmentsGrid"></section>
 </main>
@@ -68,7 +63,47 @@
     </div>
 </footer>
 
-<!-- Модалка квартиры -->
+<!-- ── FILTER PANEL ─────────────────────────────────────── -->
+<div class="filter-overlay" id="filterOverlay" onclick="closeFilterPanel()"></div>
+<div class="filter-panel" id="filterPanel">
+    <div class="filter-panel-header">
+        <span class="filter-panel-title"><i class="fa-solid fa-sliders" style="color:var(--primary);margin-right:8px;font-size:0.95rem;"></i>Фильтры</span>
+        <button class="filter-panel-close" onclick="closeFilterPanel()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="filter-panel-body">
+        <!-- Гости -->
+        <div>
+            <label class="filter-group-label">Количество гостей</label>
+            <input type="number" id="guests" min="1" max="20" placeholder="Например, 2">
+        </div>
+        <!-- Цена -->
+        <div>
+            <label class="filter-group-label">Цена за ночь (₽)</label>
+            <div class="price-row">
+                <input type="number" id="priceMin" placeholder="От" min="0">
+                <span style="color:var(--ink-3);font-size:0.8rem;font-weight:700;flex-shrink:0;">—</span>
+                <input type="number" id="priceMax" placeholder="До" min="0">
+            </div>
+        </div>
+        <!-- Удобства -->
+        <div>
+            <label class="filter-group-label">Удобства <span id="amenitySelectedCount" style="color:var(--primary);display:none;"></span></label>
+            <div class="amenity-check-list" id="amenityCheckList">
+                <div style="color:var(--ink-3);font-size:0.85rem;padding:8px 0;">Загрузка...</div>
+            </div>
+        </div>
+    </div>
+    <div class="filter-panel-footer">
+        <button class="btn-reset-filters" onclick="resetFilters()">
+            <i class="fa-solid fa-rotate-left"></i> Сбросить
+        </button>
+        <button class="btn-apply-filters" onclick="applyFilters(); closeFilterPanel();">
+            Показать квартиры
+        </button>
+    </div>
+</div>
+
+<!-- ── MODAL квартиры ──────────────────────────────────── -->
 <div class="modal-overlay" id="apartmentModal">
     <div class="modal-content">
         <button class="close-modal" onclick="closeModal()">

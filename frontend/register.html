@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,7 +13,13 @@
 <header class="header">
     <div class="container header-content">
         <a href="index.html" class="logo">Sutki<span>VMV</span></a>
-        <div id="headerUser"></div>
+        <div class="header-right">
+            <button class="theme-toggle" id="themeToggle" title="Сменить тему" aria-label="Сменить тему">
+                <i class="fa-solid fa-moon icon-moon"></i>
+                <i class="fa-solid fa-sun icon-sun"></i>
+            </button>
+            <div id="headerUser"></div>
+        </div>
     </div>
 </header>
 
@@ -22,7 +28,10 @@
         <h1>Создайте аккаунт</h1>
         <p class="subtitle">Регистрация займёт меньше минуты</p>
 
-        <div class="auth-error" id="regError"></div>
+        <div class="auth-error" id="regError">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span id="regErrorText"></span>
+        </div>
 
         <div class="form-group">
             <label>Ваше имя</label>
@@ -37,7 +46,7 @@
             <input type="email" id="regEmail" placeholder="your@email.com" autocomplete="email">
         </div>
         <div class="form-group">
-            <label>Пароль <span style="color:var(--ink-3);font-weight:400;">(минимум 6 символов)</span></label>
+            <label>Пароль <span style="color:var(--ink-3);font-weight:600;text-transform:none;letter-spacing:0;">(минимум 6 символов)</span></label>
             <div class="pw-wrap">
                 <input type="password" id="regPassword" placeholder="••••••••" autocomplete="new-password">
                 <button type="button" class="pw-toggle" onclick="togglePw('regPassword', this)">
@@ -54,32 +63,25 @@
 
 <script src="auth.js"></script>
 <script>
-    // 1. Проверка авторизации (если пользователь уже вошел)
     if (typeof isLoggedIn === 'function' && isLoggedIn()) {
         location.href = 'index.html';
     }
 
-    // 2. ЖЕЛЕЗОБЕТОННАЯ ИНИЦИАЛИЗАЦИЯ МАСКИ (запускается сразу)
     const phoneInput = document.getElementById('regPhone');
     if (phoneInput) {
         IMask(phoneInput, {
             mask: '+{7} (000) 000-00-00',
-            lazy: false, // Сразу показывает +7 (___) ___-__-__
+            lazy: false,
             placeholderChar: '_'
         });
     }
 
-    // 3. Вспомогательные функции
     function validateEmail(email) {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
-
     function validatePhone(phone) {
-        // Убираем всё, кроме цифр. Должно остаться ровно 11 цифр.
-        const digits = phone.replace(/\D/g, "");
-        return digits.length === 11;
+        return phone.replace(/\D/g, '').length === 11;
     }
-
     function togglePw(id, btn) {
         const inp = document.getElementById(id);
         const isText = inp.type === 'text';
@@ -87,66 +89,55 @@
         btn.querySelector('i').className = isText ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
     }
 
-    // 4. Главная функция регистрации
+    function showError(msg, field = null) {
+        const errorEl  = document.getElementById('regError');
+        document.getElementById('regErrorText').textContent = msg;
+        errorEl.classList.add('show');
+        if (field) {
+            field.style.borderColor = 'var(--red)';
+            field.focus();
+        }
+    }
+
     async function doRegister() {
         const fields = {
-            name: document.getElementById('regName'),
+            name:  document.getElementById('regName'),
             phone: document.getElementById('regPhone'),
             email: document.getElementById('regEmail'),
-            pass: document.getElementById('regPassword')
+            pass:  document.getElementById('regPassword')
         };
         const errorEl = document.getElementById('regError');
-        const btn = document.getElementById('regBtn');
+        const btn     = document.getElementById('regBtn');
 
-        // Функция для удобного вывода ошибок и подсветки поля
-        function showError(msg, field = null) {
-            errorEl.textContent = msg;
-            errorEl.classList.add('show');
-            if (field) {
-                field.style.borderColor = '#ff4d4d'; // Красная рамка
-                field.focus();
-            }
-        }
-
-        // Сброс старых ошибок
         errorEl.classList.remove('show');
         Object.values(fields).forEach(f => f.style.borderColor = '');
 
-        // Валидация
-        if (!fields.name.value.trim()) return showError('Введите имя', fields.name);
-        if (!validateEmail(fields.email.value.trim())) return showError('Введите корректный Email адрес', fields.email);
-        if (!validatePhone(fields.phone.value)) return showError('Введите номер телефона полностью', fields.phone);
-        if (fields.pass.value.length < 6) return showError('Пароль должен быть минимум 6 символов', fields.pass);
+        if (!fields.name.value.trim())                   return showError('Введите имя', fields.name);
+        if (!validateEmail(fields.email.value.trim()))   return showError('Введите корректный Email адрес', fields.email);
+        if (!validatePhone(fields.phone.value))          return showError('Введите номер телефона полностью', fields.phone);
+        if (fields.pass.value.length < 6)               return showError('Пароль должен быть минимум 6 символов', fields.pass);
 
         btn.disabled = true;
         btn.textContent = 'Создаём аккаунт...';
 
         try {
-            // Чтобы на сервер не улетали скобки и подчеркивания,
-            // можно очистить номер перед отправкой, оставив только цифры:
-            const cleanPhone = fields.phone.value.replace(/\D/g, "");
-
+            const cleanPhone = fields.phone.value.replace(/\D/g, '');
             const res = await fetch(`${API_URL}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    fullName: fields.name.value.trim(),
-                    phoneNumber: cleanPhone, // Отправляем очищенный номер (например: 79001234567)
-                    email: fields.email.value.trim(),
-                    password: fields.pass.value
+                    fullName:    fields.name.value.trim(),
+                    phoneNumber: cleanPhone,
+                    email:       fields.email.value.trim(),
+                    password:    fields.pass.value
                 })
             });
-
             const data = await res.json();
-
-            // Если сервер вернул ошибку (например, "Такой Email уже есть")
             if (!res.ok) throw new Error(data.message || 'Ошибка регистрации');
-
             if (typeof setAuth === 'function') setAuth(data);
             location.href = 'index.html';
-
         } catch (err) {
-            showError(err.message); // Выведет ошибку от сервера
+            showError(err.message);
         } finally {
             btn.disabled = false;
             btn.textContent = 'Зарегистрироваться';

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,7 +12,13 @@
 <header class="header">
     <div class="container header-content">
         <a href="index.html" class="logo">Sutki<span>VMV</span></a>
-        <div id="headerUser"></div>
+        <div class="header-right">
+            <button class="theme-toggle" id="themeToggle" title="Сменить тему" aria-label="Сменить тему">
+                <i class="fa-solid fa-moon icon-moon"></i>
+                <i class="fa-solid fa-sun icon-sun"></i>
+            </button>
+            <div id="headerUser"></div>
+        </div>
     </div>
 </header>
 
@@ -89,7 +95,7 @@
                         </div>
 
                         <div style="border-top:1px solid var(--border);padding-top:20px;">
-                            <p style="font-size:13px;color:var(--ink-3);margin-bottom:14px;">
+                            <p style="font-size:13px;color:var(--ink-3);margin-bottom:14px;font-weight:600;">
                                 <i class="fa-solid fa-lock" style="color:var(--primary);margin-right:5px;"></i>
                                 Смена пароля — оставьте пустым, если менять не нужно
                             </p>
@@ -219,7 +225,7 @@ async function loadBookings() {
                 <div class="empty-state">
                     <i class="fa-regular fa-calendar-xmark"></i>
                     <p>У вас пока нет бронирований.<br>
-                       <a href="index.html" style="color:var(--primary);font-weight:600;">Посмотреть квартиры →</a>
+                       <a href="index.html" style="color:var(--primary);font-weight:700;">Посмотреть квартиры →</a>
                     </p>
                 </div>`;
             return;

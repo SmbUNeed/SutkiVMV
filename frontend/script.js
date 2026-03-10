@@ -1,15 +1,18 @@
 /* ══════════════════════════════════════════════════════════
-   script.js — главная страница
+   script.js — главная страница v2
    ══════════════════════════════════════════════════════════ */
 // API_BASE и утилиты авторизации приходят из auth.js
 
-let apartments        = [];
+let apartments         = [];
 let filteredApartments = [];
-let currentApartment  = null;
-let currentDate       = new Date();
+let currentApartment   = null;
+let currentDate        = new Date();
 let currentAptBookedDates = [];
-let selectedCheckIn   = null;
-let selectedCheckOut  = null;
+let selectedCheckIn    = null;
+let selectedCheckOut   = null;
+
+// Выбранные удобства (Set имён)
+let selectedAmenities = new Set();
 
 // ── Хелпер URL для изображений ──────────────────────────
 function imgUrl(path) {
@@ -19,7 +22,6 @@ function imgUrl(path) {
 }
 
 // ── API ─────────────────────────────────────────────────
-
 async function apiGetApartments() {
     try {
         const res = await fetch(`${API_URL}/apartments/detailed`);
@@ -49,7 +51,6 @@ async function apiBookAsUser(apartmentId, startDate, endDate) {
 }
 
 // ── Grid ─────────────────────────────────────────────────
-
 const grid = document.getElementById('apartmentsGrid');
 
 function showSkeletons(count = 6) {
@@ -65,8 +66,19 @@ function showSkeletons(count = 6) {
 
 function renderGrid(data) {
     grid.innerHTML = '';
+    const countEl = document.getElementById('resultsCount');
+    if (countEl) {
+        const n = data.length;
+        const label = n === 1 ? 'квартира' : n < 5 ? 'квартиры' : 'квартир';
+        countEl.innerHTML = `<strong>${n}</strong> ${label}`;
+    }
+
     if (!data.length) {
-        grid.innerHTML = '<p class="no-results">Квартир по вашим критериям не найдено. Попробуйте изменить фильтры.</p>';
+        grid.innerHTML = `
+            <div class="no-results">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                Квартир по вашим критериям не найдено.<br>Попробуйте изменить фильтры.
+            </div>`;
         return;
     }
     data.forEach(apt => {
@@ -91,7 +103,7 @@ function renderGrid(data) {
                     </p>
                     <p class="amenities-preview">${amenText}</p>
                     <div class="card-footer">
-                        <span class="status available">Свободна</span>
+                        <span class="status available"><i class="fa-solid fa-circle" style="font-size:0.55rem;"></i> Свободна</span>
                         <button class="btn-primary">Посмотреть</button>
                     </div>
                 </div>
@@ -100,56 +112,156 @@ function renderGrid(data) {
 }
 
 // ── Фильтрация ───────────────────────────────────────────
-
 function applyFilters() {
     const guests   = parseInt(document.getElementById('guests').value)   || 0;
     const priceMin = parseInt(document.getElementById('priceMin').value) || 0;
     const priceMax = parseInt(document.getElementById('priceMax').value) || Infinity;
-    const amenity  = document.getElementById('amenityFilter').value;
     const sortVal  = document.getElementById('sortSelect').value;
 
-    filteredApartments = apartments.filter(apt =>
-        apt.guests        >= guests   &&
-        apt.pricePerNight >= priceMin &&
-        apt.pricePerNight <= priceMax &&
-        (amenity === '' || (apt.amenities && apt.amenities.some(a => a.name === amenity)))
-    );
+    filteredApartments = apartments.filter(apt => {
+        if (apt.guests < guests)             return false;
+        if (apt.pricePerNight < priceMin)    return false;
+        if (apt.pricePerNight > priceMax)    return false;
+        // Мультивыбор удобств: квартира должна иметь ВСЕ выбранные удобства
+        if (selectedAmenities.size > 0) {
+            const aptAmenityNames = (apt.amenities || []).map(a => a.name);
+            for (const name of selectedAmenities) {
+                if (!aptAmenityNames.includes(name)) return false;
+            }
+        }
+        return true;
+    });
 
     if (sortVal === 'price_asc')  filteredApartments.sort((a, b) => a.pricePerNight - b.pricePerNight);
     if (sortVal === 'price_desc') filteredApartments.sort((a, b) => b.pricePerNight - a.pricePerNight);
     if (sortVal === 'area_desc')  filteredApartments.sort((a, b) => b.area - a.area);
 
     renderGrid(filteredApartments);
+    updateFilterBadge();
 }
 
-['guests', 'priceMin', 'priceMax'].forEach(id =>
-    document.getElementById(id).addEventListener('input', applyFilters));
-['amenityFilter', 'sortSelect'].forEach(id =>
-    document.getElementById(id).addEventListener('change', applyFilters));
+function updateFilterBadge() {
+    const guests   = parseInt(document.getElementById('guests').value)   || 0;
+    const priceMin = parseInt(document.getElementById('priceMin').value) || 0;
+    const priceMax = parseInt(document.getElementById('priceMax').value) || 0;
+
+    let count = 0;
+    if (guests > 0)   count++;
+    if (priceMin > 0) count++;
+    if (priceMax > 0) count++;
+    count += selectedAmenities.size;
+
+    const badge = document.getElementById('filterBadge');
+    const btn   = document.getElementById('btnFilterOpen');
+    if (count > 0) {
+        badge.textContent = count;
+        badge.classList.add('visible');
+        btn.classList.add('has-filters');
+    } else {
+        badge.classList.remove('visible');
+        btn.classList.remove('has-filters');
+    }
+
+    // Обновить счётчик удобств в панели
+    const countEl = document.getElementById('amenitySelectedCount');
+    if (countEl) {
+        if (selectedAmenities.size > 0) {
+            countEl.textContent = `(выбрано: ${selectedAmenities.size})`;
+            countEl.style.display = 'inline';
+        } else {
+            countEl.style.display = 'none';
+        }
+    }
+}
+
+function resetFilters() {
+    document.getElementById('guests').value   = '';
+    document.getElementById('priceMin').value = '';
+    document.getElementById('priceMax').value = '';
+    selectedAmenities.clear();
+    // Снять все галочки
+    document.querySelectorAll('.amenity-check-item').forEach(el => {
+        el.classList.remove('checked');
+        el.querySelector('.amenity-checkmark').innerHTML = '';
+    });
+    applyFilters();
+}
+
+// ── Фильтр-панель ────────────────────────────────────────
+function openFilterPanel() {
+    document.getElementById('filterPanel').classList.add('open');
+    document.getElementById('filterOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeFilterPanel() {
+    document.getElementById('filterPanel').classList.remove('open');
+    document.getElementById('filterOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+}
 
 // ── Заполнение фильтра удобствами ────────────────────────
-
 async function loadAmenityFilter() {
     const amenities = await apiGetAmenities();
-    const sel = document.getElementById('amenityFilter');
-    amenities.forEach(a => {
-        const opt = document.createElement('option');
-        opt.value = a.name;
-        opt.textContent = a.name;
-        sel.appendChild(opt);
+    const list = document.getElementById('amenityCheckList');
+    if (!amenities.length) {
+        list.innerHTML = '<div style="color:var(--ink-3);font-size:0.85rem;padding:8px 0;">Удобства не найдены</div>';
+        return;
+    }
+    list.innerHTML = amenities.map(a => `
+        <label class="amenity-check-item" data-name="${a.name}" onclick="toggleAmenity(this)">
+            <input type="checkbox" value="${a.name}">
+            <span class="amenity-checkmark"></span>
+            <i class="fa-solid ${a.icon || 'fa-check'} amenity-icon"></i>
+            <span class="amenity-label">${a.name}</span>
+        </label>`).join('');
+}
+
+function toggleAmenity(el) {
+    const name = el.getAttribute('data-name');
+    const checked = el.classList.toggle('checked');
+    const mark = el.querySelector('.amenity-checkmark');
+    if (checked) {
+        selectedAmenities.add(name);
+        mark.innerHTML = '<i class="fa-solid fa-check" style="font-size:0.6rem;"></i>';
+    } else {
+        selectedAmenities.delete(name);
+        mark.innerHTML = '';
+    }
+    updateFilterBadge();
+}
+
+// ── Защита числовых полей от отрицательных значений ───────
+function guardNumberInputs() {
+    document.querySelectorAll('input[type="number"]').forEach(input => {
+        const minVal = parseFloat(input.min);
+        const floor  = isNaN(minVal) ? 0 : minVal;
+        input.addEventListener('input', () => {
+            const val = parseFloat(input.value);
+            if (!isNaN(val) && val < floor) {
+                input.value = floor;
+            }
+        });
+        input.addEventListener('change', () => {
+            const val = parseFloat(input.value);
+            if (!isNaN(val) && val < floor) {
+                input.value = floor;
+            }
+        });
     });
 }
 
 // ── Modal ────────────────────────────────────────────────
-
 function openModal(apartmentId) {
     const apt = apartments.find(a => a.id === apartmentId);
     if (!apt) return;
     currentApartment = apt;
 
     document.getElementById('modalTitle').textContent = apt.title;
-    document.getElementById('modalSpecs').textContent =
-        `Вместимость: ${apt.guests} гостей  •  Площадь: ${apt.area} м²  •  ${apt.roomsCount} комн.`;
+    document.getElementById('modalSpecs').innerHTML = `
+        <span><i class="fa-solid fa-user-group"></i> до ${apt.guests} гостей</span>
+        <span><i class="fa-solid fa-ruler-combined"></i> ${apt.area} м²</span>
+        <span><i class="fa-solid fa-door-open"></i> ${apt.roomsCount} комн.</span>`;
     document.getElementById('modalDesc').textContent = apt.description;
     document.getElementById('modalPrice').innerHTML =
         `${apt.pricePerNight.toLocaleString('ru-RU')} ₽ <span>/ ночь</span>`;
@@ -164,7 +276,7 @@ function openModal(apartmentId) {
 
     if (apt.gallery && apt.gallery.length > 1) {
         apt.gallery.forEach(g => {
-            const img = document.createElement('img');
+            const img   = document.createElement('img');
             img.src     = imgUrl(g.imagePath);
             img.loading = 'lazy';
             if (g.isMain) img.classList.add('active');
@@ -206,8 +318,7 @@ document.getElementById('apartmentModal').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeModal();
 });
 
-// ── Виджет бронирования (auth-aware) ─────────────────────
-
+// ── Виджет бронирования ──────────────────────────────────
 function renderBookingWidget() {
     const el = document.getElementById('bookingWidget');
     if (isLoggedIn()) {
@@ -219,11 +330,11 @@ function renderBookingWidget() {
         el.innerHTML = `
             <div class="auth-gate">
                 <p>Чтобы забронировать квартиру,<br>войдите в аккаунт или зарегистрируйтесь</p>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:4px;">
+                <div class="auth-gate-btns">
                     <a href="login.html" class="btn-auth btn-auth-primary">
                         <i class="fa-solid fa-arrow-right-to-bracket"></i> Войти
                     </a>
-                    <a href="register.html" class="btn-auth btn-auth-ghost" style="color:var(--ink-2);border:1.5px solid var(--border-dk);">
+                    <a href="register.html" class="btn-auth btn-auth-ghost">
                         Зарегистрироваться
                     </a>
                 </div>
@@ -232,7 +343,6 @@ function renderBookingWidget() {
 }
 
 // ── Бронирование ─────────────────────────────────────────
-
 async function handleBook() {
     if (!selectedCheckIn || !selectedCheckOut) {
         alert('Пожалуйста, выберите даты заезда и выезда.');
@@ -257,7 +367,6 @@ async function handleBook() {
 }
 
 // ── Календарь ────────────────────────────────────────────
-
 const MONTH_NAMES = [
     'Январь','Февраль','Март','Апрель','Май','Июнь',
     'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'
@@ -305,11 +414,11 @@ function renderCalendar() {
         const inRange  = selectedCheckIn && selectedCheckOut && ds > selectedCheckIn && ds < selectedCheckOut;
 
         let cls = 'cal-day';
-        if (isPast)             cls += ' past';
-        if (isBooked)           cls += ' booked';
-        if (isStart)            cls += ' check-in';
-        else if (isEnd)         cls += ' check-out';
-        else if (inRange)       cls += ' in-range';
+        if (isPast)           cls += ' past';
+        if (isBooked)         cls += ' booked';
+        if (isStart)          cls += ' check-in';
+        else if (isEnd)       cls += ' check-out';
+        else if (inRange)     cls += ' in-range';
 
         const click = (!isPast && !isBooked) ? `onclick="selectDate('${ds}')"` : '';
         html += `<div class="${cls}" ${click}>${i}</div>`;
@@ -363,13 +472,19 @@ function updateBookingSummary() {
 }
 
 // ── Инициализация ────────────────────────────────────────
-
 async function init() {
     showSkeletons();
     await loadAmenityFilter();
     apartments = await apiGetApartments();
     filteredApartments = [...apartments];
     renderGrid(filteredApartments);
+    guardNumberInputs();
+
+    // Input listeners for live filter
+    ['guests', 'priceMin', 'priceMax'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', applyFilters);
+    });
 }
 
 init();
