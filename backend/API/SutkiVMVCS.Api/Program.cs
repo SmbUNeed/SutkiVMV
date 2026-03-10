@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using SutkiVMV.Data;
 using System.Text;
 using Telegram.Bot;
+using SutkiVMV.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -90,7 +91,7 @@ builder.Services.AddSingleton<ITelegramBotClient>(sp =>
 // Сервисы используют его из DI — не создают сами
 builder.Services.AddSingleton<ITelegramService, TelegramService>();
 builder.Services.AddHostedService<TelegramBotWorker>();
-
+builder.Services.AddScoped<IEmailService, EmailService>();
 // ── CORS ──────────────────────────────────────────────────────────────
 var allowedOrigins = (builder.Configuration["AllowedOrigin"] ?? "http://localhost")
     .Split(',', StringSplitOptions.RemoveEmptyEntries);

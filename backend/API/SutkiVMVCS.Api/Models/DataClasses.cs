@@ -72,11 +72,14 @@ public class Client
 /// </summary>
 public class User
 {
-    public int      Id           { get; set; }
-    public string   Email        { get; set; } = "";
-    public string   PasswordHash { get; set; } = "";
-    public string   Role         { get; set; } = "User";   // "User" | "Admin"
-    public DateTime CreatedAt    { get; set; }
+    public int      Id                    { get; set; }
+    public string   Email                 { get; set; } = "";
+    public string   PasswordHash          { get; set; } = "";
+    public string   Role                  { get; set; } = "User";
+    public DateTime CreatedAt             { get; set; }
+    public bool     EmailConfirmed        { get; set; } = false;
+    public string?  EmailConfirmToken     { get; set; }
+    public DateTime? EmailConfirmTokenExp { get; set; }
 }
 
 public class ApartmentAmenity

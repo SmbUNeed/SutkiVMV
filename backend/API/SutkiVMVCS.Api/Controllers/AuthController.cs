@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using SutkiVMV.Data;
 using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
+using SutkiVMV.Services;
 
 namespace SutkiVMV.Controllers;
 
@@ -19,12 +20,14 @@ public class AuthController : ControllerBase
     private readonly AppDbContext    _context;
     private readonly IConfiguration _config;
     private readonly ITelegramService _telegramService;
+    private readonly IEmailService _emailService;    
 
-    public AuthController(AppDbContext context, IConfiguration config, ITelegramService telegramService)
+    public AuthController(AppDbContext context, IConfiguration config, ITelegramService telegramService, IEmailService emailService)
     {
         _context = context;
         _config  = config;
         _telegramService = telegramService;
+	_emailService = emailService;
     }
 
     // ──────────────────────────────────────────────────
@@ -63,7 +66,15 @@ public class AuthController : ControllerBase
         _context.Clients.Add(client);
         await _context.SaveChangesAsync(ct);
 
-        return Ok(BuildAuthResponse(user, client));
+	var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+	user.EmailConfirmToken    = token;
+	user.EmailConfirmTokenExp = DateTime.UtcNow.AddHours(24);
+	await _context.SaveChangesAsync(ct);
+
+	var confirmUrl = $"https://sutkivmv.ru/confirm-email.html?token={token}&email={Uri.EscapeDataString(user.Email)}";
+	_ = _emailService.SendConfirmationEmailAsync(user.Email, confirmUrl);
+
+	return Ok(BuildAuthResponse(user, client));
     }
 
     // ──────────────────────────────────────────────────
@@ -228,7 +239,25 @@ public class AuthController : ControllerBase
 
         return Ok(booking);
     }
+    
+    [HttpPost("confirm-email")]
+    public async Task<ActionResult> ConfirmEmail(ConfirmEmailDto dto, CancellationToken ct)
+    {
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == dto.Email.Trim().ToLowerInvariant());
 
+        if (user == null
+            || user.EmailConfirmToken != dto.Token
+            || user.EmailConfirmTokenExp < DateTime.UtcNow)
+            return BadRequest(new { message = "Ссылка недействительна или истекла" });
+
+        user.EmailConfirmed        = true;
+        user.EmailConfirmToken     = null;
+        user.EmailConfirmTokenExp  = null;
+        await _context.SaveChangesAsync(ct);
+
+        return Ok(new { message = "Email подтверждён!" });
+    }
     // ──────────────────────────────────────────────────
     // PRIVATE HELPERS
     // ──────────────────────────────────────────────────

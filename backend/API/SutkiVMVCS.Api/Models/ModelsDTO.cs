@@ -157,3 +157,8 @@ public class UserDto
     public string Role        { get; set; } = "";
     public int?   ClientId    { get; set; }
 }
+public class ConfirmEmailDto
+{
+    public string Email { get; set; } = "";
+    public string Token { get; set; } = "";
+}
