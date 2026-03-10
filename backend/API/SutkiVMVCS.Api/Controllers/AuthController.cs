@@ -66,15 +66,21 @@ public class AuthController : ControllerBase
         _context.Clients.Add(client);
         await _context.SaveChangesAsync(ct);
 
-	var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
-	user.EmailConfirmToken    = token;
-	user.EmailConfirmTokenExp = DateTime.UtcNow.AddHours(24);
-	await _context.SaveChangesAsync(ct);
+	    var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+	    user.EmailConfirmToken    = token;
+	    user.EmailConfirmTokenExp = DateTime.UtcNow.AddHours(24);
+	    await _context.SaveChangesAsync(ct);
 
-	var confirmUrl = $"https://sutkivmv.ru/confirm-email.html?token={token}&email={Uri.EscapeDataString(user.Email)}";
-	_ = _emailService.SendConfirmationEmailAsync(user.Email, confirmUrl);
-
-	return Ok(BuildAuthResponse(user, client));
+        var confirmUrl = $"https://sutkivmv.ru/confirm-email.html?token={token}&email={Uri.EscapeDataString(user.Email)}";
+        try
+        {
+            await _emailService.SendConfirmationEmailAsync(user.Email, confirmUrl);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[EMAIL ERROR] {ex.Message}");
+        }
+        return Ok(BuildAuthResponse(user, client));
     }
 
     // ──────────────────────────────────────────────────
