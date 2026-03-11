@@ -7,6 +7,7 @@ using SutkiVMV.Data;
 using System.Text;
 using Telegram.Bot;
 using SutkiVMV.Services;
+using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -91,6 +92,11 @@ builder.Services.AddSingleton<ITelegramBotClient>(sp =>
 // Сервисы используют его из DI — не создают сами
 builder.Services.AddSingleton<ITelegramService, TelegramService>();
 builder.Services.AddHostedService<TelegramBotWorker>();
+builder.Services.AddOptions();
+builder.Services.AddHttpClient<ResendClient>();
+builder.Services.Configure<ResendClientOptions>(options =>
+    options.ApiToken = builder.Configuration["Resend:ApiKey"]!);
+builder.Services.AddTransient<IResend, ResendClient>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 // ── CORS ──────────────────────────────────────────────────────────────
 var allowedOrigins = (builder.Configuration["AllowedOrigin"] ?? "http://localhost")

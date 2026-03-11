@@ -1,5 +1,4 @@
-using System.Net;
-using System.Net.Mail;
+using Resend;
 
 namespace SutkiVMV.Services;
 
@@ -10,38 +9,25 @@ public interface IEmailService
 
 public class EmailService : IEmailService
 {
-    private readonly IConfiguration _config;
+    private readonly IResend _resend;
 
-    public EmailService(IConfiguration config)
+    public EmailService(IResend resend)
     {
-        _config = config;
+        _resend = resend;
     }
 
     public async Task SendConfirmationEmailAsync(string toEmail, string confirmUrl)
     {
-        var host     = _config["Email:Host"]!;
-        var port     = int.Parse(_config["Email:Port"]!);
-        var username = _config["Email:Username"]!;
-        var password = _config["Email:Password"]!;
-        var from     = _config["Email:From"]!;
-
-	var client = new SmtpClient(host, port)
-	{
-	    EnableSsl   = false,
-	    DeliveryMethod = SmtpDeliveryMethod.Network,
-	    Credentials = new NetworkCredential(username, password)
-	};
-	client.EnableSsl = true; // STARTTLS
-        var mail = new MailMessage
+        var message = new EmailMessage
         {
-            From       = new MailAddress(from, "SutkiVMV"),
-            Subject    = "Подтверждение email — SutkiVMV",
-            IsBodyHtml = true,
-            Body       = $"""
+            From = "SutkiVMV <onboarding@resend.dev>",
+            To = { toEmail },
+            Subject = "Подтверждение email — SutkiVMV",
+            HtmlBody = $"""
                 <div style="font-family:sans-serif;max-width:480px;margin:auto;">
                     <h2>Подтверждение почты</h2>
                     <p>Нажмите кнопку ниже чтобы подтвердить ваш email:</p>
-                    <a href="{confirmUrl}" 
+                    <a href="{confirmUrl}"
                        style="display:inline-block;padding:12px 24px;background:#2563eb;
                               color:#fff;border-radius:8px;text-decoration:none;">
                         Подтвердить email
@@ -52,8 +38,7 @@ public class EmailService : IEmailService
                 </div>
                 """
         };
-        mail.To.Add(toEmail);
 
-        await client.SendMailAsync(mail);
+        await _resend.EmailSendAsync(message);
     }
 }
