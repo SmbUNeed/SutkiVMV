@@ -134,8 +134,24 @@
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'Ошибка регистрации');
-            if (typeof setAuth === 'function') setAuth(data);
-            location.href = 'index.html';
+            if (data.token) {
+			if (typeof setAuth === 'function') setAuth(data);
+				location.href = 'index.html';
+			} else {
+				// Показываем сообщение о подтверждении email
+				const card = document.querySelector('.auth-card');
+				card.innerHTML = `
+					<div style="text-align:center;padding:20px 0;">
+						<i class="fa-solid fa-envelope-circle-check" style="font-size:3rem;color:var(--primary);margin-bottom:16px;display:block;"></i>
+						<h2>Проверьте почту!</h2>
+						<p style="color:var(--ink-3);margin-top:8px;">
+							Мы отправили письмо на <b>${fields.email.value.trim()}</b>.<br>
+							Перейдите по ссылке в письме чтобы завершить регистрацию.
+						</p>
+						<a href="index.html" style="display:inline-block;margin-top:24px;" class="auth-submit">На главную</a>
+					</div>
+				`;
+			}
         } catch (err) {
             showError(err.message);
         } finally {
