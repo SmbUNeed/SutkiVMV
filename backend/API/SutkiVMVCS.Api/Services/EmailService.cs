@@ -20,7 +20,7 @@ public class EmailService : IEmailService
     {
         var message = new EmailMessage
         {
-            From = "SutkiVMV <onboarding@resend.dev>",
+            From = "SutkiVMV <no-reply@sutkivmv.ru>",
             To = { toEmail },
             Subject = "Подтверждение email — SutkiVMV",
             HtmlBody = $"""
