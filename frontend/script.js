@@ -209,7 +209,7 @@ async function loadAmenityFilter() {
         return;
     }
     list.innerHTML = amenities.map(a => `
-        <label class="amenity-check-item" data-name="${a.name}" onclick="toggleAmenity(this)">
+        <label class="amenity-check-item" data-name="${a.name}" onclick="toggleAmenity(event, this)">
             <input type="checkbox" value="${a.name}">
             <span class="amenity-checkmark"></span>
             <i class="fa-solid ${a.icon || 'fa-check'} amenity-icon"></i>
@@ -217,7 +217,8 @@ async function loadAmenityFilter() {
         </label>`).join('');
 }
 
-function toggleAmenity(el) {
+function toggleAmenity(e, el) {
+    e.preventDefault();
     const name = el.getAttribute('data-name');
     const checked = el.classList.toggle('checked');
     const mark = el.querySelector('.amenity-checkmark');
