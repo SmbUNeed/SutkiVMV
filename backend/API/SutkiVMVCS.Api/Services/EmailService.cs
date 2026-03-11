@@ -25,12 +25,13 @@ public class EmailService : IEmailService
         var password = _config["Email:Password"]!;
         var from     = _config["Email:From"]!;
 
-        var client = new SmtpClient(host, port)
-        {
-            EnableSsl   = true,
-            Credentials = new NetworkCredential(username, password)
-        };
-
+	var client = new SmtpClient(host, port)
+	{
+	    EnableSsl   = false,
+	    DeliveryMethod = SmtpDeliveryMethod.Network,
+	    Credentials = new NetworkCredential(username, password)
+	};
+	client.EnableSsl = true; // STARTTLS
         var mail = new MailMessage
         {
             From       = new MailAddress(from, "SutkiVMV"),
