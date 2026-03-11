@@ -34,53 +34,48 @@ public class AuthController : ControllerBase
     // POST api/auth/register
     // ──────────────────────────────────────────────────
     [HttpPost("register")]
-    public async Task<ActionResult<AuthResponseDto>> Register(RegisterDto dto, CancellationToken ct)
+    public async Task<ActionResult> Register(RegisterDto dto, CancellationToken ct)
     {
         dto.Email = dto.Email.Trim().ToLowerInvariant();
 
         if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
             return Conflict(new { message = "Пользователь с таким email уже существует" });
 
+        if (await _context.PendingRegistrations.AnyAsync(p => p.Email == dto.Email))
+        {
+            // Удаляем старую заявку и создаём новую
+            var old = await _context.PendingRegistrations.FirstAsync(p => p.Email == dto.Email);
+            _context.PendingRegistrations.Remove(old);
+        }
+
         if (string.IsNullOrWhiteSpace(dto.Password) || dto.Password.Length < 6)
             return BadRequest(new { message = "Пароль должен содержать минимум 6 символов" });
 
-        // Создаём пользователя
-        var user = new User
-        {
-            Email        = dto.Email,
-            PasswordHash = HashPassword(dto.Password),
-            Role         = "User",
-            CreatedAt    = DateTime.UtcNow
-        };
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync(ct); // нужен Id для клиента
+        var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
 
-        // Создаём связанный Client (для системы бронирований)
-        var client = new Client
+        var pending = new PendingRegistration
         {
-            FullName    = dto.FullName.Trim(),
+            Email = dto.Email,
+            PasswordHash = HashPassword(dto.Password),
+            FullName = dto.FullName.Trim(),
             PhoneNumber = dto.PhoneNumber.Trim(),
-            Email       = dto.Email,
-            UserId      = user.Id
+            Token = token,
+            ExpiresAt = DateTime.UtcNow.AddHours(24)
         };
-        _context.Clients.Add(client);
+        _context.PendingRegistrations.Add(pending);
         await _context.SaveChangesAsync(ct);
 
-	    var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
-	    user.EmailConfirmToken    = token;
-	    user.EmailConfirmTokenExp = DateTime.UtcNow.AddHours(24);
-	    await _context.SaveChangesAsync(ct);
-
-        var confirmUrl = $"https://sutkivmv.ru/confirm-email.html?token={token}&email={Uri.EscapeDataString(user.Email)}";
+        var confirmUrl = $"https://sutkivmv.ru/confirm-email.html?token={token}&email={Uri.EscapeDataString(dto.Email)}";
         try
         {
-            await _emailService.SendConfirmationEmailAsync(user.Email, confirmUrl);
+            await _emailService.SendConfirmationEmailAsync(dto.Email, confirmUrl);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[EMAIL ERROR] {ex.Message}");
         }
-        return Ok(BuildAuthResponse(user, client));
+
+        return Ok(new { message = "Проверьте почту — мы отправили письмо для подтверждения." });
     }
 
     // ──────────────────────────────────────────────────
@@ -245,24 +240,41 @@ public class AuthController : ControllerBase
 
         return Ok(booking);
     }
-    
+
     [HttpPost("confirm-email")]
     public async Task<ActionResult> ConfirmEmail(ConfirmEmailDto dto, CancellationToken ct)
     {
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Email == dto.Email.Trim().ToLowerInvariant());
+        var pending = await _context.PendingRegistrations
+            .FirstOrDefaultAsync(p => p.Email == dto.Email.Trim().ToLowerInvariant()
+                                   && p.Token == dto.Token);
 
-        if (user == null
-            || user.EmailConfirmToken != dto.Token
-            || user.EmailConfirmTokenExp < DateTime.UtcNow)
+        if (pending == null || pending.ExpiresAt < DateTime.UtcNow)
             return BadRequest(new { message = "Ссылка недействительна или истекла" });
 
-        user.EmailConfirmed        = true;
-        user.EmailConfirmToken     = null;
-        user.EmailConfirmTokenExp  = null;
+        // Создаём пользователя
+        var user = new User
+        {
+            Email = pending.Email,
+            PasswordHash = pending.PasswordHash,
+            Role = "User",
+            CreatedAt = DateTime.UtcNow,
+            EmailConfirmed = true
+        };
+        _context.Users.Add(user);
         await _context.SaveChangesAsync(ct);
 
-        return Ok(new { message = "Email подтверждён!" });
+        var client = new Client
+        {
+            FullName = pending.FullName,
+            PhoneNumber = pending.PhoneNumber,
+            Email = pending.Email,
+            UserId = user.Id
+        };
+        _context.Clients.Add(client);
+        _context.PendingRegistrations.Remove(pending);
+        await _context.SaveChangesAsync(ct);
+
+        return Ok(new { message = "Email подтверждён! Теперь вы можете войти." });
     }
     // ──────────────────────────────────────────────────
     // PRIVATE HELPERS
