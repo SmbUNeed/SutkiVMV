@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>МинВоды Вики — Путеводитель | SutkiVMV</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      media="print" onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    </noscript>
+    <meta name="description" content="Путеводитель по Минеральным Водам и КМВ — достопримечательности, курорты, природа, советы туристу.">
+    <link rel="canonical" href="https://sutkivmv.ru/wiki.html">
+    <link rel="icon" type="image/x-icon" href="favicon/favicon.ico">
+
+    <style>
+    /* ═══ WIKI-SPECIFIC STYLES ═══════════════════════════════ */
+
+    /* ── HERO ─────────────────────────────────────────────── */
+    .wiki-hero {
+        position: relative;
+        background: linear-gradient(135deg,
+            #1a0e05 0%,
+            #3d1f08 35%,
+            #6b3510 65%,
+            #e08020 100%);
+        padding: 72px 0 80px;
+        overflow: hidden;
+        margin-bottom: 0;
+    }
+    [data-theme="dark"] .wiki-hero {
+        background: linear-gradient(135deg,
+            #0d0905 0%,
+            #2a1506 35%,
+            #4a2408 65%,
+            #c56d10 100%);
+    }
+    .wiki-hero::before {
+        content: '';
+        position: absolute; inset: 0;
+        background:
+            radial-gradient(ellipse 60% 80% at 80% 50%, rgba(224,128,32,0.18) 0%, transparent 70%),
+            radial-gradient(ellipse 40% 60% at 10% 80%, rgba(255,180,80,0.10) 0%, transparent 60%);
+        pointer-events: none;
+    }
+    /* Decorative mountain silhouette */
+    .wiki-hero::after {
+        content: '';
+        position: absolute; bottom: 0; left: 0; right: 0; height: 80px;
+        background: var(--paper);
+        clip-path: ellipse(55% 100% at 50% 100%);
+        pointer-events: none;
+    }
+    [data-theme="dark"] .wiki-hero::after {
+        background: var(--paper);
+    }
+    .wiki-hero-inner {
+        position: relative; z-index: 2;
+        display: flex; flex-direction: column; align-items: flex-start;
+        gap: 18px; max-width: 680px;
+    }
+    .wiki-hero-badge {
+        display: inline-flex; align-items: center; gap: 7px;
+        background: rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.20);
+        backdrop-filter: blur(8px);
+        border-radius: var(--r-full);
+        padding: 6px 14px;
+        color: rgba(255,255,255,0.85);
+        font-size: 0.78rem; font-weight: 700;
+        letter-spacing: 0.4px; text-transform: uppercase;
+    }
+    .wiki-hero-badge i { color: var(--primary-lt); font-size: 0.72rem; }
+    .wiki-hero h1 {
+        font-family: var(--font-head);
+        font-size: clamp(2rem, 5vw, 3.2rem);
+        font-weight: 900; color: #fff;
+        line-height: 1.15; letter-spacing: -0.5px;
+    }
+    .wiki-hero h1 em {
+        font-style: normal; color: var(--primary-lt);
+    }
+    .wiki-hero p {
+        font-size: 1.05rem; color: rgba(255,255,255,0.72);
+        font-weight: 500; line-height: 1.65; max-width: 540px;
+    }
+    .wiki-hero-stats {
+        display: flex; align-items: center; gap: 28px; flex-wrap: wrap;
+        margin-top: 4px;
+    }
+    .wiki-stat {
+        display: flex; flex-direction: column; gap: 2px;
+    }
+    .wiki-stat-num {
+        font-family: var(--font-head);
+        font-size: 1.55rem; font-weight: 900;
+        color: #fff; line-height: 1;
+    }
+    .wiki-stat-label {
+        font-size: 0.74rem; color: rgba(255,255,255,0.55);
+        font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .wiki-stat-div {
+        width: 1px; height: 36px;
+        background: rgba(255,255,255,0.18);
+        flex-shrink: 0;
+    }
+
+    /* ── PAGE LAYOUT ──────────────────────────────────────── */
+    .wiki-page { padding: 48px 0 80px; }
+    .wiki-layout {
+        display: grid;
+        grid-template-columns: 1fr 280px;
+        gap: 32px;
+        align-items: start;
+    }
+
+    /* ── CATEGORY FILTER ──────────────────────────────────── */
+    .wiki-cats {
+        display: flex; align-items: center; gap: 8px;
+        flex-wrap: wrap; margin-bottom: 28px;
+    }
+    .wiki-cat-btn {
+        display: inline-flex; align-items: center; gap: 7px;
+        padding: 8px 16px;
+        background: var(--white);
+        border: 1.5px solid var(--border);
+        border-radius: var(--r-full);
+        font-size: 0.83rem; font-weight: 700;
+        color: var(--ink-2);
+        transition: all var(--transition);
+        cursor: pointer;
+    }
+    .wiki-cat-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--primary-bg);
+    }
+    .wiki-cat-btn.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: #fff;
+    }
+    .wiki-cat-btn i { font-size: 0.75rem; }
+
+    /* ── SECTION TITLE ────────────────────────────────────── */
+    .wiki-section-title {
+        font-family: var(--font-head);
+        font-size: 1.35rem; font-weight: 900;
+        color: var(--ink); margin-bottom: 18px;
+        display: flex; align-items: center; gap: 10px;
+    }
+    .wiki-section-title::after {
+        content: '';
+        flex: 1; height: 1.5px;
+        background: var(--border);
+    }
+
+    /* ── CARDS GRID ───────────────────────────────────────── */
+    .wiki-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        margin-bottom: 40px;
+    }
+    .wiki-card {
+        background: var(--white);
+        border: 1.5px solid var(--border);
+        border-radius: var(--r);
+        overflow: hidden;
+        transition: all 0.22s ease;
+        cursor: default;
+        position: relative;
+    }
+    .wiki-card:hover {
+        border-color: var(--primary-lt);
+        box-shadow: var(--shadow);
+        transform: translateY(-2px);
+    }
+    .wiki-card.hidden { display: none; }
+
+    .wiki-card-thumb {
+        height: 148px;
+        position: relative;
+        overflow: hidden;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .wiki-card-thumb-bg {
+        position: absolute; inset: 0;
+        background-size: cover; background-position: center;
+        transition: transform 0.4s ease;
+    }
+    .wiki-card:hover .wiki-card-thumb-bg { transform: scale(1.04); }
+
+    /* Gradient overlays per category */
+    .cat-nature   .wiki-card-thumb { background: linear-gradient(135deg, #1a4a2e 0%, #2d7a4a 50%, #4caf7a 100%); }
+    .cat-resort   .wiki-card-thumb { background: linear-gradient(135deg, #1a2e4a 0%, #2d507a 50%, #4c8aaf 100%); }
+    .cat-sight    .wiki-card-thumb { background: linear-gradient(135deg, #4a1a2e 0%, #7a2d50 50%, #af4c7a 100%); }
+    .cat-tips     .wiki-card-thumb { background: linear-gradient(135deg, #3a3a1a 0%, #6a6a2d 50%, #a0a04c 100%); }
+    .cat-food     .wiki-card-thumb { background: linear-gradient(135deg, #4a2e1a 0%, #7a502d 50%, #af7a4c 100%); }
+
+    .wiki-card-icon {
+        position: relative; z-index: 2;
+        width: 56px; height: 56px;
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(6px);
+        border: 1.5px solid rgba(255,255,255,0.25);
+        border-radius: var(--r);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem;
+        transition: transform 0.3s ease;
+    }
+    .wiki-card:hover .wiki-card-icon { transform: scale(1.1) rotate(-4deg); }
+
+    .wiki-card-cat-tag {
+        position: absolute; top: 10px; left: 10px; z-index: 3;
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 10px;
+        background: rgba(0,0,0,0.38);
+        backdrop-filter: blur(6px);
+        border-radius: var(--r-full);
+        font-size: 0.68rem; font-weight: 800;
+        color: rgba(255,255,255,0.9);
+        text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .wiki-card-dist-tag {
+        position: absolute; top: 10px; right: 10px; z-index: 3;
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 4px 10px;
+        background: rgba(0,0,0,0.38);
+        backdrop-filter: blur(6px);
+        border-radius: var(--r-full);
+        font-size: 0.68rem; font-weight: 700;
+        color: rgba(255,255,255,0.8);
+    }
+    .wiki-card-dist-tag i { font-size: 0.6rem; }
+
+    .wiki-card-body { padding: 14px 16px 16px; }
+    .wiki-card-title {
+        font-family: var(--font-head);
+        font-size: 1.0rem; font-weight: 800;
+        color: var(--ink); margin-bottom: 6px;
+        line-height: 1.3;
+    }
+    .wiki-card-desc {
+        font-size: 0.82rem; color: var(--ink-3);
+        font-weight: 500; line-height: 1.6;
+        margin-bottom: 10px;
+    }
+    .wiki-card-tags {
+        display: flex; flex-wrap: wrap; gap: 5px;
+    }
+    .wiki-tag {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 3px 9px;
+        background: var(--paper-2);
+        border: 1px solid var(--border);
+        border-radius: var(--r-full);
+        font-size: 0.7rem; font-weight: 700;
+        color: var(--ink-3);
+    }
+    .wiki-tag i { font-size: 0.6rem; color: var(--primary); }
+
+    /* ── SIDEBAR ──────────────────────────────────────────── */
+    .wiki-sidebar {
+        position: sticky;
+        top: calc(var(--header-h) + 24px);
+        display: flex; flex-direction: column; gap: 16px;
+    }
+    .wiki-sidebar-card {
+        background: var(--white);
+        border: 1.5px solid var(--border);
+        border-radius: var(--r);
+        padding: 20px;
+        box-shadow: var(--shadow-sm);
+    }
+    .wiki-sidebar-title {
+        font-family: var(--font-head);
+        font-size: 0.95rem; font-weight: 800;
+        color: var(--ink); margin-bottom: 14px;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .wiki-sidebar-title i { color: var(--primary); font-size: 0.85rem; }
+
+    /* CTA card */
+    .wiki-cta-card {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-lt) 100%);
+        border: none; color: #fff;
+    }
+    .wiki-cta-card .wiki-sidebar-title { color: #fff; }
+    .wiki-cta-card .wiki-sidebar-title i { color: rgba(255,255,255,0.7); }
+    .wiki-cta-card p {
+        font-size: 0.82rem; opacity: 0.88;
+        line-height: 1.6; margin-bottom: 14px;
+    }
+    .wiki-cta-btn {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        width: 100%; padding: 11px;
+        background: rgba(255,255,255,0.18);
+        backdrop-filter: blur(6px);
+        border: 1.5px solid rgba(255,255,255,0.35);
+        border-radius: var(--r-sm);
+        color: #fff; font-size: 0.88rem; font-weight: 800;
+        font-family: inherit; cursor: pointer;
+        transition: all var(--transition);
+        text-decoration: none;
+    }
+    .wiki-cta-btn:hover {
+        background: rgba(255,255,255,0.28);
+        border-color: rgba(255,255,255,0.55);
+    }
+
+    /* Tips list */
+    .wiki-tips-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .wiki-tips-list li {
+        display: flex; gap: 10px;
+        font-size: 0.82rem; color: var(--ink-2);
+        font-weight: 600; line-height: 1.5;
+    }
+    .wiki-tips-list li .tip-icon {
+        width: 28px; height: 28px; flex-shrink: 0;
+        background: var(--primary-bg);
+        border-radius: var(--r-xs);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.7rem; color: var(--primary);
+        margin-top: 1px;
+    }
+
+    /* Weather widget */
+    .wiki-weather {
+        display: flex; align-items: center; gap: 14px;
+        padding: 12px; background: var(--paper-2);
+        border-radius: var(--r-sm); margin-bottom: 12px;
+    }
+    .wiki-weather-icon { font-size: 2.2rem; line-height: 1; }
+    .wiki-weather-info {}
+    .wiki-weather-temp {
+        font-family: var(--font-head);
+        font-size: 1.5rem; font-weight: 900; color: var(--ink);
+        line-height: 1;
+    }
+    .wiki-weather-desc {
+        font-size: 0.76rem; color: var(--ink-3); font-weight: 600;
+    }
+    .wiki-weather-note {
+        font-size: 0.75rem; color: var(--ink-3);
+        font-weight: 600; font-style: italic;
+        text-align: center;
+    }
+
+    /* Distance list */
+    .wiki-dist-list { display: flex; flex-direction: column; gap: 8px; }
+    .wiki-dist-item {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 8px 10px;
+        background: var(--paper-2);
+        border-radius: var(--r-xs);
+        font-size: 0.81rem; font-weight: 600; color: var(--ink-2);
+        gap: 8px;
+    }
+    .wiki-dist-item-name { display: flex; align-items: center; gap: 7px; }
+    .wiki-dist-item-name i { color: var(--primary); font-size: 0.72rem; width: 14px; text-align: center; }
+    .wiki-dist-km {
+        font-weight: 800; color: var(--primary);
+        font-size: 0.82rem; white-space: nowrap;
+    }
+
+    /* ── NO RESULTS ───────────────────────────────────────── */
+    .wiki-no-results {
+        grid-column: 1 / -1;
+        text-align: center; padding: 56px 20px;
+        color: var(--ink-3);
+    }
+    .wiki-no-results i { font-size: 2rem; display: block; margin-bottom: 12px; opacity: 0.35; }
+    .wiki-no-results p { font-size: 0.9rem; font-weight: 600; }
+
+    /* ── HEADER NAV LINK ──────────────────────────────────── */
+    .header-nav-link {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 7px 14px;
+        background: var(--primary-bg);
+        border: 1.5px solid var(--primary-glow);
+        border-radius: var(--r-full);
+        font-size: 0.82rem; font-weight: 700;
+        color: var(--primary);
+        transition: all var(--transition);
+        white-space: nowrap;
+    }
+    .header-nav-link:hover {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: #fff;
+    }
+    .header-nav-link i { font-size: 0.72rem; }
+
+    /* ── RESPONSIVE ───────────────────────────────────────── */
+    @media (max-width: 900px) {
+        .wiki-layout { grid-template-columns: 1fr; }
+        .wiki-sidebar { position: static; }
+    }
+    @media (max-width: 600px) {
+        .wiki-grid { grid-template-columns: 1fr; }
+        .wiki-hero { padding: 52px 0 72px; }
+        .wiki-hero-stats { gap: 18px; }
+        .wiki-stat-num { font-size: 1.25rem; }
+    }
+    @media (max-width: 400px) {
+        .wiki-cats { gap: 6px; }
+        .wiki-cat-btn { padding: 7px 12px; font-size: 0.78rem; }
+    }
+    </style>
+</head>
+<body>
+
+<!-- ── HEADER ───────────────────────────────────────────── -->
+<header class="header">
+    <div class="container header-content">
+        <a href="index.html" class="logo">Sutki<span>VMV</span></a>
+        <div class="header-contacts">
+            <a href="tel:+79283597478"><i class="fa-solid fa-phone"></i> +7 (928) 359-74-78</a>
+            <a href="https://t.me/PaWellRe" target="_blank"><i class="fa-brands fa-telegram"></i> Telegram</a>
+        </div>
+        <div class="header-right">
+            <!-- Wiki link (active) -->
+            <a href="wiki.html" class="header-nav-link" style="background:var(--primary);border-color:var(--primary);color:#fff;">
+                <i class="fa-solid fa-map"></i> Путеводитель
+            </a>
+            <button class="theme-toggle" id="themeToggle" title="Сменить тему" aria-label="Сменить тему">
+                <i class="fa-solid fa-moon icon-moon"></i>
+                <i class="fa-solid fa-sun icon-sun"></i>
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- ── HERO ─────────────────────────────────────────────── -->
+<section class="wiki-hero">
+    <div class="container">
+        <div class="wiki-hero-inner">
+            <div class="wiki-hero-badge">
+                <i class="fa-solid fa-compass-drafting"></i>
+                Путеводитель по КМВ
+            </div>
+            <h1>Минеральные Воды<br>и <em>Кавказские курорты</em></h1>
+            <p>Всё, что стоит увидеть рядом — горы, целебные источники, старинные санатории и живописная природа Северного Кавказа.</p>
+            <div class="wiki-hero-stats">
+                <div class="wiki-stat">
+                    <div class="wiki-stat-num">5</div>
+                    <div class="wiki-stat-label">Курортных городов</div>
+                </div>
+                <div class="wiki-stat-div"></div>
+                <div class="wiki-stat">
+                    <div class="wiki-stat-num">5642</div>
+                    <div class="wiki-stat-label">М над уровнем моря</div>
+                </div>
+                <div class="wiki-stat-div"></div>
+                <div class="wiki-stat">
+                    <div class="wiki-stat-num">130+</div>
+                    <div class="wiki-stat-label">Лет курортной истории</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── MAIN CONTENT ──────────────────────────────────────── -->
+<main class="wiki-page">
+    <div class="container">
+        <div class="wiki-layout">
+
+            <!-- ── LEFT: ARTICLES ─────────────────────────── -->
+            <div>
+                <!-- Category filter -->
+                <div class="wiki-cats" id="wikiCats">
+                    <button class="wiki-cat-btn active" data-cat="all" onclick="filterWiki('all')">
+                        <i class="fa-solid fa-border-all"></i> Всё
+                    </button>
+                    <button class="wiki-cat-btn" data-cat="nature" onclick="filterWiki('nature')">
+                        <i class="fa-solid fa-mountain"></i> Природа
+                    </button>
+                    <button class="wiki-cat-btn" data-cat="resort" onclick="filterWiki('resort')">
+                        <i class="fa-solid fa-spa"></i> Курорты
+                    </button>
+                    <button class="wiki-cat-btn" data-cat="sight" onclick="filterWiki('sight')">
+                        <i class="fa-solid fa-landmark"></i> Достопримечательности
+                    </button>
+                    <button class="wiki-cat-btn" data-cat="food" onclick="filterWiki('food')">
+                        <i class="fa-solid fa-utensils"></i> Еда
+                    </button>
+                    <button class="wiki-cat-btn" data-cat="tips" onclick="filterWiki('tips')">
+                        <i class="fa-solid fa-lightbulb"></i> Практично
+                    </button>
+                </div>
+
+                <!-- Section: Природа & горы -->
+                <div class="wiki-section-title" id="secNature">
+                    <i class="fa-solid fa-mountain" style="color:var(--primary);"></i> Природа и горы
+                </div>
+                <div class="wiki-grid" id="wikiGrid">
+
+                    <!-- Эльбрус -->
+                    <div class="wiki-card cat-nature" data-cat="nature">
+                        <div class="wiki-card-thumb">
+                            <div class="wiki-card-cat-tag"><i class="fa-solid fa-mountain"></i> Природа</div>
+                            <div class="wiki-card-dist-tag"><i class="fa-solid fa-location-dot"></i> ~180 км</div>
+                            <div class="wiki-card-icon">🏔️</div>
+                        </div>
+                        <div class="wiki-card-body">
+                            <div class="wiki-card-title">Эльбрус</div>
+                            <div class="wiki-card-desc">Высшая точка России и Европы — 5642 м. Канатная дорога поднимает до отметки 3847 м. Захватывающие виды, катание на лыжах круглый год.</div>
+                            <div class="wiki-card-tags">
+                                <span class="wiki-tag"><i class="fa-solid fa-cable-car"></i> Канатка</span>
+                                <span class="wiki-tag"><i class="fa-solid fa-snowflake"></i> Лыжи</span>
+                                <span class="wiki-tag"><i class="fa-solid fa-person-hiking"></i> Хайкинг</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Гора Машук -->
+                    <div class="wiki-card cat-nature" data-cat="nature">
+                        <div class="wiki-card-thumb">
+                            <div class="wiki-card-cat-tag"><i class="fa-solid fa-mountain"></i> Природа</div>
+                            <div class="wiki-card-dist-tag"><i class="fa-solid fa-location-dot"></i> ~28 км</div>
+                            <div class="wiki-card-icon">⛰️</div>
+                        </div>
+                        <div class="wiki-card-body">
+                            <div class="wiki-card-title">Гора Машук</div>
+                            <div class="wiki-card-desc">Символ Пятигорска, 993 м. Канатная дорога на вершину, панорама на весь регион КМВ и Главный Кавказский хребет. Пешие тропы по лесу.</div>
+                            <div class="wiki-card-tags">
+                                <span class="wiki-tag"><i class="fa-solid fa-cable-car"></i> Канатка</span>
+                                <span class="wiki-tag"><i class="fa-regular fa-eye"></i> Панорама</span>
+                                <span class="wiki-tag"><i class="fa-solid fa-tree"></i> Прогулки</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Домбай -->
+                    <div class="wiki-card cat-nature" data-cat="nature">
+                        <div class="wiki-card-thumb">
+                            <div class="wiki-card-cat-tag"><i class="fa-solid fa-mountain"></i> Природа</div>
+                            <div class="wiki-card-dist-tag"><i class="fa-solid fa-location-dot"></i> ~130 км</div>
+                            <div class="wiki-card-icon">🌄</div>
+                        </div>
+                        <div class="wiki-card-body">
+                            <div class="wiki-card-title">Домбай</div>
+                            <div class="wiki-card-desc">Горнолыжный курорт в живописной долине Теберды. Несколько трасс разного уровня, сосновые леса, водопады. Идеален как летом, так и зимой.</div>
+                            <div class="wiki-card-tags">
+                                <span class="wiki-tag"><i class="fa-solid fa-snowflake"></i> Лыжи</span>
+                                <span class="wiki-tag"><i class="fa-solid fa-water"></i> Водопады</span>
+                                <span class="wiki-tag"><i class="fa-solid fa-sun"></i> Летом тоже</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Озеро Тамбукан -->
+                    <div class="wiki-card cat-nature" data-cat="nature">
+                        <div class="wiki-card-thumb">
+                            <div class="wiki-card-cat-tag"><i class="fa-solid fa-mountain"></i> Природа</div>
+                            <div class="wiki-card-dist-tag"><i class="fa-solid fa-location-dot"></i> ~12 км</div>
+                            <div class="wiki-card-icon">🌊</div>
+                        </div>
+                        <div class="wiki-card-body">
+                            <div class="wiki-card-title">Озеро Тамбукан</div>
+                            <div class="wiki-card-desc">Солёное озеро с целебной грязью, которую используют в санаториях всего региона. Уникальная экосистема, розоватая вода в летние дни.</div>
+                            <div class="wiki-card-tags">
+                                <span class="wiki-tag"><i class="fa-solid fa-hand-holding-heart"></i> Целебная грязь</span>
+                                <span class="wiki-tag"><i class="fa-solid fa-camera"></i> Фото</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Курорты -->
+                    <div class="wiki-card cat-resort" data-cat="resort">
+                        <div class="wiki-card-thumb">
+                            <div class="wiki-card-cat-tag"><i class="fa-solid fa-spa"></i> Курорт</div>
+                            <div class="wiki-card-dist-tag"><i class="fa-solid fa-location-dot"></i> ~28 км</div>
+                            <div class="wiki-card-icon">🌿</div>
+                        </div>
+                        <div class="wiki-card-body">
+                            <div class="wiki-card-title">Кисловодск</div>
+                            <div class="wiki-card-desc">«Город солнца» — самый южный и тёплый из КМВ. Нарзанные источники, знаменитый Курортный парк (один из крупнейших в Европе), чистый горный воздух.</div>
+                            <div class="wiki-card-tags">
+                                <span class="wiki-tag"><i class="fa-solid fa-droplet"></i> Нарзан</span>
+                                <span class="wiki-tag"><i class="fa-solid fa-tree"></i> Парк</span>
+                                <span class="wiki-tag"><i class="fa-solid fa-sun"></i> Солнце</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wiki-card cat-resort" data-cat="resort">
+                        <div class="wiki-card-thumb">
+                            <div class="wiki-card-cat-tag"><i class="fa-solid fa-spa"></i> Курорт</div>
+                            <div class="wiki-card-dist-tag"><i class="fa-solid fa-location-dot"></i> ~22 км</div>
+                            <div class="wiki-card-icon">💧</div>
+                        </div>
+                        <div class="wiki-card-body">
+                            <div class="wiki-card-title">Ессентуки</div>
+                            <div class="wiki-card-desc">Столица питьевого лечения. Минеральные воды №4 и №17 — настоящий бренд России. Грязелечебница Пирогова, старинные курзалы и бюветы.</div>
+                            <div class="wiki-card-tags">
+                                <span class="wiki-tag"><i class="fa-solid fa-bottle-water"></i> Минводы</span>
+                                <span class="wiki-tag"><i class="fa-solid fa-hand-holding-medical"></i> Лечение</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wiki-card cat-resort" data-cat="resort">
+                        <div class="wiki-card-thumb">
+                            <div class="wiki-card-cat-tag"><i class="fa-solid fa-spa"></i> Курорт</div>
+                            <div class="wiki-card-dist-tag"><i class="fa-solid fa-location-dot"></i> ~40 км</div>
+                            <div class="wiki-card-icon">🏛️</div>
+                        </div>
+                        <div class="wiki-card-body">
+                            <div class="wiki-card-title">Железноводск</div>
+                            <div class="wiki-card-desc">Самый маленький и уютный из курортов КМВ. Красивейший дворец Эмира Бухарского, Славяновский и Смирновский источники, тихие парки.</div>
+                            <div class="wiki-card-tags">
+                                <span class="wiki-tag"><i class="fa-solid fa-landmark"></i> Дворец</span>
+                                <span class="wiki-tag"><i class="fa-solid fa-leaf"></i> Уют</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wiki-card cat-resort" data-cat="resort">
+                        <div class="wiki-card-thumb">
+                            <div class="wiki-card-cat-tag"><i class="fa-solid fa-spa"></i> Курорт</div>
+                            <div class="wiki-card-dist-tag"><i class="fa-solid fa-location-dot"></i> ~20 км</div>
+                            <div class="wiki-card-icon">🏞️</div>
+                        </div>
+                        <div class="wiki-card-body">
+                            <div class="wiki-card-title">Пятигорск</div>
+                            <div class="wiki-card-desc">«Столица» КМВ, город Лермонтова. Гора Машук, Провал, Академическая галерея, лермонтовские места. Самый оживлённый и насыщенный курорт.</div>
+                            <div class="wiki-card-tags">
+                                <span class="wiki-tag"><i class="fa-solid fa-book"></i> Лермонтов</span>
+                                <span class="wiki-tag"><i class="fa-solid fa-droplet"></i> Источники</span>
+                                <span class="wiki-tag"><i class="fa-solid fa-mountain"></i> Машук</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Достопримечательности -->
+                    <div class="wiki-card cat-sight" data-cat="sight">
+                        <div class="wiki-card-thumb">
+                            <div class="wiki-card-cat-tag"><i class="fa-solid fa-landmark"></i> Места</div>
+                            <div class="wiki-card-dist-tag"><i class="fa-solid fa-location-dot"></i> ~28 км</div>
+                            <div class="wiki-card-icon">🕳️</div>
+                        </div>
+                        <div class="wiki-card-body">
+                            <div class="wiki-card-title">Провал</div>
+                            <div class="wiki-card-desc">Карстовая пещера с бирюзовым озером в глубине горы Машук. Легендарное место, упомянутое в «12 стульях» Ильфа и Петрова. Вход свободный.</div>
+                            <div class="wiki-card-tags">
+                                <span class="wiki-tag"><i class="fa-solid fa-ticket"></i> Бесплатно</span>
+                                <span class="wiki-tag"><i class="fa-solid fa-camera"></i> Фото</span>
+                                <span class="wiki-tag"><i class="fa-solid fa-water"></i> Озеро</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wiki-card cat-sight" data-cat="sight">
+                        <div class="wiki-card-thumb">
+                            <div class="wiki-card-cat-tag"><i class="fa-solid fa-landmark"></i> Места</div>
+                            <div class="wiki-card-dist-tag"><i class="fa-solid fa-location-dot"></i> ~22 км</div>
+                            <div class="wiki-card-icon">🎶</div>
+                        </div>
+                        <div class="wiki-card-body">
+                            <div class="wiki-card-title">Нарзанная галерея</div>
+                            <div class="wiki-card-desc">Красивейшее здание XIX века в центре Кисловодска. Внутри — бюветы с холодным и тёплым нарзаном. Приходить с кружкой и пить прямо из источника.</div>
+                            <div class="wiki-card-tags">
+                                <span class="wiki-tag"><i class="fa-solid fa-building-columns"></i> Архитектура</span>
+                                <span class="wiki-tag"><i class="fa-solid fa-droplet"></i> Нарзан</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wiki-card cat-sight" data-cat="sight">
+                        <div class="wiki-card-thumb">
+                            <div class="wiki-card-cat-tag"><i class="fa-solid fa-landmark"></i> Места</div>
+                            <div class="wiki-card-dist-tag"><i class="fa-solid fa-location-dot"></i> ~28 км</div>
+                            <div class="wiki-card-icon">✍️</div>
+                        </div>
+                        <div class="wiki-card-body">
+                            <div class="wiki-card-title">Музей Лермонтова</div>
+                            <div class="wiki-card-desc">Домик Лермонтова в Пятигорске, где поэт провёл последние месяцы жизни. Подлинная обстановка, личные вещи, атмосфера эпохи. Обязателен к посещению.</div>
+                            <div class="wiki-card-tags">
+                                <span class="wiki-tag"><i class="fa-solid fa-book-open"></i> Культура</span>
+                                <span class="wiki-tag"><i class="fa-solid fa-clock-rotate-left"></i> История</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Еда -->
+                    <div class="wiki-card cat-food" data-cat="food">
+                        <div class="wiki-card-thumb">
+                            <div class="wiki-card-cat-tag"><i class="fa-solid fa-utensils"></i> Еда</div>
+                            <div class="wiki-card-dist-tag"><i class="fa-solid fa-location-dot"></i> В городе</div>
+                            <div class="wiki-card-icon">🥩</div>
+                        </div>
+                        <div class="wiki-card-body">
+                            <div class="wiki-card-title">Кавказская кухня</div>
+                            <div class="wiki-card-desc">Хычины — главное блюдо КМВ: тонкие лепёшки с сыром, картофелем или мясом. Шашлык из баранины, долма, чурек. Кафе с хычинами есть на каждом углу.</div>
+                            <div class="wiki-card-tags">
+                                <span class="wiki-tag"><i class="fa-solid fa-bread-slice"></i> Хычины</span>
+                                <span class="wiki-tag"><i class="fa-solid fa-fire"></i> Шашлык</span>
+                                <span class="wiki-tag"><i class="fa-solid fa-cheese"></i> Сыр</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wiki-card cat-food" data-cat="food">
+                        <div class="wiki-card-thumb">
+                            <div class="wiki-card-cat-tag"><i class="fa-solid fa-utensils"></i> Еда</div>
+                            <div class="wiki-card-dist-tag"><i class="fa-solid fa-location-dot"></i> МВ рынок</div>
+                            <div class="wiki-card-icon">🫙</div>
+                        </div>
+                        <div class="wiki-card-body">
+                            <div class="wiki-card-title">Рынок и сувениры</div>
+                            <div class="wiki-card-desc">На центральном рынке МВ — домашние сыры, варенье из шишек, местный мёд, аджика и соленья. Лучшие сувениры: керамика с горными мотивами и нарзанная вода.</div>
+                            <div class="wiki-card-tags">
+                                <span class="wiki-tag"><i class="fa-solid fa-jar"></i> Мёд</span>
+                                <span class="wiki-tag"><i class="fa-solid fa-gift"></i> Сувениры</span>
+                                <span class="wiki-tag"><i class="fa-solid fa-cheese"></i> Сыры</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Практично -->
+                    <div class="wiki-card cat-tips" data-cat="tips">
+                        <div class="wiki-card-thumb">
+                            <div class="wiki-card-cat-tag"><i class="fa-solid fa-plane"></i> Транспорт</div>
+                            <div class="wiki-card-dist-tag"><i class="fa-solid fa-location-dot"></i> В городе</div>
+                            <div class="wiki-card-icon">✈️</div>
+                        </div>
+                        <div class="wiki-card-body">
+                            <div class="wiki-card-title">Аэропорт Минеральные Воды</div>
+                            <div class="wiki-card-desc">Международный аэропорт — крупнейший на Северном Кавказе. Прямые рейсы в Москву, Санкт-Петербург, Краснодар и многие другие города. Такси до центра ~10 мин.</div>
+                            <div class="wiki-card-tags">
+                                <span class="wiki-tag"><i class="fa-solid fa-plane-arrival"></i> Рейсы</span>
+                                <span class="wiki-tag"><i class="fa-solid fa-taxi"></i> Трансфер</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wiki-card cat-tips" data-cat="tips">
+                        <div class="wiki-card-thumb">
+                            <div class="wiki-card-cat-tag"><i class="fa-solid fa-train"></i> Транспорт</div>
+                            <div class="wiki-card-dist-tag"><i class="fa-solid fa-location-dot"></i> В городе</div>
+                            <div class="wiki-card-icon">🚂</div>
+                        </div>
+                        <div class="wiki-card-body">
+                            <div class="wiki-card-title">Электрички по КМВ</div>
+                            <div class="wiki-card-desc">Удобная электричка связывает МВ — Пятигорск — Ессентуки — Кисловодск. Ходит каждый час, стоит ~100–200 ₽. Отличный способ объехать все курорты без машины.</div>
+                            <div class="wiki-card-tags">
+                                <span class="wiki-tag"><i class="fa-solid fa-ruble-sign"></i> Дёшево</span>
+                                <span class="wiki-tag"><i class="fa-solid fa-clock"></i> Каждый час</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- /.wiki-grid -->
+
+                <!-- Bottom CTA -->
+                <div style="
+                    background: var(--paper-2);
+                    border: 1.5px solid var(--border);
+                    border-radius: var(--r-lg);
+                    padding: 32px;
+                    text-align: center;
+                    margin-top: 8px;
+                ">
+                    <div style="font-size:1.8rem;margin-bottom:12px;">🏠</div>
+                    <h3 style="font-family:var(--font-head);font-size:1.25rem;font-weight:900;color:var(--ink);margin-bottom:8px;">
+                        Остановитесь в Минеральных Водах
+                    </h3>
+                    <p style="font-size:0.88rem;color:var(--ink-3);font-weight:600;margin-bottom:18px;max-width:460px;margin-left:auto;margin-right:auto;line-height:1.65;">
+                        Удобное расположение в МВ позволяет за день съездить в любой курорт региона — и вернуться в уютную квартиру.
+                    </p>
+                    <a href="index.html" style="
+                        display:inline-flex;align-items:center;gap:8px;
+                        padding:12px 28px;
+                        background:var(--primary);color:#fff;
+                        border-radius:var(--r-full);
+                        font-size:0.9rem;font-weight:800;
+                        transition:background var(--transition);
+                        text-decoration:none;
+                    " onmouseover="this.style.background='var(--primary-lt)'" onmouseout="this.style.background='var(--primary)'">
+                        <i class="fa-solid fa-search"></i> Смотреть квартиры
+                    </a>
+                </div>
+
+            </div><!-- /.wiki-left -->
+
+            <!-- ── SIDEBAR ──────────────────────────────────── -->
+            <aside class="wiki-sidebar">
+
+                <!-- CTA -->
+                <div class="wiki-sidebar-card wiki-cta-card">
+                    <div class="wiki-sidebar-title">
+                        <i class="fa-solid fa-key"></i> Нужно жильё?
+                    </div>
+                    <p>Забронируйте квартиру в Минеральных Водах — удобная база для поездок по всему региону КМВ.</p>
+                    <a href="index.html" class="wiki-cta-btn">
+                        <i class="fa-solid fa-calendar-check"></i> Смотреть квартиры
+                    </a>
+                </div>
+
+                <!-- Расстояния -->
+                <div class="wiki-sidebar-card">
+                    <div class="wiki-sidebar-title">
+                        <i class="fa-solid fa-route"></i> От Минвод до…
+                    </div>
+                    <div class="wiki-dist-list">
+                        <div class="wiki-dist-item">
+                            <div class="wiki-dist-item-name"><i class="fa-solid fa-location-dot"></i> Пятигорск</div>
+                            <span class="wiki-dist-km">28 км · 35 мин</span>
+                        </div>
+                        <div class="wiki-dist-item">
+                            <div class="wiki-dist-item-name"><i class="fa-solid fa-location-dot"></i> Ессентуки</div>
+                            <span class="wiki-dist-km">22 км · 30 мин</span>
+                        </div>
+                        <div class="wiki-dist-item">
+                            <div class="wiki-dist-item-name"><i class="fa-solid fa-location-dot"></i> Кисловодск</div>
+                            <span class="wiki-dist-km">44 км · 50 мин</span>
+                        </div>
+                        <div class="wiki-dist-item">
+                            <div class="wiki-dist-item-name"><i class="fa-solid fa-location-dot"></i> Железноводск</div>
+                            <span class="wiki-dist-km">25 км · 35 мин</span>
+                        </div>
+                        <div class="wiki-dist-item">
+                            <div class="wiki-dist-item-name"><i class="fa-solid fa-location-dot"></i> Домбай</div>
+                            <span class="wiki-dist-km">130 км · 2 ч</span>
+                        </div>
+                        <div class="wiki-dist-item">
+                            <div class="wiki-dist-item-name"><i class="fa-solid fa-location-dot"></i> Эльбрус</div>
+                            <span class="wiki-dist-km">180 км · 2.5 ч</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Советы -->
+                <div class="wiki-sidebar-card">
+                    <div class="wiki-sidebar-title">
+                        <i class="fa-solid fa-lightbulb"></i> Советы туристу
+                    </div>
+                    <ul class="wiki-tips-list">
+                        <li>
+                            <span class="tip-icon"><i class="fa-solid fa-umbrella"></i></span>
+                            <span>В горах погода меняется быстро — берите куртку даже летом.</span>
+                        </li>
+                        <li>
+                            <span class="tip-icon"><i class="fa-solid fa-bottle-water"></i></span>
+                            <span>Минеральную воду в бюветах пьют маленькими порциями, тёплой — так лучше усваивается.</span>
+                        </li>
+                        <li>
+                            <span class="tip-icon"><i class="fa-solid fa-train"></i></span>
+                            <span>Электричка — самый удобный транспорт между городами КМВ. Такси тоже недорогое.</span>
+                        </li>
+                        <li>
+                            <span class="tip-icon"><i class="fa-solid fa-sun"></i></span>
+                            <span>Лучший сезон — май–июнь и сентябрь: не жарко, зелено, меньше туристов.</span>
+                        </li>
+                        <li>
+                            <span class="tip-icon"><i class="fa-solid fa-bread-slice"></i></span>
+                            <span>Обязательно попробуйте хычины — их делают везде по-разному, сравнивайте!</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Климат -->
+                <div class="wiki-sidebar-card">
+                    <div class="wiki-sidebar-title">
+                        <i class="fa-solid fa-cloud-sun"></i> Климат по месяцам
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:6px;">
+                        <div style="display:grid;grid-template-columns:70px 1fr 32px;align-items:center;gap:8px;font-size:0.78rem;font-weight:700;color:var(--ink-3);padding-bottom:4px;border-bottom:1px solid var(--border);">
+                            <span>Месяц</span><span>Температура</span><span style="text-align:right;">°C</span>
+                        </div>
+                        <div id="climateRows"></div>
+                    </div>
+                </div>
+
+            </aside>
+        </div><!-- /.wiki-layout -->
+    </div>
+</main>
+
+<!-- ── FOOTER ────────────────────────────────────────────── -->
+<footer class="footer">
+    <div class="container footer-content">
+        <div>
+            <h4>SutkiVMV</h4>
+            <p>Комфортная аренда квартир посуточно<br>в Минеральных Водах</p>
+        </div>
+        <div>
+            <h4>Контакты</h4>
+            <p>Email: info@sutkivmv.ru<br>Телефон: +7 (928) 359-74-78</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+/* ── Theme toggle ──────────────────────────────────────── */
+(function() {
+    const saved = localStorage.getItem('theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+})();
+document.getElementById('themeToggle').addEventListener('click', function() {
+    const html = document.documentElement;
+    const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+});
+
+/* ── Category filter ───────────────────────────────────── */
+function filterWiki(cat) {
+    // Update buttons
+    document.querySelectorAll('.wiki-cat-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.cat === cat);
+    });
+    // Show/hide cards
+    document.querySelectorAll('.wiki-card').forEach(card => {
+        if (cat === 'all' || card.dataset.cat === cat) {
+            card.classList.remove('hidden');
+        } else {
+            card.classList.add('hidden');
+        }
+    });
+    // Update section title visibility
+    const anyVisible = [...document.querySelectorAll('.wiki-card:not(.hidden)')].length > 0;
+    if (!anyVisible) {
+        // Show "no results"
+        const grid = document.getElementById('wikiGrid');
+        const existing = grid.querySelector('.wiki-no-results');
+        if (!existing) {
+            const el = document.createElement('div');
+            el.className = 'wiki-no-results';
+            el.innerHTML = '<i class="fa-solid fa-face-sad-cry"></i><p>Нет мест в этой категории.<br>Попробуйте другой фильтр.</p>';
+            grid.appendChild(el);
+        }
+    } else {
+        const existing = document.getElementById('wikiGrid').querySelector('.wiki-no-results');
+        if (existing) existing.remove();
+    }
+}
+
+/* ── Climate rows ──────────────────────────────────────── */
+const climate = [
+    { m: 'Январь',   t: -2,  hi: 4,  emoji: '❄️' },
+    { m: 'Февраль',  t: -1,  hi: 6,  emoji: '❄️' },
+    { m: 'Март',     t: 5,   hi: 12, emoji: '🌧️' },
+    { m: 'Апрель',   t: 11,  hi: 18, emoji: '🌤️' },
+    { m: 'Май',      t: 16,  hi: 23, emoji: '☀️' },
+    { m: 'Июнь',     t: 20,  hi: 27, emoji: '☀️' },
+    { m: 'Июль',     t: 23,  hi: 30, emoji: '🌡️' },
+    { m: 'Август',   t: 22,  hi: 29, emoji: '🌡️' },
+    { m: 'Сентябрь', t: 17,  hi: 24, emoji: '🍂' },
+    { m: 'Октябрь',  t: 10,  hi: 17, emoji: '🍂' },
+    { m: 'Ноябрь',   t: 4,   hi: 10, emoji: '🌧️' },
+    { m: 'Декабрь',  t: 0,   hi: 6,  emoji: '❄️' },
+];
+const maxHi = Math.max(...climate.map(c => c.hi));
+const rows = document.getElementById('climateRows');
+rows.innerHTML = climate.map(c => {
+    const pct = Math.round((c.hi / maxHi) * 100);
+    return `
+    <div style="display:grid;grid-template-columns:70px 1fr 32px;align-items:center;gap:8px;">
+        <span style="font-size:0.76rem;font-weight:700;color:var(--ink-2);">${c.emoji} ${c.m.slice(0,3)}</span>
+        <div style="background:var(--paper-3);border-radius:99px;height:6px;overflow:hidden;">
+            <div style="width:${pct}%;height:100%;background:var(--primary);border-radius:99px;transition:width 0.6s ease;"></div>
+        </div>
+        <span style="font-size:0.76rem;font-weight:800;color:var(--primary);text-align:right;">${c.hi}°</span>
+    </div>`;
+}).join('');
+
+/* ── Staggered card entrance animation ─────────────────── */
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            e.target.style.opacity = '1';
+            e.target.style.transform = 'translateY(0)';
+            observer.unobserve(e.target);
+        }
+    });
+}, { threshold: 0.08 });
+
+document.querySelectorAll('.wiki-card').forEach((card, i) => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    card.style.transition = `opacity 0.4s ease ${i * 0.05}s, transform 0.4s ease ${i * 0.05}s, border-color 0.2s ease, box-shadow 0.2s ease`;
+    observer.observe(card);
+});
+</script>
+</body>
+</html>

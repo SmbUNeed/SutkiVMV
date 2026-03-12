@@ -835,3 +835,7 @@ textarea { resize: vertical; min-height: 90px; }
     .cabinet-grid { gap: 14px; }
     .cabinet-section { padding: 18px 14px; }
 }
+
+.header-nav-link{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--primary-bg);border:1.5px solid var(--primary-glow);border-radius:var(--r-full);font-size:.82rem;font-weight:700;color:var(--primary);transition:all var(--transition);white-space:nowrap;text-decoration:none;}
+.header-nav-link:hover{background:var(--primary);border-color:var(--primary);color:#fff;}
+.header-nav-link i{font-size:.72rem;}
