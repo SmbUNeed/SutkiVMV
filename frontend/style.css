@@ -839,3 +839,30 @@ textarea { resize: vertical; min-height: 90px; }
 .header-nav-link{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--primary-bg);border:1.5px solid var(--primary-glow);border-radius:var(--r-full);font-size:.82rem;font-weight:700;color:var(--primary);transition:all var(--transition);white-space:nowrap;text-decoration:none;}
 .header-nav-link:hover{background:var(--primary);border-color:var(--primary);color:#fff;}
 .header-nav-link i{font-size:.72rem;}
+/* ── MOBILE FIXES ────────────────────────────────────────── */
+@media (max-width: 680px) {
+    /* Скрываем Путеводитель на мобилке */
+    .header-nav-link { display: none; }
+
+    /* Хедер: лого + иконки в одну строку */
+    .header-content { gap: 8px; }
+    .header-right { gap: 6px; }
+
+    /* Модалка квартиры */
+    .modal-content { margin: 0; border-radius: 0; max-height: 100dvh; }
+    .modal-overlay { padding: 0; }
+    .modal-body { padding: 14px; }
+    .modal-left, .modal-right { padding: 0; }
+    .booking-widget { padding: 14px; }
+
+    /* Кабинет */
+    .cabinet-sidebar { padding: 16px; }
+    .cabinet-nav { display: flex; flex-wrap: wrap; gap: 8px; }
+    .cabinet-nav-item { padding: 8px 14px; border-radius: var(--r-sm); border: 1px solid var(--border); }
+    .cabinet-nav-item.active { background: var(--primary-bg); border-color: var(--primary); color: var(--primary); }
+    .cabinet-avatar-block { padding-bottom: 16px; }
+
+    /* Фильтр панель */
+    .filter-panel-body { padding: 14px; }
+    .filter-panel-footer { padding: 12px 14px; }
+}

@@ -20,6 +20,8 @@
 </head>
 <body>
 
+<button class="sb-toggle" id="sbToggle" onclick="toggleSb()"><i class="fa-solid fa-bars"></i></button>
+<div class="sb-overlay" id="sbOverlay" onclick="toggleSb()"></div>
 <!-- ── SIDEBAR ──────────────────────────────────────────── -->
 <aside class="sb">
     <div class="sb-logo">
@@ -251,6 +253,20 @@
 </div>
 
 <div id="toast"></div>
+<script>
+function toggleSb() {
+    document.querySelector('.sb').classList.toggle('open');
+    document.getElementById('sbOverlay').classList.toggle('open');
+}
+// Close sidebar when nav item clicked on mobile
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.ni').forEach(function(ni) {
+        ni.addEventListener('click', function() {
+            if (window.innerWidth <= 768) toggleSb();
+        });
+    });
+});
+</script>
 <script src="admin.js" defer></script>
 </body>
 </html>
