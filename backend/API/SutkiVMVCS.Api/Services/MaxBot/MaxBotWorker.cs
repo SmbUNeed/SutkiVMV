@@ -833,12 +833,9 @@ public class MaxBotWorker : BackgroundService
 
     async Task Send(long chatId, string text, CancellationToken ct)
     {
-        var body = JsonSerializer.Serialize(new
-        {
-            recipient = new { user_id = chatId },
-            text
-        });
-        var resp = await _http.PostAsync($"{BaseUrl}/messages",
+        var body = JsonSerializer.Serialize(new { text });
+        var resp = await _http.PostAsync(
+            $"{BaseUrl}/messages?user_id={chatId}",
             new StringContent(body, Encoding.UTF8, "application/json"), ct);
         if (!resp.IsSuccessStatusCode)
             Console.WriteLine($"[MaxBot] Send error {resp.StatusCode}: {await resp.Content.ReadAsStringAsync(ct)}");
@@ -860,20 +857,20 @@ public class MaxBotWorker : BackgroundService
     {
         var payload = new
         {
-            recipient = new { user_id = chatId },
             text,
             attachments = new[]
             {
-                new
-                {
-                    type    = "inline_keyboard",
-                    payload = new { buttons = buttonRows }
-                }
+            new
+            {
+                type    = "inline_keyboard",
+                payload = new { buttons = buttonRows }
             }
+        }
         };
 
         var body = JsonSerializer.Serialize(payload);
-        var resp = await _http.PostAsync($"{BaseUrl}/messages",
+        var resp = await _http.PostAsync(
+            $"{BaseUrl}/messages?user_id={chatId}",
             new StringContent(body, Encoding.UTF8, "application/json"), ct);
         if (!resp.IsSuccessStatusCode)
             Console.WriteLine($"[MaxBot] SendWithButtons error {resp.StatusCode}: {await resp.Content.ReadAsStringAsync(ct)}");
