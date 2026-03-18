@@ -120,8 +120,7 @@ public class MaxBotWorker : BackgroundService
                 if (msg == null) return;
 
                 var senderId = msg["sender"]?["user_id"]?.GetValue<long>() ?? 0;
-                var chatId = msg["recipient"]?["chat_id"]?.GetValue<long>()
-                            ?? msg["sender"]?["user_id"]?.GetValue<long>() ?? 0;
+                var chatId = msg["recipient"]?["chat_id"]?.GetValue<long>() ?? 0; // ← берём из recipient
                 var text = msg["body"]?["text"]?.GetValue<string>() ?? "";
 
                 if (senderId != _adminId) return;
@@ -837,7 +836,7 @@ public class MaxBotWorker : BackgroundService
     {
         var body = JsonSerializer.Serialize(new { text });
         var resp = await _http.PostAsync(
-            $"{BaseUrl}/messages?user_id={chatId}",
+            $"{BaseUrl}/messages?chat_id={chatId}",
             new StringContent(body, Encoding.UTF8, "application/json"), ct);
         if (!resp.IsSuccessStatusCode)
             Console.WriteLine($"[MaxBot] Send error {resp.StatusCode}: {await resp.Content.ReadAsStringAsync(ct)}");
@@ -857,22 +856,10 @@ public class MaxBotWorker : BackgroundService
 
     async Task SendWithButtons(long chatId, string text, List<object[]> buttonRows, CancellationToken ct)
     {
-        var payload = new
-        {
-            text,
-            attachments = new[]
-            {
-            new
-            {
-                type    = "inline_keyboard",
-                payload = new { buttons = buttonRows }
-            }
-        }
-        };
-
+        var payload = new { text, attachments = new[] { new { type = "inline_keyboard", payload = new { buttons = buttonRows } } } };
         var body = JsonSerializer.Serialize(payload);
         var resp = await _http.PostAsync(
-            $"{BaseUrl}/messages?user_id={chatId}",
+            $"{BaseUrl}/messages?chat_id={chatId}",
             new StringContent(body, Encoding.UTF8, "application/json"), ct);
         if (!resp.IsSuccessStatusCode)
             Console.WriteLine($"[MaxBot] SendWithButtons error {resp.StatusCode}: {await resp.Content.ReadAsStringAsync(ct)}");
