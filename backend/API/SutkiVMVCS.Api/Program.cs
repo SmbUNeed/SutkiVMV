@@ -92,6 +92,7 @@ builder.Services.AddSingleton<ITelegramBotClient>(sp =>
 // Сервисы используют его из DI — не создают сами
 builder.Services.AddSingleton<ITelegramService, TelegramService>();
 builder.Services.AddHostedService<TelegramBotWorker>();
+builder.Services.AddHostedService<MaxBotWorker>();
 builder.Services.AddOptions();
 builder.Services.AddHttpClient<ResendClient>();
 builder.Services.Configure<ResendClientOptions>(options =>
