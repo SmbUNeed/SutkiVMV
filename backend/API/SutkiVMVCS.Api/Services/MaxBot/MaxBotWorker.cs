@@ -109,6 +109,8 @@ public class MaxBotWorker : BackgroundService
 
     async Task HandleUpdate(JsonNode upd, CancellationToken ct)
     {
+        Console.WriteLine($"[MaxBot] UPDATE: {upd.ToJsonString()}");
+
         var type = upd["update_type"]?.GetValue<string>();
 
         switch (type)
