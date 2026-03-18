@@ -833,7 +833,11 @@ public class MaxBotWorker : BackgroundService
 
     async Task Send(long chatId, string text, CancellationToken ct)
     {
-        var body = JsonSerializer.Serialize(new { chat_id = chatId, text });
+        var body = JsonSerializer.Serialize(new
+        {
+            recipient = new { user_id = chatId },
+            text
+        });
         var resp = await _http.PostAsync($"{BaseUrl}/messages",
             new StringContent(body, Encoding.UTF8, "application/json"), ct);
         if (!resp.IsSuccessStatusCode)
@@ -856,7 +860,7 @@ public class MaxBotWorker : BackgroundService
     {
         var payload = new
         {
-            chat_id = chatId,
+            recipient = new { user_id = chatId },
             text,
             attachments = new[]
             {
