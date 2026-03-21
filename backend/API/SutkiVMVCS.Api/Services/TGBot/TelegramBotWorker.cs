@@ -57,25 +57,32 @@ public class TelegramBotWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        // Регистрируем команды меню в Telegram
-        await _botClient.SetMyCommands(new[]
+        try
         {
-            new BotCommand { Command = "start",            Description = "🏠 Главное меню" },
-            new BotCommand { Command = "bookings_today",   Description = "📅 Брони на сегодня" },
-            new BotCommand { Command = "bookings_month",   Description = "🗓 Брони на месяц" },
-            new BotCommand { Command = "booking_create",   Description = "➕ Создать бронь" },
-            new BotCommand { Command = "booking_delete",   Description = "🗑 Удалить бронь" },
-            new BotCommand { Command = "client_new",       Description = "👤 Новый клиент" },
-            new BotCommand { Command = "client_search",    Description = "🔍 Поиск клиента" },
-            new BotCommand { Command = "client_info",      Description = "📋 Данные клиента" },
-            new BotCommand { Command = "client_bookings",  Description = "📌 Брони клиента" },
-            new BotCommand { Command = "apartment_edit",   Description = "🏢 Редактировать квартиру" },
-            new BotCommand { Command = "cancel",           Description = "❌ Отменить действие" },
-        }, cancellationToken: stoppingToken);
+            await _botClient.SetMyCommands(new[]
+            {
+                new BotCommand { Command = "start",            Description = "🏠 Главное меню" },
+                new BotCommand { Command = "bookings_today",   Description = "📅 Брони на сегодня" },
+                new BotCommand { Command = "bookings_month",   Description = "🗓 Брони на месяц" },
+                new BotCommand { Command = "booking_create",   Description = "➕ Создать бронь" },
+                new BotCommand { Command = "booking_delete",   Description = "🗑 Удалить бронь" },
+                new BotCommand { Command = "client_new",       Description = "👤 Новый клиент" },
+                new BotCommand { Command = "client_search",    Description = "🔍 Поиск клиента" },
+                new BotCommand { Command = "client_info",      Description = "📋 Данные клиента" },
+                new BotCommand { Command = "client_bookings",  Description = "📌 Брони клиента" },
+                new BotCommand { Command = "apartment_edit",   Description = "🏢 Редактировать квартиру" },
+                new BotCommand { Command = "cancel",           Description = "❌ Отменить действие" },
+            }, cancellationToken: stoppingToken);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[TgBot] SetMyCommands failed: {ex.Message}");
+            // не падаем — продолжаем работу
+        }
 
         _botClient.StartReceiving(
-            updateHandler:  HandleUpdateAsync,
-            errorHandler:   HandleErrorAsync,
+            updateHandler: HandleUpdateAsync,
+            errorHandler: HandleErrorAsync,
             receiverOptions: new ReceiverOptions
             {
                 AllowedUpdates = [UpdateType.Message, UpdateType.CallbackQuery]
@@ -118,8 +125,8 @@ public class TelegramBotWorker : BackgroundService
     async Task HandleMessage(ITelegramBotClient bot, Message msg, CancellationToken ct)
     {
         var chatId = msg.Chat.Id;
-        var text   = msg.Text!.Trim();
-        var state  = _states.GetValueOrDefault(chatId, BotState.None);
+        var text = msg.Text!.Trim();
+        var state = _states.GetValueOrDefault(chatId, BotState.None);
 
         // /cancel — всегда работает
         if (text == "/cancel")
@@ -133,14 +140,14 @@ public class TelegramBotWorker : BackgroundService
         // Кнопки Reply-клавиатуры → маппинг в команды
         var keyboardMap = new Dictionary<string, string>
         {
-            ["📅 Брони сегодня"]         = "/bookings_today",
-            ["🗓 Брони на месяц"]         = "/bookings_month",
-            ["➕ Создать бронь"]          = "/booking_create",
-            ["🗑 Удалить бронь"]          = "/booking_delete",
-            ["👤 Новый клиент"]           = "/client_new",
-            ["🔍 Поиск клиента"]         = "/client_search",
-            ["📋 Данные клиента"]        = "/client_info",
-            ["📌 Брони клиента"]          = "/client_bookings",
+            ["📅 Брони сегодня"] = "/bookings_today",
+            ["🗓 Брони на месяц"] = "/bookings_month",
+            ["➕ Создать бронь"] = "/booking_create",
+            ["🗑 Удалить бронь"] = "/booking_delete",
+            ["👤 Новый клиент"] = "/client_new",
+            ["🔍 Поиск клиента"] = "/client_search",
+            ["📋 Данные клиента"] = "/client_info",
+            ["📌 Брони клиента"] = "/client_bookings",
             ["🏢 Редактировать квартиру"] = "/apartment_edit",
         };
 
@@ -201,8 +208,8 @@ public class TelegramBotWorker : BackgroundService
                 break;
 
             case "/client_new":
-                _states[chatId]   = BotState.NewClient_WaitName;
-                _tempData[chatId] = new ConcurrentDictionary<string, string>(); 
+                _states[chatId] = BotState.NewClient_WaitName;
+                _tempData[chatId] = new ConcurrentDictionary<string, string>();
                 await bot.SendMessage(chatId,
                     "👤 <b>Новый клиент</b>\n\nВведите <b>ФИО</b> клиента (отмена: /cancel):",
                     parseMode: ParseMode.Html, cancellationToken: ct);
@@ -267,7 +274,7 @@ public class TelegramBotWorker : BackgroundService
                 }
                 _tempData[chatId] = new ConcurrentDictionary<string, string>()
                 { ["apartmentId"] = aptId.ToString(), ["apartmentTitle"] = apt.Title };
-                _states[chatId]   = BotState.CreateBooking_WaitClient;
+                _states[chatId] = BotState.CreateBooking_WaitClient;
                 await ShowClientsList(bot, chatId, db, ct);
                 break;
 
@@ -283,7 +290,7 @@ public class TelegramBotWorker : BackgroundService
                     await bot.SendMessage(chatId, "❌ Клиент не найден. Попробуйте ещё раз:", cancellationToken: ct);
                     return;
                 }
-                _tempData[chatId]["clientId"]   = clientId.ToString();
+                _tempData[chatId]["clientId"] = clientId.ToString();
                 _tempData[chatId]["clientName"] = client.FullName;
                 _states[chatId] = BotState.CreateBooking_WaitStartDate;
                 await bot.SendMessage(chatId,
@@ -402,7 +409,7 @@ public class TelegramBotWorker : BackgroundService
                 }
                 _tempData[chatId] = new ConcurrentDictionary<string, string>()
                 { ["apartmentId"] = eAptId.ToString() };
-                _states[chatId]   = BotState.EditApartment_WaitField;
+                _states[chatId] = BotState.EditApartment_WaitField;
                 await ShowEditApartmentMenu(bot, chatId, eApt, ct);
                 break;
 
@@ -418,11 +425,11 @@ public class TelegramBotWorker : BackgroundService
                 var fieldHint = text.ToLower() switch
                 {
                     "active" => "Введите <b>true</b> (активна) или <b>false</b> (скрыта):",
-                    "price"  => "Введите новую <b>цену за ночь</b> (число):",
-                    "rooms"  => "Введите <b>количество комнат</b>:",
+                    "price" => "Введите новую <b>цену за ночь</b> (число):",
+                    "rooms" => "Введите <b>количество комнат</b>:",
                     "guests" => "Введите <b>макс. кол-во гостей</b>:",
-                    "area"   => "Введите <b>площадь</b> (м²):",
-                    _        => $"Введите новое значение для <b>{text}</b>:"
+                    "area" => "Введите <b>площадь</b> (м²):",
+                    _ => $"Введите новое значение для <b>{text}</b>:"
                 };
                 await bot.SendMessage(chatId, fieldHint, parseMode: ParseMode.Html, cancellationToken: ct);
                 break;
@@ -444,7 +451,7 @@ public class TelegramBotWorker : BackgroundService
     async Task HandleCallback(ITelegramBotClient bot, CallbackQuery cb, CancellationToken ct)
     {
         var chatId = cb.From.Id;
-        var data   = cb.Data!;
+        var data = cb.Data!;
 
         await bot.AnswerCallbackQuery(cb.Id, cancellationToken: ct);
 
@@ -468,7 +475,7 @@ public class TelegramBotWorker : BackgroundService
                     return;
                 }
 
-                string newStatus  = parts[0] == "confirm" ? "Confirmed" : "Cancelled";
+                string newStatus = parts[0] == "confirm" ? "Confirmed" : "Cancelled";
                 string statusText = newStatus == "Confirmed" ? "✅ Подтверждена" : "❌ Отменена";
                 booking.Status = newStatus;
                 await db.SaveChangesAsync(ct);
@@ -493,15 +500,15 @@ public class TelegramBotWorker : BackgroundService
 
             var hint = field switch
             {
-                "title"       => "Введите новое <b>название</b>:",
-                "address"     => "Введите новый <b>адрес</b>:",
+                "title" => "Введите новое <b>название</b>:",
+                "address" => "Введите новый <b>адрес</b>:",
                 "description" => "Введите новое <b>описание</b>:",
-                "price"       => "Введите новую <b>цену за ночь</b> (число):",
-                "rooms"       => "Введите <b>количество комнат</b>:",
-                "guests"      => "Введите <b>макс. кол-во гостей</b>:",
-                "area"        => "Введите <b>площадь</b> (м²):",
-                "active"      => "Введите <b>true</b> (активна) или <b>false</b> (скрыта):",
-                _             => "Введите новое значение:"
+                "price" => "Введите новую <b>цену за ночь</b> (число):",
+                "rooms" => "Введите <b>количество комнат</b>:",
+                "guests" => "Введите <b>макс. кол-во гостей</b>:",
+                "area" => "Введите <b>площадь</b> (м²):",
+                "active" => "Введите <b>true</b> (активна) или <b>false</b> (скрыта):",
+                _ => "Введите новое значение:"
             };
             await bot.SendMessage(chatId, hint, parseMode: ParseMode.Html, cancellationToken: ct);
             return;
@@ -517,7 +524,7 @@ public class TelegramBotWorker : BackgroundService
                 {
                     var state = _states.GetValueOrDefault(chatId, BotState.None);
                     _tempData[chatId] = _tempData.GetValueOrDefault(chatId, new());
-                    _tempData[chatId]["apartmentId"]    = aId.ToString();
+                    _tempData[chatId]["apartmentId"] = aId.ToString();
                     _tempData[chatId]["apartmentTitle"] = apt.Title;
 
                     if (state == BotState.EditApartment_WaitId)
@@ -543,7 +550,7 @@ public class TelegramBotWorker : BackgroundService
                 var client = await db.Clients.FindAsync(cId, ct);
                 if (client != null)
                 {
-                    _tempData[chatId]["clientId"]   = cId.ToString();
+                    _tempData[chatId]["clientId"] = cId.ToString();
                     _tempData[chatId]["clientName"] = client.FullName;
                     _states[chatId] = BotState.CreateBooking_WaitStartDate;
                     await bot.SendMessage(chatId,
@@ -596,7 +603,7 @@ public class TelegramBotWorker : BackgroundService
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         var start = DateTime.UtcNow.Date;
-        var end   = start.AddDays(30);
+        var end = start.AddDays(30);
 
         var bookings = await db.Bookings
             .Include(b => b.Apartment)
@@ -700,10 +707,10 @@ public class TelegramBotWorker : BackgroundService
     {
         var d = _tempData[chatId];
         int apartmentId = int.Parse(d["apartmentId"]);
-        int clientId    = int.Parse(d["clientId"]);
+        int clientId = int.Parse(d["clientId"]);
 
         var apartment = await db.Apartments.FindAsync(apartmentId);
-        var client    = await db.Clients.FindAsync(clientId);
+        var client = await db.Clients.FindAsync(clientId);
 
         if (apartment == null || client == null)
         {
@@ -728,16 +735,16 @@ public class TelegramBotWorker : BackgroundService
             return;
         }
 
-        var nights  = (endDate - startDate).Days;
+        var nights = (endDate - startDate).Days;
         var booking = new Booking
         {
             ApartmentId = apartmentId,
-            ClientId    = clientId,
-            StartDate   = startDate.ToUniversalTime(),
-            EndDate     = endDate.ToUniversalTime(),
-            TotalPrice  = apartment.PricePerNight * nights,
-            Status      = "Confirmed",
-            CreatedAt   = DateTime.UtcNow
+            ClientId = clientId,
+            StartDate = startDate.ToUniversalTime(),
+            EndDate = endDate.ToUniversalTime(),
+            TotalPrice = apartment.PricePerNight * nights,
+            Status = "Confirmed",
+            CreatedAt = DateTime.UtcNow
         };
 
         db.Bookings.Add(booking);
@@ -800,9 +807,9 @@ public class TelegramBotWorker : BackgroundService
         var d = _tempData[chatId];
         var client = new Client
         {
-            FullName    = d["name"],
+            FullName = d["name"],
             PhoneNumber = d["phone"],
-            Email       = d.GetValueOrDefault("email", "")
+            Email = d.GetValueOrDefault("email", "")
         };
 
         db.Clients.Add(client);
@@ -869,7 +876,7 @@ public class TelegramBotWorker : BackgroundService
             return;
         }
 
-        var totalSpent  = client.Bookings.Where(b => b.Status != "Cancelled").Sum(b => b.TotalPrice);
+        var totalSpent = client.Bookings.Where(b => b.Status != "Cancelled").Sum(b => b.TotalPrice);
         var activeCount = client.Bookings.Count(b => b.Status != "Cancelled");
 
         var sb = new System.Text.StringBuilder();
@@ -956,7 +963,7 @@ public class TelegramBotWorker : BackgroundService
 
     async Task EditApartmentField(ITelegramBotClient bot, long chatId, AppDbContext db, string value, CancellationToken ct)
     {
-        var d     = _tempData[chatId];
+        var d = _tempData[chatId];
         int aptId = int.Parse(d["apartmentId"]);
         var field = d["field"];
 
@@ -974,18 +981,20 @@ public class TelegramBotWorker : BackgroundService
         {
             switch (field)
             {
-                case "title":       apt.Title       = value;                           changed = $"Название → {value}"; break;
-                case "address":     apt.Address     = value;                           changed = $"Адрес → {value}"; break;
-                case "description": apt.Description = value;                           changed = $"Описание обновлено"; break;
-                case "price":       apt.PricePerNight = decimal.Parse(value.Replace(",", "."),
+                case "title": apt.Title = value; changed = $"Название → {value}"; break;
+                case "address": apt.Address = value; changed = $"Адрес → {value}"; break;
+                case "description": apt.Description = value; changed = $"Описание обновлено"; break;
+                case "price":
+                    apt.PricePerNight = decimal.Parse(value.Replace(",", "."),
                                         System.Globalization.CultureInfo.InvariantCulture);
-                                    changed = $"Цена → {apt.PricePerNight:N0} ₽/ночь"; break;
-                case "rooms":       apt.RoomsCount = int.Parse(value);                changed = $"Комнат → {value}"; break;
-                case "guests":      apt.Guests     = int.Parse(value);                changed = $"Гостей → {value}"; break;
-                case "area":        apt.Area       = decimal.Parse(value.Replace(",", "."),
+                    changed = $"Цена → {apt.PricePerNight:N0} ₽/ночь"; break;
+                case "rooms": apt.RoomsCount = int.Parse(value); changed = $"Комнат → {value}"; break;
+                case "guests": apt.Guests = int.Parse(value); changed = $"Гостей → {value}"; break;
+                case "area":
+                    apt.Area = decimal.Parse(value.Replace(",", "."),
                                         System.Globalization.CultureInfo.InvariantCulture);
-                                    changed = $"Площадь → {apt.Area} м²"; break;
-                case "active":      apt.IsActive   = bool.Parse(value);              changed = $"Статус → {(apt.IsActive ? "🟢 Активна" : "🔴 Скрыта")}"; break;
+                    changed = $"Площадь → {apt.Area} м²"; break;
+                case "active": apt.IsActive = bool.Parse(value); changed = $"Статус → {(apt.IsActive ? "🟢 Активна" : "🔴 Скрыта")}"; break;
                 default:
                     await bot.SendMessage(chatId, "❌ Неизвестное поле.", cancellationToken: ct);
                     return;
@@ -1024,14 +1033,14 @@ public class TelegramBotWorker : BackgroundService
         // Обработка кнопок клавиатуры
         var menuMap = new Dictionary<string, string>
         {
-            ["📅 Брони сегодня"]         = "/bookings_today",
-            ["🗓 Брони на месяц"]         = "/bookings_month",
-            ["➕ Создать бронь"]          = "/booking_create",
-            ["🗑 Удалить бронь"]          = "/booking_delete",
-            ["👤 Новый клиент"]           = "/client_new",
-            ["🔍 Поиск клиента"]         = "/client_search",
-            ["📋 Данные клиента"]        = "/client_info",
-            ["📌 Брони клиента"]          = "/client_bookings",
+            ["📅 Брони сегодня"] = "/bookings_today",
+            ["🗓 Брони на месяц"] = "/bookings_month",
+            ["➕ Создать бронь"] = "/booking_create",
+            ["🗑 Удалить бронь"] = "/booking_delete",
+            ["👤 Новый клиент"] = "/client_new",
+            ["🔍 Поиск клиента"] = "/client_search",
+            ["📋 Данные клиента"] = "/client_info",
+            ["📌 Брони клиента"] = "/client_bookings",
             ["🏢 Редактировать квартиру"] = "/apartment_edit",
         };
 
@@ -1062,8 +1071,8 @@ public class TelegramBotWorker : BackgroundService
     {
         "Confirmed" => "✅",
         "Cancelled" => "❌",
-        "Pending"   => "⏳",
-        _           => "❓"
+        "Pending" => "⏳",
+        _ => "❓"
     };
 
     static bool TryParseDate(string text, out DateTime date)
