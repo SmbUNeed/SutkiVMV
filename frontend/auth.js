@@ -58,7 +58,6 @@ function renderHeaderUser() {
         container.innerHTML = `
             <div class="header-user" style="display:flex;align-items:center;gap:8px;">
                 <a href="login.html" class="btn-auth btn-auth-ghost">Войти</a>
-                <a href="register.html" class="btn-auth btn-auth-primary">Регистрация</a>
             </div>`;
     }
 }
