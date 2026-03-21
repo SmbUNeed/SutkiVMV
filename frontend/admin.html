@@ -2,6 +2,13 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+	<script>
+		(function() {
+			const saved = localStorage.getItem('sutkivmv_theme');
+			const theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+			document.documentElement.setAttribute('data-theme', theme);
+		})();
+	</script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SutkiVMV — Админ-панель</title>
     <link rel="stylesheet" 
