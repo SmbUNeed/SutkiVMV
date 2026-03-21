@@ -276,6 +276,55 @@ public class AuthController : ControllerBase
 
         return Ok(new { message = "Email подтверждён! Теперь вы можете войти." });
     }
+
+    [HttpPost("change-password-email")]
+    public async Task<ActionResult> ChangeUserPassword([FromBody] string email)
+    {
+        if (string.IsNullOrEmpty(email))
+            return BadRequest(new { message = "Email не заполнен" });
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        if (user == null)
+            return BadRequest(new { message = "Данный email не зарегистрирован" });
+
+        // Сохраняем токен в БД
+        var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        user.PasswordResetToken = token;
+        user.PasswordResetExpiry = DateTime.UtcNow.AddHours(1); // токен живёт 1 час
+        await _context.SaveChangesAsync();
+
+        var confirmUrl = $"https://sutkivmv.ru/change-password.html?token={token}&email={Uri.EscapeDataString(email)}";
+        try
+        {
+            await _emailService.SendChangePasswordAsync(email, confirmUrl);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[EMAIL ERROR] {ex.Message}");
+        }
+
+        return Ok(new { message = "Проверьте почту — мы отправили письмо для изменения пароля." });
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u =>
+            u.Email == dto.Email &&
+            u.PasswordResetToken == dto.Token &&
+            u.PasswordResetExpiry > DateTime.UtcNow);
+
+        if (user == null)
+            return BadRequest(new { message = "Ссылка недействительна или истекла" });
+
+        user.PasswordHash = HashPassword(dto.NewPassword);
+        user.PasswordResetToken = null;
+        user.PasswordResetExpiry = null;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Пароль успешно изменён" });
+    }
+
     // ──────────────────────────────────────────────────
     // PRIVATE HELPERS
     // ──────────────────────────────────────────────────

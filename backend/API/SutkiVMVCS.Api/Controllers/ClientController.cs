@@ -51,7 +51,6 @@ public class ClientsController : ControllerBase
 
     // POST /api/clients
     [HttpPost]
-    [HttpPost]
     public async Task<ActionResult<ClientDto>> Create(CreateClientDto dto, CancellationToken ct)
     {
         var client = new Client

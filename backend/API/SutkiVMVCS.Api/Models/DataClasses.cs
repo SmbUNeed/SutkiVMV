@@ -80,6 +80,9 @@ public class User
     public bool     EmailConfirmed        { get; set; } = false;
     public string?  EmailConfirmToken     { get; set; }
     public DateTime? EmailConfirmTokenExp { get; set; }
+    public bool      IsBanned             { get; set; } = false;
+    public string? PasswordResetToken { get; set; }
+    public DateTime? PasswordResetExpiry { get; set; }
 }
 
 public class ApartmentAmenity

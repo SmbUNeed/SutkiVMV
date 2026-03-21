@@ -5,6 +5,7 @@ namespace SutkiVMV.Services;
 public interface IEmailService
 {
     Task SendConfirmationEmailAsync(string toEmail, string confirmUrl);
+    Task SendChangePasswordAsync(string toEmail, string confirmUrl);
 }
 
 public class EmailService : IEmailService
@@ -34,6 +35,32 @@ public class EmailService : IEmailService
                     </a>
                     <p style="color:#888;font-size:12px;margin-top:16px;">
                         Если вы не регистрировались — просто проигнорируйте письмо.
+                    </p>
+                </div>
+                """
+        };
+
+        await _resend.EmailSendAsync(message);
+    }
+
+    public async Task SendChangePasswordAsync(string toEmail, string confirmUrl)
+    {
+        var message = new EmailMessage
+        {
+            From = "SutkiVMV <no-reply@sutkivmv.ru>",
+            To = { toEmail },
+            Subject = "Изменение пароля — SutkiVMV",
+            HtmlBody = $"""
+                <div style="font-family:sans-serif;max-width:480px;margin:auto;">
+                    <h2>Изменение пароля</h2>
+                    <p>Нажмите кнопку ниже чтобы сменить пароль:</p>
+                    <a href="{confirmUrl}"
+                       style="display:inline-block;padding:12px 24px;background:#2563eb;
+                              color:#fff;border-radius:8px;text-decoration:none;">
+                        Сменить пароль
+                    </a>
+                    <p style="color:#888;font-size:12px;margin-top:16px;">
+                        Если это были не вы — просто проигнорируйте письмо.
                     </p>
                 </div>
                 """
