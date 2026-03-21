@@ -2,6 +2,10 @@
 <html lang="ru" data-theme="light">
 <head>
     <meta charset="UTF-8">
+    <script>
+        const saved = localStorage.getItem('sutkivmv_theme');
+        if (saved) document.documentElement.setAttribute('data-theme', saved);
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>МинВоды Вики — Путеводитель | SutkiVMV</title>
     <link rel="stylesheet" href="style.css">
@@ -899,15 +903,12 @@
 
 <script>
 /* ── Theme toggle ──────────────────────────────────────── */
-(function() {
-    const saved = localStorage.getItem('theme');
-    if (saved) document.documentElement.setAttribute('data-theme', saved);
-})();
+
 document.getElementById('themeToggle').addEventListener('click', function() {
     const html = document.documentElement;
     const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
     html.setAttribute('data-theme', next);
-    localStorage.setItem('theme', next);
+    localStorage.setItem('sutkivmv_theme', next);
 });
 
 /* ── Category filter ───────────────────────────────────── */
