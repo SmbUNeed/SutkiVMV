@@ -26,14 +26,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
     private readonly IServiceProvider _serviceProvider;
     private readonly HttpClient _http;
     private readonly long _adminChatId;
-
     private const string BaseUrl = "https://platform-api.max.ru";
-
-    // ── Состояния диалога ────────────────────────────────────────────
-    private enum State { None /*, ВашиСостояния */ }
-
-    private readonly ConcurrentDictionary<long, State> _states = new();
-    private readonly ConcurrentDictionary<long, ConcurrentDictionary<string, string>> _tmp = new();
 
     public MaxBotWorker(IConfiguration config, IServiceProvider serviceProvider)
     {
@@ -56,7 +49,6 @@ public class MaxBotWorker : BackgroundService, IMaxService
         try { await _http.DeleteAsync($"{BaseUrl}/subscriptions", ct); } catch { }
 
         long marker = 0;
-
         while (!ct.IsCancellationRequested)
         {
             try
@@ -72,13 +64,13 @@ public class MaxBotWorker : BackgroundService, IMaxService
                 if (updates != null)
                     foreach (var upd in updates)
                         try { await HandleUpdate(upd!, ct); }
-                        catch (Exception ex) { Log($"HandleUpdate error: {ex.Message}"); }
+                        catch (Exception ex) { Console.WriteLine($"[MaxBot] {ex.Message}"); }
 
-                var lastMarker = json?["marker"]?.GetValue<long>();
-                if (lastMarker.HasValue) marker = lastMarker.Value;
+                var last = json?["marker"]?.GetValue<long>();
+                if (last.HasValue) marker = last.Value;
             }
             catch (TaskCanceledException) { break; }
-            catch (Exception ex) { Log($"Polling error: {ex.Message}"); await Task.Delay(5000, ct); }
+            catch (Exception ex) { Console.WriteLine($"[MaxBot] Polling: {ex.Message}"); await Task.Delay(5000, ct); }
         }
     }
 
@@ -88,37 +80,29 @@ public class MaxBotWorker : BackgroundService, IMaxService
 
     async Task HandleUpdate(JsonNode upd, CancellationToken ct)
     {
-        var type = upd["update_type"]?.GetValue<string>();
-
-        switch (type)
+        switch (upd["update_type"]?.GetValue<string>())
         {
             case "message_created":
-                {
-                    var msg = upd["message"]; if (msg == null) return;
-                    var senderId = msg["sender"]?["user_id"]?.GetValue<long>() ?? 0;
-                    var chatId = msg["recipient"]?["chat_id"]?.GetValue<long>() ?? 0;
-                    var text = msg["body"]?["text"]?.GetValue<string>() ?? "";
-                    if (senderId != _adminChatId) return;
-                    await OnMessage(chatId, text, ct);
-                    break;
-                }
+                var senderId = upd["message"]?["sender"]?["user_id"]?.GetValue<long>() ?? 0;
+                var chatId = upd["message"]?["recipient"]?["chat_id"]?.GetValue<long>() ?? 0;
+                var text = upd["message"]?["body"]?["text"]?.GetValue<string>() ?? "";
+                if (senderId != _adminChatId) return;
+                await OnMessage(chatId, text, ct);
+                break;
+
             case "message_callback":
-                {
-                    var cb = upd["callback"]; if (cb == null) return;
-                    var userId = cb["user"]?["user_id"]?.GetValue<long>() ?? 0;
-                    var chatId = cb["message"]?["recipient"]?["chat_id"]?.GetValue<long>() ?? userId;
-                    var payload = cb["payload"]?.GetValue<string>() ?? "";
-                    if (userId != _adminChatId) return;
-                    await OnCallback(chatId, payload, ct);
-                    break;
-                }
+                var cbUserId = upd["callback"]?["user"]?["user_id"]?.GetValue<long>() ?? 0;
+                var cbChatId = upd["callback"]?["message"]?["recipient"]?["chat_id"]?.GetValue<long>() ?? 0;
+                var cbPayload = upd["callback"]?["payload"]?.GetValue<string>() ?? "";
+                var cbCallbackId = upd["callback"]?["callback_id"]?.GetValue<string>() ?? "";
+                if (cbUserId != _adminChatId) return;
+                await OnCallback(cbChatId, cbPayload, cbCallbackId, ct);
+                break;
+
             case "bot_started":
-                {
-                    var chatId = upd["chat_id"]?.GetValue<long>() ?? 0;
-                    if (upd["user"]?["user_id"]?.GetValue<long>() != _adminChatId) return;
-                    await SendMenu(chatId, "👋 Добро пожаловать!", ct);
-                    break;
-                }
+                var startChatId = upd["chat_id"]?.GetValue<long>() ?? 0;
+                await Send(startChatId, "👋 Привет!", ct);
+                break;
         }
     }
 
@@ -128,227 +112,73 @@ public class MaxBotWorker : BackgroundService, IMaxService
 
     async Task OnMessage(long chatId, string text, CancellationToken ct)
     {
-        text = text.Trim();
-
-        // /cancel — сбрасывает любой диалог
-        if (text == "/cancel")
+        if (text == "/start")
         {
-            _states.TryRemove(chatId, out _);
-            _tmp.TryRemove(chatId, out _);
-            await SendMenu(chatId, "❌ Действие отменено.", ct);
+            await Send(chatId, "Привет!", ct);
             return;
         }
-
-        // Команды
-        if (text.StartsWith('/'))
-        {
-            _states.TryRemove(chatId, out _);
-            _tmp.TryRemove(chatId, out _);
-            await OnCommand(chatId, text.Split('@')[0].ToLower(), ct);
-            return;
-        }
-
-        // Диалог по состоянию
-        var state = _states.GetValueOrDefault(chatId, State.None);
-        await OnState(chatId, text, state, ct);
+        // любая логика
     }
 
     // ═══════════════════════════════════════════════════════════════════
-    //  КОМАНДЫ
+    //  ОБРАБОТКА КНОПОК
     // ═══════════════════════════════════════════════════════════════════
 
-    async Task OnCommand(long chatId, string cmd, CancellationToken ct)
+    async Task OnCallback(long chatId, string payload, string callbackId, CancellationToken ct)
     {
-        switch (cmd)
+        // Сначала всегда отвечаем на callback — иначе кнопка крутится
+        await _http.PostAsync(
+            $"{BaseUrl}/answers?callback_id={callbackId}",
+            new StringContent("{}", Encoding.UTF8, "application/json"), ct);
+
+        if (payload == "hello")
         {
-            case "/start":
-                await SendMenu(chatId, "👋 Добро пожаловать в панель управления!", ct);
-                break;
-
-            // ── ПРИМЕР: команда с переходом в состояние ──────────────
-            // case "/booking_create":
-            //     _states[chatId] = State.CreateBooking_WaitApartment;
-            //     await Send(chatId, "Введите ID квартиры:", ct);
-            //     break;
-
-            default:
-                await SendMenu(chatId, "❓ Неизвестная команда.", ct);
-                break;
+            await Send(chatId, "Нажали кнопку!", ct);
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════
-    //  ДИАЛОГ ПО СОСТОЯНИЮ
-    // ═══════════════════════════════════════════════════════════════════
-
-    async Task OnState(long chatId, string text, State state, CancellationToken ct)
-    {
-        using var scope = _serviceProvider.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-        switch (state)
-        {
-            // ── ПРИМЕР: ждём ввод от пользователя ────────────────────
-            // case State.CreateBooking_WaitApartment:
-            //     if (!int.TryParse(text, out int aptId))
-            //     {
-            //         await Send(chatId, "⚠️ Введите число:", ct); return;
-            //     }
-            //     var apt = await db.Apartments.FindAsync(aptId);
-            //     if (apt == null) { await Send(chatId, "❌ Не найдена.", ct); return; }
-            //     _tmp.GetOrAdd(chatId, _ => new())["apartmentId"] = aptId.ToString();
-            //     _states[chatId] = State.CreateBooking_WaitClient;
-            //     await Send(chatId, $"✅ {apt.Title}\n\nТеперь введите ID клиента:", ct);
-            //     break;
-
-            default:
-                await SendMenu(chatId, "🏠 Используйте команды меню.", ct);
-                break;
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════
-    //  CALLBACK КНОПКИ
-    // ═══════════════════════════════════════════════════════════════════
-
-    async Task OnCallback(long chatId, string data, CancellationToken ct)
-    {
-        using var scope = _serviceProvider.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-        // ── ПРИМЕР: confirm_123 / cancel_123 ─────────────────────────
-        if (data.StartsWith("confirm_") || data.StartsWith("cancel_"))
-        {
-            var parts = data.Split('_');
-            if (parts.Length == 2 && int.TryParse(parts[1], out int bId))
-            {
-                var booking = await db.Bookings.FindAsync(bId);
-                if (booking == null) { await Send(chatId, "❌ Бронь не найдена.", ct); return; }
-
-                booking.Status = parts[0] == "confirm" ? "Confirmed" : "Cancelled";
-                await db.SaveChangesAsync(ct);
-                await Send(chatId, $"Бронь #{bId}: {(booking.Status == "Confirmed" ? "✅ Подтверждена" : "❌ Отменена")}", ct);
-            }
-            return;
-        }
-
-        // Добавляйте свои обработчики по аналогии:
-        // if (data.StartsWith("apt_")) { ... }
-        // if (data.StartsWith("cli_")) { ... }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════
-    //  РЕАЛИЗАЦИЯ IMaxService — вызывается из других контроллеров
-    // ═══════════════════════════════════════════════════════════════════
-
-    public async Task SendNotificationAsync(string message)
-        => await Send(_adminChatId, message, CancellationToken.None);
-
-    public async Task SendBookingNotificationAsync(string message, int bookingId)
-    {
-        var buttons = new List<object[]>
-        {
-            new object[]
-            {
-                new { type = "callback", text = "✅ Подтвердить", payload = $"confirm_{bookingId}" },
-                new { type = "callback", text = "❌ Отменить",    payload = $"cancel_{bookingId}"  }
-            }
-        };
-        await SendWithButtons(_adminChatId, message, buttons, CancellationToken.None);
-    }
-
-    // ═══════════════════════════════════════════════════════════════════
-    //  ОТПРАВКА — базовые методы
-    // ═══════════════════════════════════════════════════════════════════
-
-    // Простое текстовое сообщение
-    public async Task Send(long chatId, string text, CancellationToken ct)
-    {
-        var body = JsonSerializer.Serialize(new { text });
-        var resp = await _http.PostAsync(
-            $"{BaseUrl}/messages?chat_id={chatId}",
-            new StringContent(body, Encoding.UTF8, "application/json"), ct);
-        if (!resp.IsSuccessStatusCode)
-            Log($"Send error {resp.StatusCode}: {await resp.Content.ReadAsStringAsync(ct)}");
-    }
-
-    // Сообщение + меню команд в тексте
-    public async Task SendMenu(long chatId, string text, CancellationToken ct)
-    {
-        var menu =
-            "📅 /bookings_today  |  🗓 /bookings_month\n" +
-            "➕ /booking_create  |  🗑 /booking_delete\n" +
-            "👤 /client_new      |  🔍 /client_search\n" +
-            "📋 /client_info     |  📌 /client_bookings\n" +
-            "🏢 /apartment_edit  |  ❌ /cancel";
-        await Send(chatId, $"{text}\n\n─────────────\n{menu}", ct);
-    }
-
-    // Сообщение с инлайн-кнопками
-    // Пример вызова:
-    //   var buttons = new List<object[]>
-    //   {
-    //       new object[] {
-    //           new { type = "callback", text = "Да",  payload = "confirm_1" },
-    //           new { type = "callback", text = "Нет", payload = "cancel_1"  }
-    //       }
-    //   };
-    //   await SendWithButtons(chatId, "Подтвердить?", buttons, ct);
-    public async Task SendWithButtons(long chatId, string text, List<object[]> buttons, CancellationToken ct)
+    async Task Send(long chatId, string text, CancellationToken ct)
     {
         var payload = new
         {
-            text,
-            attachments = new[]
+            recipient = new { chat_id = chatId },
+            body = new { text }
+        };
+        var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+        await _http.PostAsync($"{BaseUrl}/messages", content, ct);
+    }
+
+    public async Task SendNotificationAsync(string message)
+    {
+        await Send(_adminChatId, message, CancellationToken.None);
+    }
+
+    public async Task SendBookingNotificationAsync(string message, int bookingId)
+    {
+        var payload = new
+        {
+            recipient = new { chat_id = _adminChatId },
+            body = new
             {
-                new { type = "inline_keyboard", payload = new { buttons } }
+                text = message,
+                attachments = new[]
+                {
+                    new
+                    {
+                        type = "button",
+                        text = "Принять",
+                        payload = $"confirm_booking_{bookingId}"
+                    },
+                    new
+                    {
+                        type = "button",
+                        text = "Отменить",
+                        payload = $"cancel_booking_{bookingId}"
+                    }
+                }
             }
         };
-        var body = JsonSerializer.Serialize(payload);
-        var resp = await _http.PostAsync(
-            $"{BaseUrl}/messages?chat_id={chatId}",
-            new StringContent(body, Encoding.UTF8, "application/json"), ct);
-        if (!resp.IsSuccessStatusCode)
-            Log($"SendWithButtons error {resp.StatusCode}: {await resp.Content.ReadAsStringAsync(ct)}");
+        var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+        await _http.PostAsync($"{BaseUrl}/messages", content);
     }
-
-    // Длинное сообщение — автоматически бьётся на части по 4000 символов
-    public async Task SendLong(long chatId, string text, CancellationToken ct)
-    {
-        const int max = 4000;
-        if (text.Length <= max) { await Send(chatId, text, ct); return; }
-
-        var chunk = new StringBuilder();
-        foreach (var line in text.Split('\n'))
-        {
-            if (chunk.Length + line.Length + 1 > max)
-            {
-                await Send(chatId, chunk.ToString(), ct);
-                chunk.Clear();
-            }
-            chunk.AppendLine(line);
-        }
-        if (chunk.Length > 0) await Send(chatId, chunk.ToString(), ct);
-    }
-
-    // ═══════════════════════════════════════════════════════════════════
-    //  УТИЛИТЫ
-    // ═══════════════════════════════════════════════════════════════════
-
-    // Парсинг даты ДД.ММ.ГГГГ
-    protected static bool TryParseDate(string text, out DateTime date) =>
-        DateTime.TryParseExact(text.Trim(), "dd.MM.yyyy",
-            System.Globalization.CultureInfo.InvariantCulture,
-            System.Globalization.DateTimeStyles.None, out date);
-
-    // Эмодзи статуса брони
-    protected static string StatusEmoji(string status) => status switch
-    {
-        "Confirmed" => "✅",
-        "Cancelled" => "❌",
-        "Pending" => "⏳",
-        _ => "❓"
-    };
-
-    static void Log(string msg) => Console.WriteLine($"[MaxBot] {msg}");
 }
