@@ -19,15 +19,13 @@ public class AuthController : ControllerBase
 {
     private readonly AppDbContext    _context;
     private readonly IConfiguration _config;
-    //private readonly ITelegramService _telegramService;
     private readonly IEmailService _emailService;
     private readonly IMaxService _maxBotService;
 
-    public AuthController(AppDbContext context, IConfiguration config, /*ITelegramService telegramService, */IMaxService maxService, IEmailService emailService)
+    public AuthController(AppDbContext context, IConfiguration config, IMaxService maxService, IEmailService emailService)
     {
         _context = context;
         _config  = config;
-        //_telegramService = telegramService;
         _maxBotService = maxService;
 	    _emailService = emailService;
     }

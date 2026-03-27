@@ -113,15 +113,7 @@ builder.Services.AddCors(options =>
 //  BOTS
 // ═══════════════════════════════════════════════════════════════════════
 
-builder.Services.AddSingleton<ITelegramBotClient>(sp =>
-    new TelegramBotClient(
-        sp.GetRequiredService<IConfiguration>()["TelegramBot:Token"]!));
 
-/*builder.Services.AddSingleton<ITelegramService, TelegramService>();
-builder.Services.AddHostedService<TelegramBotWorker>();*/
-builder.Services.AddSingleton<MaxBotWorker>();
-builder.Services.AddSingleton<IMaxService>(sp => sp.GetRequiredService<MaxBotWorker>());
-builder.Services.AddHostedService(sp => sp.GetRequiredService<MaxBotWorker>());
 
 // ═══════════════════════════════════════════════════════════════════════
 //  EMAIL
