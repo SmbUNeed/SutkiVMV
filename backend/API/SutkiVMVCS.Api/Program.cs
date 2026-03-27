@@ -119,7 +119,9 @@ builder.Services.AddSingleton<ITelegramBotClient>(sp =>
 
 /*builder.Services.AddSingleton<ITelegramService, TelegramService>();
 builder.Services.AddHostedService<TelegramBotWorker>();*/
-builder.Services.AddHostedService<MaxBotWorker>();
+builder.Services.AddSingleton<MaxBotWorker>();
+builder.Services.AddSingleton<IMaxService>(sp => sp.GetRequiredService<MaxBotWorker>());
+builder.Services.AddHostedService(sp => sp.GetRequiredService<MaxBotWorker>());
 
 // ═══════════════════════════════════════════════════════════════════════
 //  EMAIL

@@ -9,10 +9,12 @@ using System.Text.Json.Nodes;
 
 public interface IMaxService
 {
-    Task SendNotificationAsync(string message);
-    Task SendBookingNotificationAsync(string message, int bookingId);
+    async Task Send(long chatId, string text, CancellationToken ct) { }
+    async Task SendMenu(long chatId, string text, CancellationToken ct) { }
+    async Task SendWithButtons(long chatId, string text, List<object[]> buttonRows, CancellationToken ct) { }
+    public async Task SendBookingNotificationAsync(string message, int bookingId) { }
 }
-public class MaxBotWorker : BackgroundService
+public class MaxBotWorker : BackgroundService, IMaxService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IConfiguration _config;
@@ -37,6 +39,24 @@ public class MaxBotWorker : BackgroundService
     }
 
     // ── Состояния диалога ────────────────────────────────────────────────
+
+    public async Task SendNotificationAsync(string message)
+    {
+        await Send(_adminId, message, CancellationToken.None);
+    }
+
+    public async Task SendBookingNotificationAsync(string message, int bookingId)
+    {
+        var buttons = new List<object[]>
+        {
+            new object[]
+            {
+                new { type = "callback", text = "✅ Подтвердить", payload = $"confirm_{bookingId}" },
+                new { type = "callback", text = "❌ Отменить",    payload = $"cancel_{bookingId}"  }
+            }
+        };
+        await SendWithButtons(_adminId, message, buttons, CancellationToken.None);
+    }
 
     private enum BotState
     {
