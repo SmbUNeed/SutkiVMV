@@ -232,13 +232,18 @@ public class AuthController : ControllerBase
         _context.Bookings.Add(booking);
         await _context.SaveChangesAsync(ct);
 
-        await _maxBotService.SendBookingNotificationAsync(
-        $"🔔 <b>Новое бронирование!</b>\n" +
-        $"🏠 Объект: {apartment.Title}\n" +
-        $"📅 Даты: {dto.StartDate:dd.MM} - {dto.EndDate:dd.MM}\n" +
-        $"Номер телефона: {client.PhoneNumber}", booking.Id);
-
-        return Ok(booking);
+        try
+        {
+            await _maxBotService.SendBookingNotificationAsync(
+                $"🔔 Новое бронирование!\n" +
+                $"🏠 Объект: {apartment.Title}\n" +
+                $"📅 Даты: {dto.StartDate:dd.MM} - {dto.EndDate:dd.MM}\n" +
+                $"Номер телефона: {client.PhoneNumber}", booking.Id);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[MaxBot] SendBookingNotification error: {ex.Message}");
+        }
     }
 
     [HttpPost("confirm-email")]
