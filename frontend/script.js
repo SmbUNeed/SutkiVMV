@@ -416,7 +416,9 @@ function renderCalendar() {
 
         let cls = 'cal-day';
         if (isPast)           cls += ' past';
-        if (isBooked)         cls += ' booked';
+        const isCheckoutOnly = isBooked && selectedCheckIn && !selectedCheckOut;
+		if (isBooked && !isCheckoutOnly) cls += ' booked';
+		if (isCheckoutOnly)   cls += ' checkout-only';
         if (isStart)          cls += ' check-in';
         else if (isEnd)       cls += ' check-out';
         else if (inRange)     cls += ' in-range';
