@@ -421,7 +421,8 @@ function renderCalendar() {
         else if (isEnd)       cls += ' check-out';
         else if (inRange)     cls += ' in-range';
 
-        const click = (!isPast && !isBooked) ? `onclick="selectDate('${ds}')"` : '';
+        const canClick = !isPast && (!isBooked || (selectedCheckIn && !selectedCheckOut));
+		const click = canClick ? `onclick="selectDate('${ds}')"` : '';
         html += `<div class="${cls}" ${click}>${i}</div>`;
     }
     html += '</div>';
