@@ -80,6 +80,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
 
     async Task HandleUpdate(JsonNode upd, CancellationToken ct)
     {
+        Console.WriteLine($"[MaxBot] UPDATE: {upd.ToJsonString()}");
         switch (upd["update_type"]?.GetValue<string>())
         {
             case "message_created":
