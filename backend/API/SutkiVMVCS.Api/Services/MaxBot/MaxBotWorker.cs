@@ -100,7 +100,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
             case "message_callback":
                 {
                     var cbUserId = upd["callback"]?["user"]?["user_id"]?.GetValue<long>() ?? 0;
-                    var cbChatId = upd["callback"]?["message"]?["recipient"]?["chat_id"]?.GetValue<long>() ?? 0;
+                    var cbChatId = upd["message"]?["recipient"]?["chat_id"]?.GetValue<long>() ?? 0;
                     Log($"RAW CALLBACK: {upd.ToJsonString()}");  // ← добавь
                     Log($"cbUserId={cbUserId}, cbChatId={cbChatId}");
                     var cbPayload = upd["callback"]?["payload"]?.GetValue<string>() ?? "";
