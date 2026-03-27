@@ -104,6 +104,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
                 await Send(startChatId, "👋 Привет!", ct);
                 break;
         }
+        //fff
     }
 
     // ═══════════════════════════════════════════════════════════════════
