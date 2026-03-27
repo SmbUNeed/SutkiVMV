@@ -176,12 +176,11 @@ public class MaxBotWorker : BackgroundService, IMaxService
             }
             else
             {
-                // Отменено — убираем кнопки
                 newMessage = new
                 {
                     text = upd?["callback"]?["message"]?["body"]?["text"]?.GetValue<string>()
-                           + "\n\n❌ Бронь отменена",
-                    attachments = (object?)null
+                    + "\n\n❌ Бронь отменена",
+                    attachments = Array.Empty<object>()
                 };
             }
 
