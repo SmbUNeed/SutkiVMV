@@ -7,6 +7,11 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
+public interface IMaxService
+{
+    Task SendNotificationAsync(string message);
+    Task SendBookingNotificationAsync(string message, int bookingId);
+}
 public class MaxBotWorker : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;

@@ -117,8 +117,8 @@ builder.Services.AddSingleton<ITelegramBotClient>(sp =>
     new TelegramBotClient(
         sp.GetRequiredService<IConfiguration>()["TelegramBot:Token"]!));
 
-builder.Services.AddSingleton<ITelegramService, TelegramService>();
-builder.Services.AddHostedService<TelegramBotWorker>();
+/*builder.Services.AddSingleton<ITelegramService, TelegramService>();
+builder.Services.AddHostedService<TelegramBotWorker>();*/
 builder.Services.AddHostedService<MaxBotWorker>();
 
 // ═══════════════════════════════════════════════════════════════════════

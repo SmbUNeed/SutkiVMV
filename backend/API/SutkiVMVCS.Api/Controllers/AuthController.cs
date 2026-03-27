@@ -19,15 +19,17 @@ public class AuthController : ControllerBase
 {
     private readonly AppDbContext    _context;
     private readonly IConfiguration _config;
-    private readonly ITelegramService _telegramService;
-    private readonly IEmailService _emailService;    
+    //private readonly ITelegramService _telegramService;
+    private readonly IEmailService _emailService;
+    private readonly IMaxService _maxBotService;
 
-    public AuthController(AppDbContext context, IConfiguration config, ITelegramService telegramService, IEmailService emailService)
+    public AuthController(AppDbContext context, IConfiguration config, /*ITelegramService telegramService, */IMaxService maxService, IEmailService emailService)
     {
         _context = context;
         _config  = config;
-        _telegramService = telegramService;
-	_emailService = emailService;
+        //_telegramService = telegramService;
+        _maxBotService = maxService;
+	    _emailService = emailService;
     }
 
     // ──────────────────────────────────────────────────
@@ -232,7 +234,7 @@ public class AuthController : ControllerBase
         _context.Bookings.Add(booking);
         await _context.SaveChangesAsync(ct);
 
-        await _telegramService.SendBookingNotificationAsync(
+        await _maxBotService.SendBookingNotificationAsync(
         $"🔔 <b>Новое бронирование!</b>\n" +
         $"🏠 Объект: {apartment.Title}\n" +
         $"📅 Даты: {dto.StartDate:dd.MM} - {dto.EndDate:dd.MM}\n" +

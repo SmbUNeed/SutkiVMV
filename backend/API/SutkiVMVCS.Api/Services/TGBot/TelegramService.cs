@@ -1,4 +1,4 @@
-using Telegram.Bot;
+/*using Telegram.Bot;
 using Telegram.Bot.Types.ReplyMarkups; // Важный using для кнопок!
 
 public interface ITelegramService
@@ -44,4 +44,4 @@ public class TelegramService : ITelegramService
             replyMarkup: inlineKeyboard // Прикрепляем кнопки
         );
     }
-}
+}*/

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+/*using Microsoft.EntityFrameworkCore;
 using SutkiVMV.Data;
 using SutkiVMV.Models;
 using System.Collections.Concurrent;
@@ -1112,3 +1112,4 @@ public class TelegramBotWorker : BackgroundService
         return Task.CompletedTask;
     }
 }
+*/
