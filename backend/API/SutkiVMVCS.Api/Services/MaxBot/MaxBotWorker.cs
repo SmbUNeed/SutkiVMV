@@ -104,7 +104,6 @@ public class MaxBotWorker : BackgroundService, IMaxService
                 await Send(startChatId, "👋 Привет!", ct);
                 break;
         }
-        //fff
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -173,6 +172,8 @@ public class MaxBotWorker : BackgroundService, IMaxService
 
     public async Task SendBookingNotificationAsync(string message, int bookingId)
     {
+        Console.WriteLine($"[MaxBot] SendBookingNotificationAsync called, bookingId={bookingId}");
+
         var buttons = new List<object[]>
         {
             new object[]
@@ -182,6 +183,8 @@ public class MaxBotWorker : BackgroundService, IMaxService
             }
         };
         await SendWithButtons(_adminChatId, message, buttons, CancellationToken.None);
+
+        Console.WriteLine($"[MaxBot] SendBookingNotificationAsync done");
     }
 
     async Task SendWithButtons(long chatId, string text, List<object[]> buttons, CancellationToken ct)
