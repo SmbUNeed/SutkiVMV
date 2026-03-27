@@ -117,7 +117,6 @@ public class MaxBotWorker : BackgroundService, IMaxService
             await Send(chatId, "Привет!", ct);
             return;
         }
-        // любая логика
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -157,13 +156,13 @@ public class MaxBotWorker : BackgroundService, IMaxService
 
     async Task Send(long chatId, string text, CancellationToken ct)
     {
-        var payload = new
-        {
-            recipient = new { chat_id = chatId },
-            body = new { text }
-        };
-        var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-        await _http.PostAsync($"{BaseUrl}/messages", content, ct);
+        var body = JsonSerializer.Serialize(new { text });
+        var resp = await _http.PostAsync(
+            $"{BaseUrl}/messages?chat_id={chatId}",
+            new StringContent(body, Encoding.UTF8, "application/json"), ct);
+
+        if (!resp.IsSuccessStatusCode)
+            Console.WriteLine($"[MaxBot] Send error {resp.StatusCode}: {await resp.Content.ReadAsStringAsync(ct)}");
     }
 
     public async Task SendNotificationAsync(string message)
