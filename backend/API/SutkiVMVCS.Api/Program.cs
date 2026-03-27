@@ -124,6 +124,9 @@ builder.Services.Configure<ResendClientOptions>(options =>
     options.ApiToken = builder.Configuration["Resend:ApiKey"]!);
 builder.Services.AddTransient<IResend, ResendClient>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddSingleton<MaxBotWorker>();
+builder.Services.AddSingleton<IMaxService>(sp => sp.GetRequiredService<MaxBotWorker>());
+builder.Services.AddHostedService(sp => sp.GetRequiredService<MaxBotWorker>());
 
 // ═══════════════════════════════════════════════════════════════════════
 //  HOST OPTIONS — не останавливать хост если BackgroundService упал
