@@ -261,8 +261,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
             }
             else
             {
-                var newMsg = new { text = upd?["callback"]?["message"]?["body"]?["text"]?.GetValue<string>()
-           + "\n\n❌ Бронь отменена", attachments = Array.Empty<object>() };
+                var newMsg = new { text = originalText + "\n\n❌ Бронь отменена", attachments = Array.Empty<object>() };
                 await _http.PostAsync($"{BaseUrl}/answers?callback_id={callbackId}",
                     new StringContent(JsonSerializer.Serialize(new { message = newMsg }), Encoding.UTF8, "application/json"), ct);
             }
@@ -679,7 +678,11 @@ public class MaxBotWorker : BackgroundService, IMaxService
 
     async Task Send(long chatId, string text, CancellationToken ct)
     {
-        if (chatId == 0) { Log("Send skipped: chatId=0"); return; }
+        if (chatId == 0)
+        {
+            Log($"Send called with chatId=0, stack:\n{Environment.StackTrace}");
+            return;
+        }
         var body = JsonSerializer.Serialize(new { text });
         var resp = await _http.PostAsync(
             $"{BaseUrl}/messages?chat_id={chatId}",
