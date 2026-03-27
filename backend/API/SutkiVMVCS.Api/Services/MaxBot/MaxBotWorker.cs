@@ -92,6 +92,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
                 {
                     var senderId = upd["message"]?["sender"]?["user_id"]?.GetValue<long>() ?? 0;
                     var chatId = upd["message"]?["recipient"]?["chat_id"]?.GetValue<long>() ?? 0;
+                    Log($"{new string('=', 40)}\nMessage chatId={chatId}\n{new string('=', 40)}");
                     var text = upd["message"]?["body"]?["text"]?.GetValue<string>() ?? "";
                     if (senderId != _adminUserId) return;
                     await OnMessage(chatId, text, ct);
@@ -101,8 +102,6 @@ public class MaxBotWorker : BackgroundService, IMaxService
                 {
                     var cbUserId = upd["callback"]?["user"]?["user_id"]?.GetValue<long>() ?? 0;
                     var cbChatId = upd["message"]?["recipient"]?["chat_id"]?.GetValue<long>() ?? 0;
-                    Log($"RAW CALLBACK: {upd.ToJsonString()}");  // ← добавь
-                    Log($"cbUserId={cbUserId}, cbChatId={cbChatId}");
                     var cbPayload = upd["callback"]?["payload"]?.GetValue<string>() ?? "";
                     var cbCallbackId = upd["callback"]?["callback_id"]?.GetValue<string>() ?? "";
                     if (cbUserId != _adminUserId) return;
