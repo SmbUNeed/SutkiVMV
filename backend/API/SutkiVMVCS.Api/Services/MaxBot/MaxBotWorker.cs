@@ -26,12 +26,14 @@ public class MaxBotWorker : BackgroundService, IMaxService
     private readonly IServiceProvider _serviceProvider;
     private readonly HttpClient _http;
     private readonly long _adminChatId;
+    private readonly long _adminUserId;
     private const string BaseUrl = "https://platform-api.max.ru";
 
     public MaxBotWorker(IConfiguration config, IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
         _adminChatId = long.Parse(config["MaxBot:AdminChatId"]!);
+        _adminUserId = long.Parse(config["MaxBot:AdminUserId"]!);   
 
         _http = new HttpClient();
         _http.DefaultRequestHeaders.Authorization =
@@ -87,7 +89,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
                 var senderId = upd["message"]?["sender"]?["user_id"]?.GetValue<long>() ?? 0;
                 var chatId = upd["message"]?["recipient"]?["chat_id"]?.GetValue<long>() ?? 0;
                 var text = upd["message"]?["body"]?["text"]?.GetValue<string>() ?? "";
-                if (senderId != _adminChatId) return;
+                if (senderId != _adminUserId) return;
                 await OnMessage(chatId, text, ct);
                 break;
 
@@ -96,7 +98,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
                 var cbChatId = upd["callback"]?["message"]?["recipient"]?["chat_id"]?.GetValue<long>() ?? 0;
                 var cbPayload = upd["callback"]?["payload"]?.GetValue<string>() ?? "";
                 var cbCallbackId = upd["callback"]?["callback_id"]?.GetValue<string>() ?? "";
-                if (cbUserId != _adminChatId) return;
+                if (cbUserId != _adminUserId) return;
                 await OnCallback(cbChatId, cbPayload, cbCallbackId, ct);
                 break;
 
