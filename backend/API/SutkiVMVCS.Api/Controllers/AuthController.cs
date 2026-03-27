@@ -244,6 +244,8 @@ public class AuthController : ControllerBase
         {
             Console.WriteLine($"[MaxBot] SendBookingNotification error: {ex.Message}");
         }
+
+        return Ok(booking);
     }
 
     [HttpPost("confirm-email")]
