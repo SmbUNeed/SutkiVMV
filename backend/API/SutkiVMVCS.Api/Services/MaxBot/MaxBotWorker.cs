@@ -9,10 +9,10 @@ using System.Text.Json.Nodes;
 
 public interface IMaxService
 {
-    async Task Send(long chatId, string text, CancellationToken ct) { }
-    async Task SendMenu(long chatId, string text, CancellationToken ct) { }
-    async Task SendWithButtons(long chatId, string text, List<object[]> buttonRows, CancellationToken ct) { }
-    public async Task SendBookingNotificationAsync(string message, int bookingId) { }
+    public Task Send(long chatId, string text, CancellationToken ct);
+    public Task SendMenu(long chatId, string text, CancellationToken ct);
+    public Task SendWithButtons(long chatId, string text, List<object[]> buttonRows, CancellationToken ct);
+    public Task SendBookingNotificationAsync(string message, int bookingId);
 }
 public class MaxBotWorker : BackgroundService, IMaxService
 {
@@ -857,7 +857,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
     //  ОТПРАВКА СООБЩЕНИЙ — HTTP
     // ═══════════════════════════════════════════════════════════════════════
 
-    async Task Send(long chatId, string text, CancellationToken ct)
+    public async Task Send(long chatId, string text, CancellationToken ct)
     {
         var body = JsonSerializer.Serialize(new { text });
         var resp = await _http.PostAsync(
@@ -867,7 +867,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
             Console.WriteLine($"[MaxBot] Send error {resp.StatusCode}: {await resp.Content.ReadAsStringAsync(ct)}");
     }
 
-    async Task SendMenu(long chatId, string text, CancellationToken ct)
+    public async Task SendMenu(long chatId, string text, CancellationToken ct)
     {
         var menu =
             "📅 /bookings_today  |  🗓 /bookings_month\n" +
@@ -879,7 +879,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
         await Send(chatId, $"{text}\n\n─────────────\n{menu}", ct);
     }
 
-    async Task SendWithButtons(long chatId, string text, List<object[]> buttonRows, CancellationToken ct)
+    public async Task SendWithButtons(long chatId, string text, List<object[]> buttonRows, CancellationToken ct)
     {
         var payload = new { text, attachments = new[] { new { type = "inline_keyboard", payload = new { buttons = buttonRows } } } };
         var body = JsonSerializer.Serialize(payload);
