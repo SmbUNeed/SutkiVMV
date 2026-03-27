@@ -99,7 +99,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
                 var cbPayload = upd["callback"]?["payload"]?.GetValue<string>() ?? "";
                 var cbCallbackId = upd["callback"]?["callback_id"]?.GetValue<string>() ?? "";
                 if (cbUserId != _adminUserId) return;
-                await OnCallback(cbChatId, cbPayload, cbCallbackId, ct);
+                await OnCallback(cbChatId, cbPayload, cbCallbackId, upd, ct);
                 break;
 
             case "bot_started":
@@ -126,7 +126,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
     //  ОБРАБОТКА КНОПОК
     // ═══════════════════════════════════════════════════════════════════
 
-    async Task OnCallback(long chatId, string payload, string callbackId, CancellationToken ct)
+    async Task OnCallback(long chatId, string payload, string callbackId, JsonNode upd, CancellationToken ct)
     {
         // Сначала всегда отвечаем на callback — иначе кнопка крутится
         await _http.PostAsync(
@@ -147,10 +147,49 @@ public class MaxBotWorker : BackgroundService, IMaxService
             booking.Status = parts[0] == "confirm" ? "Confirmed" : "Cancelled";
             await db.SaveChangesAsync(ct);
 
-            await Send(chatId,
-                booking.Status == "Confirmed"
-                    ? $"✅ Бронь #{bookingId} подтверждена"
-                    : $"❌ Бронь #{bookingId} отменена", ct);
+            // Обновляем сообщение с кнопками
+            object newMessage;
+            if (booking.Status == "Confirmed")
+            {
+                // Подтверждено — оставляем кнопку Отменить
+                newMessage = new
+                {
+                    text = upd?["callback"]?["message"]?["body"]?["text"]?.GetValue<string>()
+                           + "\n\n✅ Подтверждено",
+                    attachments = new[]
+                    {
+                new
+                {
+                    type    = "inline_keyboard",
+                    payload = new
+                    {
+                        buttons = new List<object[]>
+                        {
+                            new object[] {
+                                new { type = "callback", text = "❌ Отменить бронь", payload = $"cancel_{bookingId}" }
+                            }
+                        }
+                    }
+                }
+            }
+                };
+            }
+            else
+            {
+                // Отменено — убираем кнопки
+                newMessage = new
+                {
+                    text = upd?["callback"]?["message"]?["body"]?["text"]?.GetValue<string>()
+                           + "\n\n❌ Бронь отменена",
+                    attachments = (object?)null
+                };
+            }
+
+            var answerBody = JsonSerializer.Serialize(new { message = newMessage });
+            await _http.PostAsync(
+                $"{BaseUrl}/answers?callback_id={callbackId}",
+                new StringContent(answerBody, Encoding.UTF8, "application/json"), ct);
+
             return;
         }
 
