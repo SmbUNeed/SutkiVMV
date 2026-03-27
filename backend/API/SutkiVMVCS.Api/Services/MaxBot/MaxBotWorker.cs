@@ -101,6 +101,8 @@ public class MaxBotWorker : BackgroundService, IMaxService
                 {
                     var cbUserId = upd["callback"]?["user"]?["user_id"]?.GetValue<long>() ?? 0;
                     var cbChatId = upd["callback"]?["message"]?["recipient"]?["chat_id"]?.GetValue<long>() ?? 0;
+                    Log($"RAW CALLBACK: {upd.ToJsonString()}");  // ← добавь
+                    Log($"cbUserId={cbUserId}, cbChatId={cbChatId}");
                     var cbPayload = upd["callback"]?["payload"]?.GetValue<string>() ?? "";
                     var cbCallbackId = upd["callback"]?["callback_id"]?.GetValue<string>() ?? "";
                     if (cbUserId != _adminUserId) return;
@@ -678,11 +680,6 @@ public class MaxBotWorker : BackgroundService, IMaxService
 
     async Task Send(long chatId, string text, CancellationToken ct)
     {
-        if (chatId == 0)
-        {
-            Log($"Send called with chatId=0, stack:\n{Environment.StackTrace}");
-            return;
-        }
         var body = JsonSerializer.Serialize(new { text });
         var resp = await _http.PostAsync(
             $"{BaseUrl}/messages?chat_id={chatId}",
