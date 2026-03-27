@@ -131,10 +131,28 @@ public class MaxBotWorker : BackgroundService, IMaxService
             $"{BaseUrl}/answers?callback_id={callbackId}",
             new StringContent("{}", Encoding.UTF8, "application/json"), ct);
 
-        if (payload == "hello")
+        if (payload.StartsWith("confirm_") || payload.StartsWith("cancel_"))
         {
-            await Send(chatId, "Нажали кнопку!", ct);
+            var parts = payload.Split('_');
+            var bookingId = int.Parse(parts[1]);
+
+            using var scope = _serviceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            var booking = await db.Bookings.FindAsync(bookingId);
+            if (booking == null) { await Send(chatId, "❌ Бронь не найдена.", ct); return; }
+
+            booking.Status = parts[0] == "confirm" ? "Confirmed" : "Cancelled";
+            await db.SaveChangesAsync(ct);
+
+            await Send(chatId,
+                booking.Status == "Confirmed"
+                    ? $"✅ Бронь #{bookingId} подтверждена"
+                    : $"❌ Бронь #{bookingId} отменена", ct);
+            return;
         }
+
+        else await Send(chatId, $"Неизвестный callback: {payload}", ct);
     }
 
     async Task Send(long chatId, string text, CancellationToken ct)
@@ -155,30 +173,38 @@ public class MaxBotWorker : BackgroundService, IMaxService
 
     public async Task SendBookingNotificationAsync(string message, int bookingId)
     {
+        var buttons = new List<object[]>
+        {
+            new object[]
+            {
+                new { type = "callback", text = "✅ Подтвердить", payload = $"confirm_{bookingId}" },
+                new { type = "callback", text = "❌ Отменить",    payload = $"cancel_{bookingId}"  }
+            }
+        };
+        await SendWithButtons(_adminChatId, message, buttons, CancellationToken.None);
+    }
+
+    async Task SendWithButtons(long chatId, string text, List<object[]> buttons, CancellationToken ct)
+    {
         var payload = new
         {
-            recipient = new { chat_id = _adminChatId },
-            body = new
+            text,
+            attachments = new[]
             {
-                text = message,
-                attachments = new[]
+                new
                 {
-                    new
-                    {
-                        type = "button",
-                        text = "Принять",
-                        payload = $"confirm_booking_{bookingId}"
-                    },
-                    new
-                    {
-                        type = "button",
-                        text = "Отменить",
-                        payload = $"cancel_booking_{bookingId}"
-                    }
+                    type    = "inline_keyboard",
+                    payload = new { buttons }
                 }
             }
         };
-        var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-        await _http.PostAsync($"{BaseUrl}/messages", content);
+
+        var body = JsonSerializer.Serialize(payload);
+        var resp = await _http.PostAsync(
+            $"{BaseUrl}/messages?chat_id={chatId}",
+            new StringContent(body, Encoding.UTF8, "application/json"), ct);
+
+        if (!resp.IsSuccessStatusCode)
+            Console.WriteLine($"[MaxBot] SendWithButtons error {resp.StatusCode}: {await resp.Content.ReadAsStringAsync(ct)}");
     }
 }
