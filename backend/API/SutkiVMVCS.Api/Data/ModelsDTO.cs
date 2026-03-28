@@ -101,6 +101,7 @@ public class AdminBookingDto
     public string   Status         { get; set; } = "";
     public DateTime CreatedAt      { get; set; }
     public int      Nights         => (EndDate - StartDate).Days;
+    public string   Source         { get; set; } = "Вручную";
 }
 public class UserCreateBookingDto
 {

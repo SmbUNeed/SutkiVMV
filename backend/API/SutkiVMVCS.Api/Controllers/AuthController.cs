@@ -227,6 +227,7 @@ public class AuthController : ControllerBase
             EndDate     = dto.EndDate.ToUniversalTime(),
             TotalPrice  = apartment.PricePerNight * nights,
             Status      = "Pending",
+            Source      = "Site",
             CreatedAt   = DateTime.UtcNow.ToUniversalTime()
         };
         _context.Bookings.Add(booking);

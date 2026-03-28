@@ -29,6 +29,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
         Client_SearchPhone,
         Client_InfoQuery,
         Apartment_InfoQuery,
+        Statistics_InfoQuery,
     }
 
     private readonly ConcurrentDictionary<long, State> _states = new();
@@ -336,6 +337,13 @@ public class MaxBotWorker : BackgroundService, IMaxService
             return;
         }
 
+        if (payload.StartsWith("statistics"))
+        {
+            await AnswerCallback(callbackId, ct);
+            await ShowStatistics(chatId, db, ct);
+            return;
+        }
+
         await AnswerCallback(callbackId, ct);
     }
 
@@ -348,9 +356,10 @@ public class MaxBotWorker : BackgroundService, IMaxService
         var buttons = new List<object[]>
         {
             new object[] {
-                new { type = "callback", text = "📅 Брони",    payload = "bookings"   },
-                new { type = "callback", text = "👤 Клиенты",  payload = "clients"    },
-                new { type = "callback", text = "🏢 Квартиры", payload = "apartments" }
+                new { type = "callback", text = "📅 Брони",      payload = "bookings"   },
+                new { type = "callback", text = "👤 Клиенты",    payload = "clients"    },
+                new { type = "callback", text = "🏢 Квартиры",   payload = "apartments" },
+                new { type = "callback", text = "📊 Статистика", payload = "statistics" }
             }
         };
         await SendWithButtons(chatId, text, buttons, ct);
@@ -650,6 +659,68 @@ public class MaxBotWorker : BackgroundService, IMaxService
             sb.AppendLine($"   💰 {b.TotalPrice:N0} ₽\n");
         }
         await SendLong(chatId, sb.ToString(), ct);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  СТАТИСТИКА
+    // ═══════════════════════════════════════════════════════════════════
+
+    async Task ShowStatistics(long chatId, AppDbContext db, CancellationToken ct)
+    {
+        var now = DateTime.UtcNow;
+        var month = new DateTime(now.Year, now.Month, 1);
+
+        var allBookings = await db.Bookings
+            .Include(b => b.Apartment)
+            .Where(b => b.Status != "Cancelled")
+            .AsNoTracking().ToListAsync(ct);
+
+        var thisMonth = allBookings.Where(b => b.StartDate >= month).ToList();
+
+        // По источникам
+        var bySource = allBookings
+            .GroupBy(b => b.Source ?? "Вручную")
+            .Select(g => (Source: g.Key, Count: g.Count(), Total: g.Sum(b => b.TotalPrice)))
+            .OrderByDescending(x => x.Count)
+            .ToList();
+
+        // По квартирам (топ)
+        var byApt = allBookings
+            .GroupBy(b => b.Apartment?.Title ?? "—")
+            .Select(g => (Title: g.Key, Count: g.Count(), Total: g.Sum(b => b.TotalPrice)))
+            .OrderByDescending(x => x.Total)
+            .Take(5)
+            .ToList();
+
+        var sb = new StringBuilder("📊 Статистика\n");
+        sb.AppendLine("───────────────────");
+
+        sb.AppendLine($"\n📅 Этот месяц ({now:MMMM}):");
+        sb.AppendLine($"   Броней: {thisMonth.Count}");
+        sb.AppendLine($"   Доход:  {thisMonth.Sum(b => b.TotalPrice):N0} ₽");
+
+        sb.AppendLine($"\n📈 Всего за всё время:");
+        sb.AppendLine($"   Броней: {allBookings.Count}");
+        sb.AppendLine($"   Доход:  {allBookings.Sum(b => b.TotalPrice):N0} ₽");
+
+        sb.AppendLine("\n🔗 По источникам:");
+        foreach (var s in bySource)
+        {
+            var emoji = s.Source switch
+            {
+                "Site" => "🌐",
+                "Вручную" => "✍️",
+                "Avito" => "🟢",
+                _ => "📌"
+            };
+            sb.AppendLine($"   {emoji} {s.Source}: {s.Count} броней · {s.Total:N0} ₽");
+        }
+
+        sb.AppendLine("\n🏆 Топ квартир по доходу:");
+        foreach (var a in byApt)
+            sb.AppendLine($"   {a.Title}: {a.Count} броней · {a.Total:N0} ₽");
+
+        await Send(chatId, sb.ToString(), ct);
     }
 
     // ═══════════════════════════════════════════════════════════════════
