@@ -703,7 +703,7 @@
     /* ── РЯДОМ (каталог) ─────────────────────────────────── */
     async function loadNearby() {
         try {
-            const list = await api('/nearbyplaces');
+            const list = await api('/nearby-places');
             const tb = document.getElementById('tbNearby');
             if (!list.length) {
                 tb.innerHTML = '<tr><td colspan="5"><div class="es"><i class="fa-solid fa-map"></i><p>Мест нет</p></div></td></tr>';
@@ -729,7 +729,7 @@
         const name     = document.getElementById('nNewName').value.trim();
         const distance = document.getElementById('nNewDist').value.trim();
         try {
-            await api('/nearbyplaces', { method: 'POST', body: JSON.stringify({ icon, name, distance }) });
+            await api('/nearby-places', { method: 'POST', body: JSON.stringify({ icon, name, distance }) });
             toast('Место добавлено');
             document.getElementById('formNearby').reset();
             loadNearby();
@@ -739,7 +739,7 @@
     async function deleteNearbyCatalog(id) {
         if (!confirm('Удалить место?')) return;
         try {
-            await api(`/nearbyplaces/${id}`, { method: 'DELETE' });
+            await api(`/nearby-places/${id}`, { method: 'DELETE' });
             toast('Место удалено');
             loadNearby();
         } catch (err) { toast(err.message, 'er'); }
