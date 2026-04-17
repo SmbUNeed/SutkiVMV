@@ -866,3 +866,35 @@ textarea { resize: vertical; min-height: 90px; }
     .filter-panel-body { padding: 14px; }
     .filter-panel-footer { padding: 12px 14px; }
 }
+
+@media (max-width: 700px) {
+    .modal-overlay {
+        padding: 0;
+        align-items: flex-end;
+    }
+
+    .modal-content {
+        max-width: 100%;
+        border-radius: var(--r-lg) var(--r-lg) 0 0;
+        max-height: 95dvh;
+        overflow-y: auto;
+    }
+
+    .modal-body {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-left {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        max-height: none;
+        overflow-y: visible;
+        padding: 18px;
+    }
+
+    .modal-right {
+        max-height: none;
+        overflow-y: visible;
+        padding: 18px;
+    }
+}

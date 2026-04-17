@@ -170,6 +170,17 @@ public class ApartmentsController : ControllerBase
         return NoContent();
     }
 
+    [HttpPost("{id}/set-active-{isActive:bool}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult> ChangeActivity(int id, bool isActive, CancellationToken ct)
+    {
+        var apt = await _context.Apartments.FindAsync(id);
+        if (apt == null) return NotFound();
+        apt.IsActive = isActive;
+        await _context.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
     // ── Helper ──────────────────────────────────────────────────────────
     internal static ApartmentDto ToDto(Apartment a) => new()
     {
