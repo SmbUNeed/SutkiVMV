@@ -660,7 +660,7 @@
     /* ── ПРАВИЛА (каталог) ───────────────────────────────── */
     async function loadRules() {
         try {
-            const list = await api('/rules');
+            const list = await api('/apartments/rules');
             const tb = document.getElementById('tbRules');
             if (!list.length) {
                 tb.innerHTML = '<tr><td colspan="4"><div class="es"><i class="fa-solid fa-ban"></i><p>Правил нет</p></div></td></tr>';
@@ -684,7 +684,7 @@
         const icon = document.getElementById('rNewIcon').value.trim();
         const text = document.getElementById('rNewText').value.trim();
         try {
-            await api('/rules', { method: 'POST', body: JSON.stringify({ icon, text }) });
+            await api('/apartments/rules', { method: 'POST', body: JSON.stringify({ icon, text }) });
             toast('Правило добавлено');
             document.getElementById('formRule').reset();
             loadRules();
@@ -694,7 +694,7 @@
     async function deleteRuleCatalog(id) {
         if (!confirm('Удалить правило?')) return;
         try {
-            await api(`/rules/${id}`, { method: 'DELETE' });
+            await api(`/apartments/rules/${id}`, { method: 'DELETE' });
             toast('Правило удалено');
             loadRules();
         } catch (err) { toast(err.message, 'er'); }
@@ -703,7 +703,7 @@
     /* ── РЯДОМ (каталог) ─────────────────────────────────── */
     async function loadNearby() {
         try {
-            const list = await api('/nearby-places');
+            const list = await api('/apartments/nearby-places');
             const tb = document.getElementById('tbNearby');
             if (!list.length) {
                 tb.innerHTML = '<tr><td colspan="5"><div class="es"><i class="fa-solid fa-map"></i><p>Мест нет</p></div></td></tr>';
@@ -729,7 +729,7 @@
         const name     = document.getElementById('nNewName').value.trim();
         const distance = document.getElementById('nNewDist').value.trim();
         try {
-            await api('/nearby-places', { method: 'POST', body: JSON.stringify({ icon, name, distance }) });
+            await api('/apartments/nearby-places', { method: 'POST', body: JSON.stringify({ icon, name, distance }) });
             toast('Место добавлено');
             document.getElementById('formNearby').reset();
             loadNearby();
@@ -739,7 +739,7 @@
     async function deleteNearbyCatalog(id) {
         if (!confirm('Удалить место?')) return;
         try {
-            await api(`/nearby-places/${id}`, { method: 'DELETE' });
+            await api(`/apartments/nearby-places/${id}`, { method: 'DELETE' });
             toast('Место удалено');
             loadNearby();
         } catch (err) { toast(err.message, 'er'); }
