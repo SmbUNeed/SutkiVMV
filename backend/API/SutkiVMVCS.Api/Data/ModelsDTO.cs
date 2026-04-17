@@ -5,21 +5,23 @@ namespace SutkiVMV.ModelsDTO;
 // ── Apartment ──────────────────────────────────────────────────────────
 public class ApartmentDto
 {
-    public int     Id            { get; set; }
-    public string  Title         { get; set; } = "";
-    public string  Address       { get; set; } = "";
-    public string  Description   { get; set; } = "";
-    public int     Guests        { get; set; }
+    public int Id { get; set; }
+    public string Title { get; set; } = "";
+    public string Address { get; set; } = "";
+    public string Description { get; set; } = "";
+    public int Guests { get; set; }
     public decimal PricePerNight { get; set; }
-    public int     RoomsCount    { get; set; }
-    public decimal Area          { get; set; }
-    public bool    IsActive      { get; set; }
-    public bool    IsDeleted     { get; set; }
-    public string? MainImage     { get; set; }
+    public int RoomsCount { get; set; }
+    public decimal Area { get; set; }
+    public bool IsActive { get; set; }
+    public bool IsDeleted { get; set; }
+    public string? MainImage { get; set; }
 
-    public List<GalleryItemDto> Gallery   { get; set; } = [];
-    public List<AmenityDto>    Amenities { get; set; } = [];
-    public List<BookingDto>     Bookings  { get; set; } = [];
+    public List<GalleryItemDto> Gallery { get; set; } = [];
+    public List<AmenityDto> Amenities { get; set; } = [];
+    public List<BookingDto> Bookings { get; set; } = [];
+    public List<ApartmentRuleDto> Rules { get; set; } = [];
+    public List<ApartmentNearbyDto> Nearby { get; set; } = [];
 }
 public class CreateApartmentDto
 {
@@ -32,6 +34,37 @@ public class CreateApartmentDto
     [Range(1, 10000)] public decimal Area { get; set; }
     public bool IsActive { get; set; } = true;
 }
+
+public class ApartmentRuleDto
+{
+    public int Id { get; set; }
+    public string Icon { get; set; } = "";
+    public string Text { get; set; } = "";
+    public int Order { get; set; }
+}
+
+public class ApartmentNearbyDto
+{
+    public int Id { get; set; }
+    public string Icon { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string Distance { get; set; } = "";
+}
+
+public class CreateRuleDto
+{
+    [Required] public string Icon { get; set; } = "";
+    [Required] public string Text { get; set; } = "";
+    public int Order { get; set; }
+}
+
+public class CreateNearbyDto
+{
+    [Required] public string Icon { get; set; } = "";
+    [Required] public string Name { get; set; } = "";
+    [Required] public string Distance { get; set; } = "";
+}
+
 public class GalleryItemDto
 {
     public int    Id        { get; set; }

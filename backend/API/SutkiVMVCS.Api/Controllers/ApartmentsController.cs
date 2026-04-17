@@ -22,13 +22,15 @@ public class ApartmentsController : ControllerBase
             .Include(a => a.ApartmentGallery)
             .Include(a => a.ApartmentAmenities).ThenInclude(aa => aa.Amenity)
             .Include(a => a.Bookings)
+            .Include(a => a.Rules.OrderBy(r => r.Order))
+            .Include(a => a.Nearby)
             .AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Id == id && !a.IsDeleted); // ← добавить
+            .FirstOrDefaultAsync(a => a.Id == id && !a.IsDeleted);
 
         return apt == null ? NotFound() : Ok(ToDto(apt));
     }
 
-    // GET /api/apartments/all  (все, включая удалённые — для админки)
+    // GET /api/apartments/all
     [HttpGet("all")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<IEnumerable<ApartmentDto>>> GetAll()
@@ -36,11 +38,14 @@ public class ApartmentsController : ControllerBase
         var apts = await _context.Apartments
             .Include(a => a.ApartmentGallery)
             .Include(a => a.ApartmentAmenities).ThenInclude(aa => aa.Amenity)
+            .Include(a => a.Rules.OrderBy(r => r.Order))
+            .Include(a => a.Nearby)
             .AsNoTracking()
             .ToListAsync();
         return Ok(apts.Select(ToDto));
     }
 
+    // GET /api/apartments/detailed
     [HttpGet("detailed")]
     public async Task<ActionResult<IEnumerable<ApartmentDto>>> GetDetailed()
     {
@@ -49,6 +54,8 @@ public class ApartmentsController : ControllerBase
             .Include(a => a.ApartmentGallery)
             .Include(a => a.ApartmentAmenities).ThenInclude(aa => aa.Amenity)
             .Include(a => a.Bookings)
+            .Include(a => a.Rules.OrderBy(r => r.Order))
+            .Include(a => a.Nearby)
             .AsNoTracking()
             .ToListAsync();
         return Ok(apts.Select(ToDto));
@@ -63,6 +70,8 @@ public class ApartmentsController : ControllerBase
             .Where(a => a.IsActive && !a.IsDeleted)
             .Include(a => a.ApartmentGallery)
             .Include(a => a.ApartmentAmenities).ThenInclude(aa => aa.Amenity)
+            .Include(a => a.Rules.OrderBy(r => r.Order))
+            .Include(a => a.Nearby)
             .AsNoTracking().AsQueryable();
 
         if (minPrice.HasValue) query = query.Where(a => a.PricePerNight >= minPrice.Value);
@@ -87,7 +96,6 @@ public class ApartmentsController : ControllerBase
             RoomsCount = dto.RoomsCount,
             Area = dto.Area,
             IsActive = dto.IsActive
-            // Id, IsDeleted — не трогаем, БД сама
         };
         _context.Apartments.Add(apartment);
         await _context.SaveChangesAsync(ct);
@@ -115,7 +123,7 @@ public class ApartmentsController : ControllerBase
         return NoContent();
     }
 
-    // POST /api/apartments/{id}/amenities  — задать список удобств (полная замена)
+    // POST /api/apartments/{id}/amenities
     [HttpPost("{id:int}/amenities")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult> SetAmenities(int id, SetAmenitiesDto dto, CancellationToken ct)
@@ -123,28 +131,138 @@ public class ApartmentsController : ControllerBase
         var apt = await _context.Apartments.FindAsync(id);
         if (apt == null) return NotFound();
 
-        // Удаляем старые связи
-        var old = await _context.ApartmentAmenities
-            .Where(aa => aa.ApartmentId == id)
-            .ToListAsync();
+        var old = await _context.ApartmentAmenities.Where(aa => aa.ApartmentId == id).ToListAsync();
         _context.ApartmentAmenities.RemoveRange(old);
 
-        // Добавляем новые
         foreach (var amenityId in dto.AmenityIds.Distinct())
-        {
             if (await _context.Amenities.AnyAsync(a => a.Id == amenityId))
-                _context.ApartmentAmenities.Add(new ApartmentAmenity
-                {
-                    ApartmentId = id,
-                    AmenityId = amenityId
-                });
-        }
+                _context.ApartmentAmenities.Add(new ApartmentAmenity { ApartmentId = id, AmenityId = amenityId });
 
         await _context.SaveChangesAsync(ct);
         return NoContent();
     }
 
-    // PATCH /api/apartments/restore/{id}
+    // ── RULES ───────────────────────────────────────────────────────────
+
+    // GET /api/apartments/{id}/rules
+    [HttpGet("{id:int}/rules")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<IEnumerable<ApartmentRuleDto>>> GetRules(int id)
+    {
+        var rules = await _context.ApartmentRules
+            .Where(r => r.ApartmentId == id)
+            .OrderBy(r => r.Order)
+            .AsNoTracking()
+            .ToListAsync();
+        return Ok(rules.Select(r => new ApartmentRuleDto { Id = r.Id, Icon = r.Icon, Text = r.Text, Order = r.Order }));
+    }
+
+    // POST /api/apartments/{id}/rules
+    [HttpPost("{id:int}/rules")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult> AddRule(int id, CreateRuleDto dto, CancellationToken ct)
+    {
+        if (!await _context.Apartments.AnyAsync(a => a.Id == id && !a.IsDeleted, ct))
+            return NotFound();
+
+        _context.ApartmentRules.Add(new ApartmentRule
+        {
+            ApartmentId = id,
+            Icon = dto.Icon,
+            Text = dto.Text,
+            Order = dto.Order
+        });
+        await _context.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    // DELETE /api/apartments/{id}/rules/{ruleId}
+    [HttpDelete("{id:int}/rules/{ruleId:int}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult> DeleteRule(int id, int ruleId, CancellationToken ct)
+    {
+        var rule = await _context.ApartmentRules.FirstOrDefaultAsync(r => r.Id == ruleId && r.ApartmentId == id, ct);
+        if (rule == null) return NotFound();
+        _context.ApartmentRules.Remove(rule);
+        await _context.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    // PUT /api/apartments/{id}/rules/{ruleId}
+    [HttpPut("{id:int}/rules/{ruleId:int}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult> UpdateRule(int id, int ruleId, CreateRuleDto dto, CancellationToken ct)
+    {
+        var rule = await _context.ApartmentRules.FirstOrDefaultAsync(r => r.Id == ruleId && r.ApartmentId == id, ct);
+        if (rule == null) return NotFound();
+        rule.Icon = dto.Icon;
+        rule.Text = dto.Text;
+        rule.Order = dto.Order;
+        await _context.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    // ── NEARBY ──────────────────────────────────────────────────────────
+
+    // GET /api/apartments/{id}/nearby
+    [HttpGet("{id:int}/nearby")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<IEnumerable<ApartmentNearbyDto>>> GetNearby(int id)
+    {
+        var nearby = await _context.ApartmentNearby
+            .Where(n => n.ApartmentId == id)
+            .AsNoTracking()
+            .ToListAsync();
+        return Ok(nearby.Select(n => new ApartmentNearbyDto { Id = n.Id, Icon = n.Icon, Name = n.Name, Distance = n.Distance }));
+    }
+
+    // POST /api/apartments/{id}/nearby
+    [HttpPost("{id:int}/nearby")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult> AddNearby(int id, CreateNearbyDto dto, CancellationToken ct)
+    {
+        if (!await _context.Apartments.AnyAsync(a => a.Id == id && !a.IsDeleted, ct))
+            return NotFound();
+
+        _context.ApartmentNearby.Add(new ApartmentNearby
+        {
+            ApartmentId = id,
+            Icon = dto.Icon,
+            Name = dto.Name,
+            Distance = dto.Distance
+        });
+        await _context.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    // DELETE /api/apartments/{id}/nearby/{nearbyId}
+    [HttpDelete("{id:int}/nearby/{nearbyId:int}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult> DeleteNearby(int id, int nearbyId, CancellationToken ct)
+    {
+        var nearby = await _context.ApartmentNearby.FirstOrDefaultAsync(n => n.Id == nearbyId && n.ApartmentId == id, ct);
+        if (nearby == null) return NotFound();
+        _context.ApartmentNearby.Remove(nearby);
+        await _context.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    // PUT /api/apartments/{id}/nearby/{nearbyId}
+    [HttpPut("{id:int}/nearby/{nearbyId:int}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult> UpdateNearby(int id, int nearbyId, CreateNearbyDto dto, CancellationToken ct)
+    {
+        var nearby = await _context.ApartmentNearby.FirstOrDefaultAsync(n => n.Id == nearbyId && n.ApartmentId == id, ct);
+        if (nearby == null) return NotFound();
+        nearby.Icon = dto.Icon;
+        nearby.Name = dto.Name;
+        nearby.Distance = dto.Distance;
+        await _context.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    // ── Restore / Delete / Active ────────────────────────────────────────
+
     [HttpPatch("restore/{id:int}")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult> Restore(int id, CancellationToken ct)
@@ -157,7 +275,6 @@ public class ApartmentsController : ControllerBase
         return NoContent();
     }
 
-    // DELETE /api/apartments/{id}
     [HttpDelete("{id:int}")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult> Delete(int id, CancellationToken ct)
@@ -181,7 +298,8 @@ public class ApartmentsController : ControllerBase
         return NoContent();
     }
 
-    // ── Helper ──────────────────────────────────────────────────────────
+    // ── ToDto ────────────────────────────────────────────────────────────
+
     internal static ApartmentDto ToDto(Apartment a) => new()
     {
         Id = a.Id,
@@ -205,6 +323,13 @@ public class ApartmentsController : ControllerBase
                      .ToList(),
         Bookings = a.Bookings
                      .Select(b => new BookingDto { StartDate = b.StartDate, EndDate = b.EndDate, Status = b.Status })
+                     .ToList(),
+        Rules = a.Rules
+                     .OrderBy(r => r.Order)
+                     .Select(r => new ApartmentRuleDto { Id = r.Id, Icon = r.Icon, Text = r.Text, Order = r.Order })
+                     .ToList(),
+        Nearby = a.Nearby
+                     .Select(n => new ApartmentNearbyDto { Id = n.Id, Icon = n.Icon, Name = n.Name, Distance = n.Distance })
                      .ToList()
     };
 }
