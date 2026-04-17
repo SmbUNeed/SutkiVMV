@@ -15,6 +15,8 @@ public class AppDbContext : DbContext
     public DbSet<ApartmentAmenity>    ApartmentAmenities   => Set<ApartmentAmenity>();
     public DbSet<ApartmentGallery>    ApartmentGallery     => Set<ApartmentGallery>();
     public DbSet<PendingRegistration> PendingRegistrations => Set<PendingRegistration>();
+    public DbSet<ApartmentRule>       ApartmentRules       => Set<ApartmentRule>();
+    public DbSet<ApartmentNearby>     ApartmentNearby      => Set<ApartmentNearby>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

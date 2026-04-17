@@ -19,9 +19,33 @@ public class Apartment
     public ICollection<Booking>           Bookings           { get; set; } = [];
     public ICollection<ApartmentAmenity> ApartmentAmenities { get; set; } = [];
     public ICollection<ApartmentGallery>  ApartmentGallery   { get; set; } = [];
+    public ICollection<ApartmentRule>   Rules   { get; set; } = new List<ApartmentRule>();
+    public ICollection<ApartmentNearby> Nearby  { get; set; } = new List<ApartmentNearby>();
 
     [NotMapped]
     public ApartmentGallery? MainImage => ApartmentGallery?.FirstOrDefault(g => g.IsMain);
+}
+
+public class ApartmentRule
+{
+    public int    Id          { get; set; }
+    public int    ApartmentId { get; set; }
+    public string Icon        { get; set; } = ""; // fa-ban, fa-clock и т.д.
+    public string Text        { get; set; } = "";
+    public int    Order       { get; set; }       // порядок отображения
+
+    public Apartment Apartment { get; set; } = null!;
+}
+
+public class ApartmentNearby
+{
+    public int    Id          { get; set; }
+    public int    ApartmentId { get; set; }
+    public string Icon        { get; set; } = ""; // fa-store, fa-plane и т.д.
+    public string Name        { get; set; } = ""; // "Магнит"
+    public string Distance    { get; set; } = ""; // "5 мин пешком"
+
+    public Apartment Apartment { get; set; } = null!;
 }
 
 public class Booking
