@@ -20,6 +20,8 @@
         if (id === 'list-apt') loadGrid();
         if (id === 'bookings') loadBookings();
         if (id === 'clients')  loadClients();
+        if (id === 'rules')    loadRules();
+        if (id === 'nearby')   loadNearby();
     }
 
     /* ── TOAST ───────────────────────────────────────────── */
@@ -652,6 +654,94 @@
             const a = await api(`/apartments/${aptId}`);
             renderNearby(a.nearby || [], aptId);
             toast('Место удалено');
+        } catch (err) { toast(err.message, 'er'); }
+    }
+
+    /* ── ПРАВИЛА (каталог) ───────────────────────────────── */
+    async function loadRules() {
+        try {
+            const list = await api('/rules');
+            const tb = document.getElementById('tbRules');
+            if (!list.length) {
+                tb.innerHTML = '<tr><td colspan="4"><div class="es"><i class="fa-solid fa-ban"></i><p>Правил нет</p></div></td></tr>';
+                return;
+            }
+            tb.innerHTML = list.map(r => `
+            <tr>
+                <td style="color:var(--tm);">#${r.id}</td>
+                <td><i class="fa-solid ${r.icon}" style="color:var(--a);"></i> <span style="color:var(--tm);font-size:.8rem;">${r.icon}</span></td>
+                <td>${r.text}</td>
+                <td><button class="btn bd sm" onclick="deleteRuleCatalog(${r.id})"><i class="fa-solid fa-trash"></i></button></td>
+            </tr>`).join('');
+        } catch (err) {
+            document.getElementById('tbRules').innerHTML =
+                `<tr><td colspan="4" style="color:var(--red);padding:16px;">${err.message}</td></tr>`;
+        }
+    }
+
+    async function createRule(e) {
+        e.preventDefault();
+        const icon = document.getElementById('rNewIcon').value.trim();
+        const text = document.getElementById('rNewText').value.trim();
+        try {
+            await api('/rules', { method: 'POST', body: JSON.stringify({ icon, text }) });
+            toast('Правило добавлено');
+            document.getElementById('formRule').reset();
+            loadRules();
+        } catch (err) { toast(err.message, 'er'); }
+    }
+
+    async function deleteRuleCatalog(id) {
+        if (!confirm('Удалить правило?')) return;
+        try {
+            await api(`/rules/${id}`, { method: 'DELETE' });
+            toast('Правило удалено');
+            loadRules();
+        } catch (err) { toast(err.message, 'er'); }
+    }
+
+    /* ── РЯДОМ (каталог) ─────────────────────────────────── */
+    async function loadNearby() {
+        try {
+            const list = await api('/nearbyplaces');
+            const tb = document.getElementById('tbNearby');
+            if (!list.length) {
+                tb.innerHTML = '<tr><td colspan="5"><div class="es"><i class="fa-solid fa-map"></i><p>Мест нет</p></div></td></tr>';
+                return;
+            }
+            tb.innerHTML = list.map(n => `
+            <tr>
+                <td style="color:var(--tm);">#${n.id}</td>
+                <td><i class="fa-solid ${n.icon}" style="color:var(--a);"></i> <span style="color:var(--tm);font-size:.8rem;">${n.icon}</span></td>
+                <td>${n.name}</td>
+                <td style="color:var(--tm);">${n.distance}</td>
+                <td><button class="btn bd sm" onclick="deleteNearbyCatalog(${n.id})"><i class="fa-solid fa-trash"></i></button></td>
+            </tr>`).join('');
+        } catch (err) {
+            document.getElementById('tbNearby').innerHTML =
+                `<tr><td colspan="5" style="color:var(--red);padding:16px;">${err.message}</td></tr>`;
+        }
+    }
+
+    async function createNearbyPlace(e) {
+        e.preventDefault();
+        const icon     = document.getElementById('nNewIcon').value.trim();
+        const name     = document.getElementById('nNewName').value.trim();
+        const distance = document.getElementById('nNewDist').value.trim();
+        try {
+            await api('/nearbyplaces', { method: 'POST', body: JSON.stringify({ icon, name, distance }) });
+            toast('Место добавлено');
+            document.getElementById('formNearby').reset();
+            loadNearby();
+        } catch (err) { toast(err.message, 'er'); }
+    }
+
+    async function deleteNearbyCatalog(id) {
+        if (!confirm('Удалить место?')) return;
+        try {
+            await api(`/nearbyplaces/${id}`, { method: 'DELETE' });
+            toast('Место удалено');
+            loadNearby();
         } catch (err) { toast(err.message, 'er'); }
     }
 

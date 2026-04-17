@@ -2,28 +2,28 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-	<script>
-		(function() {
-			const saved = localStorage.getItem('sutkivmv_theme');
-			const theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-			document.documentElement.setAttribute('data-theme', theme);
-		})();
-	</script>
+    <script>
+        (function() {
+            const saved = localStorage.getItem('sutkivmv_theme');
+            const theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SutkiVMV — Админ-панель</title>
-    <link rel="stylesheet" 
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" 
-      media="print" 
-      onload="this.media='all'">
-	<noscript>
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-	</noscript>
-	<link rel="stylesheet" href="admin.css">
-	<link rel="icon" type="image/x-icon" href="favicon/favicon.ico">
-	<link rel="icon" type="image/png" sizes="96x96" href="favicon/favicon-96x96.png">
-	<link rel="icon" type="image/svg+xml" href="favicon/favicon.svg">
-	<link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
-	<link rel="manifest" href="favicon/site.webmanifest">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          media="print"
+          onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    </noscript>
+    <link rel="stylesheet" href="admin.css">
+    <link rel="icon" type="image/x-icon" href="favicon/favicon.ico">
+    <link rel="icon" type="image/png" sizes="96x96" href="favicon/favicon-96x96.png">
+    <link rel="icon" type="image/svg+xml" href="favicon/favicon.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
+    <link rel="manifest" href="favicon/site.webmanifest">
 </head>
 <body>
 
@@ -49,6 +49,12 @@
         </div>
         <div class="ni" onclick="showSec('clients',this)">
             <i class="fa-solid fa-users"></i> Клиенты
+        </div>
+        <div class="ni" onclick="showSec('rules',this)">
+            <i class="fa-solid fa-blocked"></i> Правила
+        </div>
+        <div class="ni" onclick="showSec('nearby',this)">
+            <i class="fa-solid fa-map"></i> Рядом
         </div>
     </nav>
     <div class="sb-foot">
@@ -209,6 +215,65 @@
         </div>
     </section>
 
+    <!-- ════ ПРАВИЛА ════════════════════════════════════════ -->
+    <section id="rules" class="sec">
+        <div class="sec-h">
+            <div class="sec-t">Правила</div>
+            <div class="sec-s">Глобальный каталог правил для квартир</div>
+        </div>
+        <div class="card">
+            <div class="ct"><i class="fa-solid fa-plus"></i> Добавить правило</div>
+            <form id="formRule" onsubmit="createRule(event)">
+                <div class="fg">
+                    <div class="fv"><label>Иконка</label><input type="text" id="rNewIcon" placeholder="fa-ban" required></div>
+                    <div class="fv sp2"><label>Текст</label><input type="text" id="rNewText" placeholder="Не курить" required></div>
+                </div>
+                <button type="submit" class="btn bs" style="margin-top:16px;">
+                    <i class="fa-solid fa-plus"></i> Добавить
+                </button>
+            </form>
+        </div>
+        <div class="card">
+            <div class="ct"><i class="fa-solid fa-list"></i> Все правила</div>
+            <div class="tw">
+                <table>
+                    <thead><tr><th>ID</th><th>Иконка</th><th>Текст</th><th></th></tr></thead>
+                    <tbody id="tbRules"><tr><td colspan="4" class="ld">Загрузка...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════ РЯДОМ ══════════════════════════════════════════ -->
+    <section id="nearby" class="sec">
+        <div class="sec-h">
+            <div class="sec-t">Рядом</div>
+            <div class="sec-s">Глобальный каталог мест поблизости</div>
+        </div>
+        <div class="card">
+            <div class="ct"><i class="fa-solid fa-plus"></i> Добавить место</div>
+            <form id="formNearby" onsubmit="createNearbyPlace(event)">
+                <div class="fg">
+                    <div class="fv"><label>Иконка</label><input type="text" id="nNewIcon" placeholder="fa-store" required></div>
+                    <div class="fv"><label>Название</label><input type="text" id="nNewName" placeholder="Магазин" required></div>
+                    <div class="fv"><label>Расстояние</label><input type="text" id="nNewDist" placeholder="5 мин пешком" required></div>
+                </div>
+                <button type="submit" class="btn bs" style="margin-top:16px;">
+                    <i class="fa-solid fa-plus"></i> Добавить
+                </button>
+            </form>
+        </div>
+        <div class="card">
+            <div class="ct"><i class="fa-solid fa-list"></i> Все места</div>
+            <div class="tw">
+                <table>
+                    <thead><tr><th>ID</th><th>Иконка</th><th>Название</th><th>Расстояние</th><th></th></tr></thead>
+                    <tbody id="tbNearby"><tr><td colspan="5" class="ld">Загрузка...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
 </main>
 
 <!-- ── MODAL EDIT ────────────────────────────────────────── -->
@@ -283,18 +348,18 @@
 
 <div id="toast"></div>
 <script>
-function toggleSb() {
-    document.querySelector('.sb').classList.toggle('open');
-    document.getElementById('sbOverlay').classList.toggle('open');
-}
-// Close sidebar when nav item clicked on mobile
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.ni').forEach(function(ni) {
-        ni.addEventListener('click', function() {
-            if (window.innerWidth <= 768) toggleSb();
+    function toggleSb() {
+        document.querySelector('.sb').classList.toggle('open');
+        document.getElementById('sbOverlay').classList.toggle('open');
+    }
+    // Close sidebar when nav item clicked on mobile
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.ni').forEach(function(ni) {
+            ni.addEventListener('click', function() {
+                if (window.innerWidth <= 768) toggleSb();
+            });
         });
     });
-});
 </script>
 <script src="admin.js" defer></script>
 </body>
