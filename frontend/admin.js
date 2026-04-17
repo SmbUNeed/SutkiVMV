@@ -313,7 +313,10 @@
             // amenities — List<AmenityDto> (id, name, icon)
             const selIds = (a.amenities || []).map(x => x.id);
             renderAmen('amenEdit', selIds);
-
+            // Правила
+            renderRules(a.rules || [], a.id);
+            // Рядом
+            renderNearby(a.nearby || [], a.id);
             // Фото
             const ph = document.getElementById('editPhotos');
             if (a.gallery?.length) {
@@ -562,6 +565,93 @@
             await api(`/clients/${id}`, { method: 'DELETE' });
             toast('Клиент удалён');
             loadClients();
+        } catch (err) { toast(err.message, 'er'); }
+    }
+
+    /* ── ПРАВИЛА ─────────────────────────────────────────────── */
+    function renderRules(rules, aptId) {
+        const el = document.getElementById('editRules');
+        if (!rules.length) { el.innerHTML = '<span style="color:var(--tm);font-size:.85rem;">Нет правил</span>'; return; }
+        el.innerHTML = rules.map(r => `
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;
+                        background:var(--bg3);border-radius:6px;border:1px solid var(--bl);">
+                <i class="fa-solid ${r.icon}" style="color:var(--a);width:16px;text-align:center;"></i>
+                <span style="flex:1;font-size:.875rem;">${r.text}</span>
+                <button type="button" class="btn bd sm" onclick="deleteRule(${aptId},${r.id})">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>`).join('');
+    }
+
+    async function addRule() {
+        const id   = document.getElementById('eId').value;
+        const icon = document.getElementById('ruleIcon').value.trim();
+        const text = document.getElementById('ruleText').value.trim();
+        if (!icon || !text) { toast('Заполните иконку и текст', 'er'); return; }
+        try {
+            await api(`/apartments/${id}/rules`, {
+                method: 'POST',
+                body: JSON.stringify({ icon, text, order: 0 })
+            });
+            document.getElementById('ruleIcon').value = '';
+            document.getElementById('ruleText').value = '';
+            const a = await api(`/apartments/${id}`);
+            renderRules(a.rules || [], parseInt(id));
+            toast('Правило добавлено');
+        } catch (err) { toast(err.message, 'er'); }
+    }
+
+    async function deleteRule(aptId, ruleId) {
+        try {
+            await api(`/apartments/${aptId}/rules/${ruleId}`, { method: 'DELETE' });
+            const a = await api(`/apartments/${aptId}`);
+            renderRules(a.rules || [], aptId);
+            toast('Правило удалено');
+        } catch (err) { toast(err.message, 'er'); }
+    }
+
+    /* ── РЯДОМ ───────────────────────────────────────────────── */
+    function renderNearby(nearby, aptId) {
+        const el = document.getElementById('editNearby');
+        if (!nearby.length) { el.innerHTML = '<span style="color:var(--tm);font-size:.85rem;">Ничего не добавлено</span>'; return; }
+        el.innerHTML = nearby.map(n => `
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;
+                        background:var(--bg3);border-radius:6px;border:1px solid var(--bl);">
+                <i class="fa-solid ${n.icon}" style="color:var(--a);width:16px;text-align:center;"></i>
+                <span style="flex:1;font-size:.875rem;">${n.name}</span>
+                <span style="color:var(--tm);font-size:.8rem;">${n.distance}</span>
+                <button type="button" class="btn bd sm" onclick="deleteNearby(${aptId},${n.id})">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>`).join('');
+    }
+
+    async function addNearby() {
+        const id       = document.getElementById('eId').value;
+        const icon     = document.getElementById('nearbyIcon').value.trim();
+        const name     = document.getElementById('nearbyName').value.trim();
+        const distance = document.getElementById('nearbyDistance').value.trim();
+        if (!icon || !name || !distance) { toast('Заполните все поля', 'er'); return; }
+        try {
+            await api(`/apartments/${id}/nearby`, {
+                method: 'POST',
+                body: JSON.stringify({ icon, name, distance })
+            });
+            document.getElementById('nearbyIcon').value     = '';
+            document.getElementById('nearbyName').value     = '';
+            document.getElementById('nearbyDistance').value = '';
+            const a = await api(`/apartments/${id}`);
+            renderNearby(a.nearby || [], parseInt(id));
+            toast('Место добавлено');
+        } catch (err) { toast(err.message, 'er'); }
+    }
+
+    async function deleteNearby(aptId, nearbyId) {
+        try {
+            await api(`/apartments/${aptId}/nearby/${nearbyId}`, { method: 'DELETE' });
+            const a = await api(`/apartments/${aptId}`);
+            renderNearby(a.nearby || [], aptId);
+            toast('Место удалено');
         } catch (err) { toast(err.message, 'er'); }
     }
 

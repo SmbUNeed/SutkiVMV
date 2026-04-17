@@ -307,6 +307,32 @@ function openModal(apartmentId) {
 
     document.getElementById('apartmentModal').classList.add('open');
     document.body.style.overflow = 'hidden';
+
+    // Правила
+    const rulesEl = document.getElementById('modalRules');
+    rulesEl.innerHTML = (apt.rules && apt.rules.length)
+        ? apt.rules.map(r => `
+            <div class="modal-rule">
+                <i class="fa-solid ${r.icon}"></i>
+                <span>${r.text}</span>
+            </div>`).join('')
+        : '<p style="color:var(--ink-3);">Правила не указаны</p>';
+
+    // Рядом
+    const nearbyEl = document.getElementById('modalNearby');
+    nearbyEl.innerHTML = (apt.nearby && apt.nearby.length)
+        ? apt.nearby.map(n => `
+            <div class="modal-nearby">
+                <i class="fa-solid ${n.icon}"></i>
+                <span>${n.name}</span>
+                <span class="modal-nearby-dist">${n.distance}</span>
+            </div>`).join('')
+        : '<p style="color:var(--ink-3);">Не указано</p>';
+
+    // Сброс вкладки на Описание
+    switchTab('desc');
+    document.querySelectorAll('.modal-tab').forEach(el => el.classList.remove('active'));
+    document.querySelector('.modal-tab').classList.add('active');
 }
 
 function closeModal() {
@@ -473,6 +499,13 @@ function updateBookingSummary() {
     } else {
         el.style.display = 'none';
     }
+}
+
+function switchTab(tab) {
+    document.querySelectorAll('.modal-tab-content').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.modal-tab').forEach(el => el.classList.remove('active'));
+    document.getElementById(`tab-${tab}`).style.display = 'block';
+    event.target.classList.add('active');
 }
 
 // ── Инициализация ────────────────────────────────────────

@@ -248,6 +248,28 @@
                     </label>
                     <div id="previewEdit" class="pg"></div>
                 </div>
+                <hr class="dv">
+                <span class="fl"><i class="fa-solid fa-ban" style="color:var(--a);margin-right:5px;"></i>Правила</span>
+                <div id="editRules" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;"></div>
+                <div style="display:flex;gap:8px;margin-top:10px;">
+                    <input type="text" id="ruleIcon" placeholder="fa-ban" style="width:130px;">
+                    <input type="text" id="ruleText" placeholder="Текст правила" style="flex:1;">
+                    <button type="button" class="btn bp sm" onclick="addRule()">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+
+                <hr class="dv">
+                <span class="fl"><i class="fa-solid fa-location-dot" style="color:var(--a);margin-right:5px;"></i>Рядом</span>
+                <div id="editNearby" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;"></div>
+                <div style="display:flex;gap:8px;margin-top:10px;">
+                    <input type="text" id="nearbyIcon"     placeholder="fa-store"     style="width:130px;">
+                    <input type="text" id="nearbyName"     placeholder="Название"      style="flex:1;">
+                    <input type="text" id="nearbyDistance" placeholder="5 мин пешком"  style="width:140px;">
+                    <button type="button" class="btn bp sm" onclick="addNearby()">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
             </div>
             <div class="mfoot">
                 <button type="button" class="btn bg0" onclick="closeEdit()">Отмена</button>

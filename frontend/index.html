@@ -163,9 +163,22 @@
                 <h2 id="modalTitle"></h2>
                 <p class="modal-specs" id="modalSpecs"></p>
                 <div class="modal-amenities" id="modalAmenities"></div>
-                <div class="modal-description">
-                    <h3>Описание</h3>
+
+                <!-- Вкладки -->
+                <div class="modal-tabs">
+                    <button class="modal-tab active" onclick="switchTab('desc')">Описание</button>
+                    <button class="modal-tab" onclick="switchTab('rules')">Правила</button>
+                    <button class="modal-tab" onclick="switchTab('nearby')">Рядом</button>
+                </div>
+
+                <div class="modal-tab-content" id="tab-desc">
                     <p id="modalDesc"></p>
+                </div>
+                <div class="modal-tab-content" id="tab-rules" style="display:none;">
+                    <div id="modalRules"></div>
+                </div>
+                <div class="modal-tab-content" id="tab-nearby" style="display:none;">
+                    <div id="modalNearby"></div>
                 </div>
             </div>
             <div class="modal-right">
