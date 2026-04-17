@@ -20,8 +20,8 @@ public class ApartmentDto
     public List<GalleryItemDto> Gallery { get; set; } = [];
     public List<AmenityDto> Amenities { get; set; } = [];
     public List<BookingDto> Bookings { get; set; } = [];
-    public List<ApartmentRuleDto> Rules { get; set; } = [];
-    public List<ApartmentNearbyDto> Nearby { get; set; } = [];
+    public List<RuleDto> Rules { get; set; } = [];
+    public List<NearbyPlaceDto> Nearby { get; set; } = [];
 }
 public class CreateApartmentDto
 {
@@ -34,16 +34,14 @@ public class CreateApartmentDto
     [Range(1, 10000)] public decimal Area { get; set; }
     public bool IsActive { get; set; } = true;
 }
-
-public class ApartmentRuleDto
+public class RuleDto
 {
     public int Id { get; set; }
     public string Icon { get; set; } = "";
     public string Text { get; set; } = "";
-    public int Order { get; set; }
 }
 
-public class ApartmentNearbyDto
+public class NearbyPlaceDto
 {
     public int Id { get; set; }
     public string Icon { get; set; } = "";
@@ -55,7 +53,6 @@ public class CreateRuleDto
 {
     [Required] public string Icon { get; set; } = "";
     [Required] public string Text { get; set; } = "";
-    public int Order { get; set; }
 }
 
 public class CreateNearbyDto
@@ -64,6 +61,8 @@ public class CreateNearbyDto
     [Required] public string Name { get; set; } = "";
     [Required] public string Distance { get; set; } = "";
 }
+
+public record SetIdsDto(List<int> Ids);
 
 public class GalleryItemDto
 {

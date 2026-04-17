@@ -41,7 +41,7 @@ public class AmenitiesController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult> Delete(int id, CancellationToken ct)
     {
-        var amenity = await _context.Amenities.FindAsync(id);
+        var amenity = await _context.Amenities.FindAsync(id, ct);
         if (amenity == null) return NotFound();
         _context.Amenities.Remove(amenity);
         await _context.SaveChangesAsync(ct);

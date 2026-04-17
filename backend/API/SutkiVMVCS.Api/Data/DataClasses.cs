@@ -19,33 +19,51 @@ public class Apartment
     public ICollection<Booking>           Bookings           { get; set; } = [];
     public ICollection<ApartmentAmenity> ApartmentAmenities { get; set; } = [];
     public ICollection<ApartmentGallery>  ApartmentGallery   { get; set; } = [];
-    public ICollection<ApartmentRule>   Rules   { get; set; } = new List<ApartmentRule>();
-    public ICollection<ApartmentNearby> Nearby  { get; set; } = new List<ApartmentNearby>();
+    public ICollection<ApartmentRule> Rules { get; set; } = new List<ApartmentRule>();
+    public ICollection<ApartmentNearbyPlace> Nearby { get; set; } = new List<ApartmentNearbyPlace>();
 
     [NotMapped]
     public ApartmentGallery? MainImage => ApartmentGallery?.FirstOrDefault(g => g.IsMain);
 }
 
-public class ApartmentRule
+// Глобальное правило
+public class Rule
 {
-    public int    Id          { get; set; }
-    public int    ApartmentId { get; set; }
-    public string Icon        { get; set; } = ""; // fa-ban, fa-clock и т.д.
-    public string Text        { get; set; } = "";
-    public int    Order       { get; set; }       // порядок отображения
+    public int Id { get; set; }
+    public string Icon { get; set; } = "";
+    public string Text { get; set; } = "";
 
-    public Apartment Apartment { get; set; } = null!;
+    public ICollection<ApartmentRule> Apartments { get; set; } = new List<ApartmentRule>();
 }
 
-public class ApartmentNearby
+// Глобальное место рядом
+public class NearbyPlace
 {
-    public int    Id          { get; set; }
-    public int    ApartmentId { get; set; }
-    public string Icon        { get; set; } = ""; // fa-store, fa-plane и т.д.
-    public string Name        { get; set; } = ""; // "Магнит"
-    public string Distance    { get; set; } = ""; // "5 мин пешком"
+    public int Id { get; set; }
+    public string Icon { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string Distance { get; set; } = "";
+
+    public ICollection<ApartmentNearbyPlace> Apartments { get; set; } = new List<ApartmentNearbyPlace>();
+}
+
+// Связующие
+public class ApartmentRule
+{
+    public int ApartmentId { get; set; }
+    public int RuleId { get; set; }
 
     public Apartment Apartment { get; set; } = null!;
+    public Rule Rule { get; set; } = null!;
+}
+
+public class ApartmentNearbyPlace
+{
+    public int ApartmentId { get; set; }
+    public int NearbyPlaceId { get; set; }
+
+    public Apartment Apartment { get; set; } = null!;
+    public NearbyPlace NearbyPlace { get; set; } = null!;
 }
 
 public class Booking

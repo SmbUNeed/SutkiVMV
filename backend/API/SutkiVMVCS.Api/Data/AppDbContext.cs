@@ -15,8 +15,10 @@ public class AppDbContext : DbContext
     public DbSet<ApartmentAmenity>    ApartmentAmenities   => Set<ApartmentAmenity>();
     public DbSet<ApartmentGallery>    ApartmentGallery     => Set<ApartmentGallery>();
     public DbSet<PendingRegistration> PendingRegistrations => Set<PendingRegistration>();
-    public DbSet<ApartmentRule>       ApartmentRules       => Set<ApartmentRule>();
-    public DbSet<ApartmentNearby>     ApartmentNearby      => Set<ApartmentNearby>();
+    public DbSet<Rule> Rules => Set<Rule>();
+    public DbSet<NearbyPlace> NearbyPlaces => Set<NearbyPlace>();
+    public DbSet<ApartmentRule> ApartmentRules => Set<ApartmentRule>();
+    public DbSet<ApartmentNearbyPlace> ApartmentNearby => Set<ApartmentNearbyPlace>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -47,5 +49,11 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<Booking>()
             .HasIndex(b => b.ClientId);
+
+        modelBuilder.Entity<ApartmentRule>()
+            .HasKey(ar => new { ar.ApartmentId, ar.RuleId });
+
+        modelBuilder.Entity<ApartmentNearbyPlace>()
+            .HasKey(an => new { an.ApartmentId, an.NearbyPlaceId });
     }
 }
