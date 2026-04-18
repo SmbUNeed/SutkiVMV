@@ -376,6 +376,7 @@
             } else {
                 ph.innerHTML = '<p style="color:var(--tm);font-size:.85rem;">Нет фотографий</p>';
             }
+            switchEditTab('amenities', document.querySelector('.etab'));
         } catch (err) { toast(err.message, 'er'); closeEdit(); }
     }
 
