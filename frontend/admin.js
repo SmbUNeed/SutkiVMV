@@ -622,17 +622,20 @@
     }
 
     async function addRule() {
-        const id  = document.getElementById('eId').value;
-        const sel = document.getElementById('ruleSelect');
+        const id     = document.getElementById('eId').value;
+        const sel    = document.getElementById('ruleSelect');
         const ruleId = parseInt(sel?.value);
         if (!ruleId) { toast('Выберите правило', 'er'); return; }
         try {
+            const a        = await api(`/apartments/${id}`);
+            const current  = (a.rules || []).map(r => r.id);
+            if (current.includes(ruleId)) { toast('Правило уже добавлено', 'er'); return; }
             await api(`/apartments/${id}/rules`, {
                 method: 'POST',
-                body: JSON.stringify({ ruleId })
+                body: JSON.stringify({ Ids: [...current, ruleId] })
             });
-            const a = await api(`/apartments/${id}`);
-            renderRules(a.rules || [], parseInt(id));
+            const updated = await api(`/apartments/${id}`);
+            renderRules(updated.rules || [], parseInt(id));
             toast('Правило добавлено');
         } catch (err) { toast(err.message, 'er'); }
     }
@@ -681,9 +684,9 @@
         } catch (err) { toast(err.message, 'er'); }
     }
 
-    async function deleteNearby(aptId, nearbyId) {
+    async function deleteNearby(aptId, nearbyPlaceId) {
         try {
-            await api(`/apartments/${aptId}/nearby/${nearbyId}`, { method: 'DELETE' });
+            await api(`/apartments/${aptId}/nearby/${nearbyPlaceId}`, { method: 'DELETE' });
             const a = await api(`/apartments/${aptId}`);
             renderNearby(a.nearby || [], aptId);
             toast('Место удалено');
