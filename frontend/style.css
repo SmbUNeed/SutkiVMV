@@ -429,7 +429,7 @@ textarea { resize: vertical; min-height: 90px; }
     border-color: var(--primary);
 }
 .card-image { position: relative; height: 196px; overflow: hidden; background: var(--paper-3); }
-.card-image img { width: 100%; height: 100%; object-fit: contain; transition: transform 0.4s ease; }
+.card-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
 .apartment-card:hover .card-image img { transform: scale(1.06); }
 .no-photo-placeholder {
     width: 100%; height: 100%;
@@ -525,7 +525,7 @@ textarea { resize: vertical; min-height: 90px; }
 .main-img { width: 100%; height: 270px; object-fit: contain; background: var(--paper-3); border-radius: var(--r); margin-bottom: 10px; }
 .thumbnails { display: flex; gap: 7px; flex-wrap: wrap; }
 .thumbnails img {
-    width: 70px; height: 52px; object-fit: contain; background: var(--paper-3); border-radius: var(--r-xs);
+    width: 70px; height: 52px; object-fit: cover; border-radius: var(--r-xs);
     cursor: pointer; border: 2px solid transparent;
     transition: border-color var(--transition), opacity var(--transition); opacity: 0.65;
 }
@@ -947,3 +947,15 @@ textarea { resize: vertical; min-height: 90px; }
         padding: 18px;
     }
 }
+/* ── LIGHTBOX ─────────────────────────────────────────────── */
+.lightbox { display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,.92); align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+.lightbox.open { display:flex; }
+.lightbox-img { max-width:90vw; max-height:88vh; object-fit:contain; border-radius:8px; user-select:none; }
+.lightbox-close { position:fixed; top:18px; right:22px; background:rgba(255,255,255,.1); border:none; color:#fff; font-size:1.3rem; width:40px; height:40px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .15s; }
+.lightbox-close:hover { background:rgba(255,255,255,.22); }
+.lightbox-arrow { position:fixed; top:50%; transform:translateY(-50%); background:rgba(255,255,255,.1); border:none; color:#fff; font-size:1.2rem; width:46px; height:46px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .15s; }
+.lightbox-arrow:hover { background:rgba(255,255,255,.25); }
+.lightbox-arrow.prev { left:16px; }
+.lightbox-arrow.next { right:16px; }
+.lightbox-counter { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); color:rgba(255,255,255,.6); font-size:.85rem; font-family:inherit; }
+.main-img { cursor:zoom-in; }

@@ -162,10 +162,11 @@
                 </div>
                 <h2 id="modalTitle"></h2>
                 <p class="modal-specs" id="modalSpecs"></p>
+                <div class="modal-amenities" id="modalAmenities"></div>
+
                 <!-- Вкладки -->
                 <div class="modal-tabs">
                     <button class="modal-tab active" onclick="switchTab('desc')">Описание</button>
-                    <button class="modal-tab" onclick="switchTab('amenities')">Удобства</button>
                     <button class="modal-tab" onclick="switchTab('rules')">Правила</button>
                     <button class="modal-tab" onclick="switchTab('nearby')">Рядом</button>
                 </div>
@@ -173,14 +174,14 @@
                 <div class="modal-tab-content" id="tab-desc">
                     <p id="modalDesc"></p>
                 </div>
-                <div class="modal-tab-content" id="tab-amenities" style="display:none;">
-                    <div class="modal-amenities" id="modalAmenities"></div>
-                </div>
                 <div class="modal-tab-content" id="tab-rules" style="display:none;">
                     <div id="modalRules"></div>
                 </div>
                 <div class="modal-tab-content" id="tab-nearby" style="display:none;">
                     <div id="modalNearby"></div>
+                </div>
+                <div class="modal-tab-content" id="tab-amenities" style="display:none;">
+                    <div id="modalAmenities"></div>
                 </div>
 
             </div>
@@ -195,6 +196,15 @@
             </div>
         </div>
     </div>
+</div>
+
+<!-- ── LIGHTBOX ─────────────────────────────────────────── -->
+<div class="lightbox" id="lightbox" onclick="lightboxBgClick(event)">
+    <button class="lightbox-close" onclick="closeLightbox()"><i class="fa-solid fa-xmark"></i></button>
+    <button class="lightbox-arrow prev" onclick="lightboxStep(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+    <img class="lightbox-img" id="lightboxImg" src="" alt="">
+    <button class="lightbox-arrow next" onclick="lightboxStep(1)"><i class="fa-solid fa-chevron-right"></i></button>
+    <span class="lightbox-counter" id="lightboxCounter"></span>
 </div>
 
 <script src="auth.js" defer></script>

@@ -275,6 +275,15 @@ function openModal(apartmentId) {
     mainImg.style.display = 'block';
     thumbs.innerHTML = '';
 
+    const galleryUrls = (apt.gallery && apt.gallery.length)
+        ? apt.gallery.map(g => imgUrl(g.imagePath))
+        : [firstSrc];
+
+    mainImg.onclick = () => {
+        const currentIdx = galleryUrls.indexOf(mainImg.src) ?? 0;
+        openLightbox(galleryUrls, currentIdx < 0 ? 0 : currentIdx);
+    };
+
     if (apt.gallery && apt.gallery.length > 1) {
         apt.gallery.forEach(g => {
             const img   = document.createElement('img');
@@ -330,8 +339,9 @@ function openModal(apartmentId) {
         : '<p style="color:var(--ink-3);">Не указано</p>';
 
     // Сброс вкладки на Описание
-    const firstTab = document.querySelector('.modal-tab');
-    switchTab('desc', firstTab);
+    switchTab('desc');
+    document.querySelectorAll('.modal-tab').forEach(el => el.classList.remove('active'));
+    document.querySelector('.modal-tab').classList.add('active');
 }
 
 function closeModal() {
@@ -500,12 +510,11 @@ function updateBookingSummary() {
     }
 }
 
-function switchTab(tab, btn) {
+function switchTab(tab) {
     document.querySelectorAll('.modal-tab-content').forEach(el => el.style.display = 'none');
     document.querySelectorAll('.modal-tab').forEach(el => el.classList.remove('active'));
     document.getElementById(`tab-${tab}`).style.display = 'block';
-    const target = btn || (event && event.target);
-    if (target) target.classList.add('active');
+    event.target.classList.add('active');
 }
 
 // ── Инициализация ────────────────────────────────────────
@@ -525,3 +534,43 @@ async function init() {
 }
 
 init();
+
+// ── LIGHTBOX ──────────────────────────────────────────────
+let lightboxImages = [];
+let lightboxIndex  = 0;
+
+function openLightbox(images, startIndex) {
+    lightboxImages = images;
+    lightboxIndex  = startIndex;
+    renderLightbox();
+    document.getElementById('lightbox').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function lightboxBgClick(e) {
+    if (e.target === e.currentTarget) closeLightbox();
+}
+
+function lightboxStep(dir) {
+    lightboxIndex = (lightboxIndex + dir + lightboxImages.length) % lightboxImages.length;
+    renderLightbox();
+}
+
+function renderLightbox() {
+    document.getElementById('lightboxImg').src = lightboxImages[lightboxIndex];
+    document.getElementById('lightboxCounter').textContent =
+        lightboxImages.length > 1 ? `${lightboxIndex + 1} / ${lightboxImages.length}` : '';
+}
+
+document.addEventListener('keydown', e => {
+    const lb = document.getElementById('lightbox');
+    if (!lb.classList.contains('open')) return;
+    if (e.key === 'ArrowRight') lightboxStep(1);
+    if (e.key === 'ArrowLeft')  lightboxStep(-1);
+    if (e.key === 'Escape')     closeLightbox();
+});
