@@ -175,6 +175,30 @@ public class ApartmentsController : ControllerBase
         return NoContent();
     }
 
+    [HttpDelete("{id:int}/rules/{ruleId:int}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> RemoveRule(int id, int ruleId, CancellationToken ct)
+    {
+        var link = await _context.ApartmentRules
+            .FirstOrDefaultAsync(x => x.ApartmentId == id && x.RuleId == ruleId, ct);
+        if (link == null) return NotFound();
+        _context.ApartmentRules.Remove(link);
+        await _context.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    [HttpDelete("{id:int}/nearby/{nearbyPlaceId:int}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> RemoveNearby(int id, int nearbyPlaceId, CancellationToken ct)
+    {
+        var link = await _context.Set<ApartmentNearbyPlace>()
+            .FirstOrDefaultAsync(x => x.ApartmentId == id && x.NearbyPlaceId == nearbyPlaceId, ct);
+        if (link == null) return NotFound();
+        _context.Set<ApartmentNearbyPlace>().Remove(link);
+        await _context.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
     [HttpPatch("restore/{id:int}")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult> Restore(int id, CancellationToken ct)

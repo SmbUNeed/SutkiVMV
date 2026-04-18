@@ -759,11 +759,10 @@
 
     async function createNearbyPlace(e) {
         e.preventDefault();
-        const icon     = document.getElementById('nNewIcon').value.trim();
-        const name     = document.getElementById('nNewName').value.trim();
-        const distance = document.getElementById('nNewDist').value.trim();
+        const icon = document.getElementById('nNewIcon').value.trim();
+        const name = document.getElementById('nNewName').value.trim();
         try {
-            await api('/apartments/nearby-places', { method: 'POST', body: JSON.stringify({ icon, name, distance }) });
+            await api('/apartments/nearby-places', { method: 'POST', body: JSON.stringify({ icon, name }) });
             toast('Место добавлено');
             document.getElementById('formNearby').reset();
             await loadNearbyPlacesCatalog();
