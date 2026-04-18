@@ -139,7 +139,6 @@ public class ApartmentsController : ControllerBase
         return NoContent();
     }
 
-    // Прикрепить правила к квартире (полная замена)
     [HttpPost("{id:int}/rules")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult> SetRules(int id, [FromBody] SetIdsDto dto, CancellationToken ct)
@@ -158,21 +157,20 @@ public class ApartmentsController : ControllerBase
         return NoContent();
     }
 
-    // Прикрепить места к квартире (полная замена)
     [HttpPost("{id:int}/nearby")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult> SetNearby(int id, [FromBody] SetIdsDto dto, CancellationToken ct)
+    public async Task<IActionResult> AddNearbyToApartment(int id, [FromBody] AddNearbyToApartmentDto dto, CancellationToken ct)
     {
-        if (!await _context.Apartments.AnyAsync(a => a.Id == id && !a.IsDeleted, ct))
-            return NotFound();
+        var exists = await _context.Set<ApartmentNearbyPlace>()
+            .AnyAsync(x => x.ApartmentId == id && x.NearbyPlaceId == dto.NearbyPlaceId, ct);
+        if (exists) return Conflict("Место уже добавлено");
 
-        var old = await _context.ApartmentNearby.Where(an => an.ApartmentId == id).ToListAsync(ct);
-        _context.ApartmentNearby.RemoveRange(old);
-
-        foreach (var nearbyId in dto.Ids.Distinct())
-            if (await _context.NearbyPlaces.AnyAsync(n => n.Id == nearbyId, ct))
-                _context.ApartmentNearby.Add(new ApartmentNearbyPlace { ApartmentId = id, NearbyPlaceId = nearbyId });
-
+        _context.Set<ApartmentNearbyPlace>().Add(new ApartmentNearbyPlace
+        {
+            ApartmentId = id,
+            NearbyPlaceId = dto.NearbyPlaceId,
+            Distance = dto.Distance
+        });
         await _context.SaveChangesAsync(ct);
         return NoContent();
     }
@@ -250,21 +248,21 @@ public class ApartmentsController : ControllerBase
     // ═══════════════════════════════════════════════════════════════════
 
     [HttpGet("nearby-places")]
-    [Authorize(Roles = "Admin")]
+    [Authorize (Roles = "Admin")]
     public async Task<ActionResult<IEnumerable<NearbyPlaceDto>>> GetAllNearbyPlaces()
     {
         var nearby = await _context.NearbyPlaces.AsNoTracking().ToListAsync();
-        return Ok(nearby.Select(n => new NearbyPlaceDto { Id = n.Id, Icon = n.Icon, Name = n.Name, Distance = n.Distance }));
+        return Ok(nearby.Select(n => new NearbyPlaceDto { Id = n.Id, Icon = n.Icon, Name = n.Name }));
     }
 
     [HttpPost("nearby-places")]
-    [Authorize(Roles = "Admin")]
+    [Authorize (Roles = "Admin")]
     public async Task<ActionResult<NearbyPlaceDto>> CreateNearbyPlace([FromBody] CreateNearbyDto dto, CancellationToken ct)
     {
-        var place = new NearbyPlace { Icon = dto.Icon, Name = dto.Name, Distance = dto.Distance };
+        var place = new NearbyPlace { Icon = dto.Icon, Name = dto.Name };
         _context.NearbyPlaces.Add(place);
         await _context.SaveChangesAsync(ct);
-        return Ok(new NearbyPlaceDto { Id = place.Id, Icon = place.Icon, Name = place.Name, Distance = place.Distance });
+        return Ok(new NearbyPlaceDto { Id = place.Id, Icon = place.Icon, Name = place.Name });
     }
 
     [HttpDelete("nearby-places/{nearbyId:int}")]
@@ -310,13 +308,11 @@ public class ApartmentsController : ControllerBase
                      .Select(ar => new RuleDto { Id = ar.Rule.Id, Icon = ar.Rule.Icon, Text = ar.Rule.Text })
                      .ToList(),
         Nearby = a.Nearby
-                     .Select(an => new NearbyPlaceDto
-                     {
+                     .Select(an => new NearbyPlaceDto {
                          Id = an.NearbyPlace.Id,
                          Icon = an.NearbyPlace.Icon,
                          Name = an.NearbyPlace.Name,
-                         Distance = an.NearbyPlace.Distance
-                     })
-                     .ToList()
-    };
+                         Distance = an.Distance
+                     }).ToList()
+                     };
 }

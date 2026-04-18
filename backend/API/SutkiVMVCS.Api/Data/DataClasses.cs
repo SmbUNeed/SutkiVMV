@@ -42,9 +42,8 @@ public class NearbyPlace
     public int Id { get; set; }
     public string Icon { get; set; } = "";
     public string Name { get; set; } = "";
-    public string Distance { get; set; } = "";
 
-    public ICollection<ApartmentNearbyPlace> Apartments { get; set; } = new List<ApartmentNearbyPlace>();
+    public ICollection<ApartmentNearbyPlace> Apartments { get; set; } = [];
 }
 
 // Связующие
@@ -61,6 +60,7 @@ public class ApartmentNearbyPlace
 {
     public int ApartmentId { get; set; }
     public int NearbyPlaceId { get; set; }
+    public string Distance { get; set; } = "";
 
     public Apartment Apartment { get; set; } = null!;
     public NearbyPlace NearbyPlace { get; set; } = null!;

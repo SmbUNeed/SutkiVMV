@@ -41,6 +41,12 @@ public class RuleDto
     public string Text { get; set; } = "";
 }
 
+public class CreateRuleDto
+{
+    [Required] public string Icon { get; set; } = "";
+    [Required] public string Text { get; set; } = "";
+}
+
 public class NearbyPlaceDto
 {
     public int Id { get; set; }
@@ -49,17 +55,16 @@ public class NearbyPlaceDto
     public string Distance { get; set; } = "";
 }
 
-public class CreateRuleDto
-{
-    [Required] public string Icon { get; set; } = "";
-    [Required] public string Text { get; set; } = "";
-}
-
 public class CreateNearbyDto
 {
-    [Required] public string Icon { get; set; } = "";
-    [Required] public string Name { get; set; } = "";
-    [Required] public string Distance { get; set; } = "";
+    public string Icon { get; set; } = "";
+    public string Name { get; set; } = "";
+}
+
+public class AddNearbyToApartmentDto
+{
+    public int NearbyPlaceId { get; set; }
+    public string Distance { get; set; } = "";
 }
 
 public record SetIdsDto(List<int> Ids);
