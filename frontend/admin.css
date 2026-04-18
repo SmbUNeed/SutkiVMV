@@ -153,6 +153,15 @@
         .es i{font-size:2.5rem;margin-bottom:14px;opacity:.3;display:block}
         .ld{text-align:center;padding:32px;color:var(--tm)}
         hr.dv{border:none;border-top:1px solid var(--b);margin:20px 0}
+
+        /* ── EDIT TABS ── */
+        .etabs{display:flex;gap:4px;margin-top:4px;border-bottom:1px solid var(--b);padding-bottom:0}
+        .etab{background:none;border:none;border-bottom:2px solid transparent;padding:8px 14px;font-size:.8rem;font-weight:700;color:var(--tm);cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;transition:all .15s;margin-bottom:-1px;border-radius:6px 6px 0 0}
+        .etab:hover{color:var(--t);background:rgba(255,255,255,.03)}
+        .etab.active{color:var(--a);border-bottom-color:var(--a);background:var(--ag)}
+        .etab i{font-size:.75rem}
+        .etab-pane{display:none;padding-top:16px}
+        .etab-pane.active{display:block}
 /* ── MOBILE ── */
 .sb-toggle {
     display: none;
