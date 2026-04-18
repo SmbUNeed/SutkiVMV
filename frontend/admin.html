@@ -51,7 +51,7 @@
             <i class="fa-solid fa-users"></i> Клиенты
         </div>
         <div class="ni" onclick="showSec('rules',this)">
-            <i class="fa-solid fa-ban"></i> Правила
+            <i class="fa-solid fa-blocked"></i> Правила
         </div>
         <div class="ni" onclick="showSec('nearby',this)">
             <i class="fa-solid fa-map"></i> Рядом
@@ -317,8 +317,7 @@
                 <span class="fl"><i class="fa-solid fa-ban" style="color:var(--a);margin-right:5px;"></i>Правила</span>
                 <div id="editRules" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;"></div>
                 <div style="display:flex;gap:8px;margin-top:10px;">
-                    <input type="text" id="ruleIcon" placeholder="fa-ban" style="width:130px;">
-                    <input type="text" id="ruleText" placeholder="Текст правила" style="flex:1;">
+                    <select id="ruleSelect" style="flex:1;"></select>
                     <button type="button" class="btn bp sm" onclick="addRule()">
                         <i class="fa-solid fa-plus"></i>
                     </button>
@@ -328,9 +327,8 @@
                 <span class="fl"><i class="fa-solid fa-location-dot" style="color:var(--a);margin-right:5px;"></i>Рядом</span>
                 <div id="editNearby" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;"></div>
                 <div style="display:flex;gap:8px;margin-top:10px;">
-                    <input type="text" id="nearbyIcon"     placeholder="fa-store"     style="width:130px;">
-                    <input type="text" id="nearbyName"     placeholder="Название"      style="flex:1;">
-                    <input type="text" id="nearbyDistance" placeholder="5 мин пешком"  style="width:140px;">
+                    <select id="nearbySelect" style="flex:1;"></select>
+                    <input type="text" id="nearbyDistance" placeholder="5 мин пешком" style="width:150px;">
                     <button type="button" class="btn bp sm" onclick="addNearby()">
                         <i class="fa-solid fa-plus"></i>
                     </button>

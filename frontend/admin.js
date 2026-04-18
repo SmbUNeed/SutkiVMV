@@ -81,6 +81,40 @@
 
     /* ── УДОБСТВА ────────────────────────────────────────── */
     let amenities = [];
+    let rulesCatalog = [];
+    let nearbyPlacesCatalog = [];
+
+    async function loadRulesCatalog() {
+        try { rulesCatalog = await api('/apartments/rules'); }
+        catch { rulesCatalog = []; }
+    }
+
+    async function loadNearbyPlacesCatalog() {
+        try { nearbyPlacesCatalog = await api('/apartments/nearby-places'); }
+        catch { nearbyPlacesCatalog = []; }
+    }
+
+    function populateRuleSelect(selectedId = null) {
+        const sel = document.getElementById('ruleSelect');
+        if (!sel) return;
+        sel.innerHTML = rulesCatalog.length
+            ? rulesCatalog.map(r =>
+                `<option value="${r.id}" ${r.id === selectedId ? 'selected' : ''}>
+                    ${r.text}
+                </option>`).join('')
+            : '<option value="" disabled>Нет правил в каталоге</option>';
+    }
+
+    function populateNearbySelect(selectedId = null) {
+        const sel = document.getElementById('nearbySelect');
+        if (!sel) return;
+        sel.innerHTML = nearbyPlacesCatalog.length
+            ? nearbyPlacesCatalog.map(n =>
+                `<option value="${n.id}" ${n.id === selectedId ? 'selected' : ''}>
+                    ${n.name}
+                </option>`).join('')
+            : '<option value="" disabled>Нет мест в каталоге</option>';
+    }
 
     async function loadAmenities() {
         try { amenities = await api('/amenities'); }
@@ -316,8 +350,10 @@
             const selIds = (a.amenities || []).map(x => x.id);
             renderAmen('amenEdit', selIds);
             // Правила
+            populateRuleSelect();
             renderRules(a.rules || [], a.id);
             // Рядом
+            populateNearbySelect();
             renderNearby(a.nearby || [], a.id);
             // Фото
             const ph = document.getElementById('editPhotos');
@@ -586,17 +622,15 @@
     }
 
     async function addRule() {
-        const id   = document.getElementById('eId').value;
-        const icon = document.getElementById('ruleIcon').value.trim();
-        const text = document.getElementById('ruleText').value.trim();
-        if (!icon || !text) { toast('Заполните иконку и текст', 'er'); return; }
+        const id  = document.getElementById('eId').value;
+        const sel = document.getElementById('ruleSelect');
+        const ruleId = parseInt(sel?.value);
+        if (!ruleId) { toast('Выберите правило', 'er'); return; }
         try {
             await api(`/apartments/${id}/rules`, {
                 method: 'POST',
-                body: JSON.stringify({ icon, text, order: 0 })
+                body: JSON.stringify({ ruleId })
             });
-            document.getElementById('ruleIcon').value = '';
-            document.getElementById('ruleText').value = '';
             const a = await api(`/apartments/${id}`);
             renderRules(a.rules || [], parseInt(id));
             toast('Правило добавлено');
@@ -629,18 +663,17 @@
     }
 
     async function addNearby() {
-        const id       = document.getElementById('eId').value;
-        const icon     = document.getElementById('nearbyIcon').value.trim();
-        const name     = document.getElementById('nearbyName').value.trim();
-        const distance = document.getElementById('nearbyDistance').value.trim();
-        if (!icon || !name || !distance) { toast('Заполните все поля', 'er'); return; }
+        const id           = document.getElementById('eId').value;
+        const sel          = document.getElementById('nearbySelect');
+        const nearbyPlaceId = parseInt(sel?.value);
+        const distance     = document.getElementById('nearbyDistance').value.trim();
+        if (!nearbyPlaceId) { toast('Выберите место', 'er'); return; }
+        if (!distance)      { toast('Укажите расстояние', 'er'); return; }
         try {
             await api(`/apartments/${id}/nearby`, {
                 method: 'POST',
-                body: JSON.stringify({ icon, name, distance })
+                body: JSON.stringify({ nearbyPlaceId, distance })
             });
-            document.getElementById('nearbyIcon').value     = '';
-            document.getElementById('nearbyName').value     = '';
             document.getElementById('nearbyDistance').value = '';
             const a = await api(`/apartments/${id}`);
             renderNearby(a.nearby || [], parseInt(id));
@@ -687,6 +720,7 @@
             await api('/apartments/rules', { method: 'POST', body: JSON.stringify({ icon, text }) });
             toast('Правило добавлено');
             document.getElementById('formRule').reset();
+            await loadRulesCatalog();
             loadRules();
         } catch (err) { toast(err.message, 'er'); }
     }
@@ -732,6 +766,7 @@
             await api('/apartments/nearby-places', { method: 'POST', body: JSON.stringify({ icon, name, distance }) });
             toast('Место добавлено');
             document.getElementById('formNearby').reset();
+            await loadNearbyPlacesCatalog();
             loadNearby();
         } catch (err) { toast(err.message, 'er'); }
     }
@@ -809,5 +844,7 @@
         }
 
         await loadAmenities();
+        await loadRulesCatalog();
+        await loadNearbyPlacesCatalog();
         renderAmen('amenAdd', []);
     })();
