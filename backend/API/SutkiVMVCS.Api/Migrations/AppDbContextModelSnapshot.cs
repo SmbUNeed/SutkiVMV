@@ -128,61 +128,36 @@ namespace SutkiVMVCS.Migrations
                     b.ToTable("ApartmentGallery");
                 });
 
-            modelBuilder.Entity("SutkiVMV.Models.ApartmentNearby", b =>
+            modelBuilder.Entity("SutkiVMV.Models.ApartmentNearbyPlace", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<int>("ApartmentId")
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ApartmentId")
+                    b.Property<int>("NearbyPlaceId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Distance")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Icon")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.HasKey("ApartmentId", "NearbyPlaceId");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ApartmentId");
+                    b.HasIndex("NearbyPlaceId");
 
                     b.ToTable("ApartmentNearby");
                 });
 
             modelBuilder.Entity("SutkiVMV.Models.ApartmentRule", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
                     b.Property<int>("ApartmentId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Icon")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Order")
+                    b.Property<int>("RuleId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.HasKey("ApartmentId", "RuleId");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("ApartmentId");
+                    b.HasIndex("RuleId");
 
                     b.ToTable("ApartmentRules");
                 });
@@ -262,6 +237,27 @@ namespace SutkiVMVCS.Migrations
                     b.ToTable("Clients");
                 });
 
+            modelBuilder.Entity("SutkiVMV.Models.NearbyPlace", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("NearbyPlaces");
+                });
+
             modelBuilder.Entity("SutkiVMV.Models.PendingRegistration", b =>
                 {
                     b.Property<int>("Id")
@@ -296,6 +292,27 @@ namespace SutkiVMVCS.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("PendingRegistrations");
+                });
+
+            modelBuilder.Entity("SutkiVMV.Models.Rule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Rules");
                 });
 
             modelBuilder.Entity("SutkiVMV.Models.User", b =>
@@ -377,7 +394,7 @@ namespace SutkiVMVCS.Migrations
                     b.Navigation("Apartment");
                 });
 
-            modelBuilder.Entity("SutkiVMV.Models.ApartmentNearby", b =>
+            modelBuilder.Entity("SutkiVMV.Models.ApartmentNearbyPlace", b =>
                 {
                     b.HasOne("SutkiVMV.Models.Apartment", "Apartment")
                         .WithMany("Nearby")
@@ -385,7 +402,15 @@ namespace SutkiVMVCS.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("SutkiVMV.Models.NearbyPlace", "NearbyPlace")
+                        .WithMany("Apartments")
+                        .HasForeignKey("NearbyPlaceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Apartment");
+
+                    b.Navigation("NearbyPlace");
                 });
 
             modelBuilder.Entity("SutkiVMV.Models.ApartmentRule", b =>
@@ -396,7 +421,15 @@ namespace SutkiVMVCS.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("SutkiVMV.Models.Rule", "Rule")
+                        .WithMany("Apartments")
+                        .HasForeignKey("RuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Apartment");
+
+                    b.Navigation("Rule");
                 });
 
             modelBuilder.Entity("SutkiVMV.Models.Booking", b =>
@@ -444,6 +477,16 @@ namespace SutkiVMVCS.Migrations
             modelBuilder.Entity("SutkiVMV.Models.Client", b =>
                 {
                     b.Navigation("Bookings");
+                });
+
+            modelBuilder.Entity("SutkiVMV.Models.NearbyPlace", b =>
+                {
+                    b.Navigation("Apartments");
+                });
+
+            modelBuilder.Entity("SutkiVMV.Models.Rule", b =>
+                {
+                    b.Navigation("Apartments");
                 });
 #pragma warning restore 612, 618
         }
