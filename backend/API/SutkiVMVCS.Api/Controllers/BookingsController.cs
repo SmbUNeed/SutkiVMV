@@ -97,6 +97,7 @@ public class BookingsController : ControllerBase
             EndDate = dto.EndDate.ToUniversalTime(),
             TotalPrice = apartment.PricePerNight * nights,
             Status = "Pending",
+            Source = "Вручную",
             CreatedAt = DateTime.UtcNow.ToUniversalTime()
         };
 
@@ -115,6 +116,7 @@ public class BookingsController : ControllerBase
             EndDate = booking.EndDate,
             TotalPrice = booking.TotalPrice,
             Status = booking.Status,
+            Source = booking.Source,
             CreatedAt = booking.CreatedAt
         });
     }
@@ -179,6 +181,7 @@ public class BookingsController : ControllerBase
         EndDate = b.EndDate,
         TotalPrice = b.TotalPrice,
         Status = b.Status,
+        Source = b.Source,
         CreatedAt = b.CreatedAt
     };
 }
