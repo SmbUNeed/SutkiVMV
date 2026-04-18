@@ -782,6 +782,13 @@
         } catch (err) { toast(err.message, 'er'); }
     }
 
+    function switchEditTab(pane, btn) {
+        document.querySelectorAll('.etab-pane').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.etab').forEach(el => el.classList.remove('active'));
+        document.getElementById(`epane-${pane}`).classList.add('active');
+        btn.classList.add('active');
+    }
+
     /* ── INIT ────────────────────────────────────────────── */
     (async () => {
         // ── Защита страницы: проверяем токен и роль ──────────

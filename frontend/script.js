@@ -330,9 +330,8 @@ function openModal(apartmentId) {
         : '<p style="color:var(--ink-3);">Не указано</p>';
 
     // Сброс вкладки на Описание
-    switchTab('desc');
-    document.querySelectorAll('.modal-tab').forEach(el => el.classList.remove('active'));
-    document.querySelector('.modal-tab').classList.add('active');
+    const firstTab = document.querySelector('.modal-tab');
+    switchTab('desc', firstTab);
 }
 
 function closeModal() {
@@ -501,11 +500,12 @@ function updateBookingSummary() {
     }
 }
 
-function switchTab(tab) {
+function switchTab(tab, btn) {
     document.querySelectorAll('.modal-tab-content').forEach(el => el.style.display = 'none');
     document.querySelectorAll('.modal-tab').forEach(el => el.classList.remove('active'));
     document.getElementById(`tab-${tab}`).style.display = 'block';
-    event.target.classList.add('active');
+    const target = btn || (event && event.target);
+    if (target) target.classList.add('active');
 }
 
 // ── Инициализация ────────────────────────────────────────

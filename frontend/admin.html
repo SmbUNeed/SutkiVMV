@@ -295,42 +295,65 @@
                     <div class="fv sp2"><label>Описание</label><textarea id="eDesc"></textarea></div>
                 </div>
                 <hr class="dv">
-                <span class="fl"><i class="fa-solid fa-star" style="color:var(--a);margin-right:5px;"></i>Удобства</span>
-                <div id="amenEdit" style="display:flex;flex-wrap:wrap;gap:8px;">
-                    <span style="color:var(--tm);font-size:.85rem;">Загрузка...</span>
-                </div>
-                <hr class="dv">
-                <span class="fl"><i class="fa-solid fa-images" style="color:var(--a);margin-right:5px;"></i>Фотографии</span>
-                <div id="editPhotos" class="pg">
-                    <p style="color:var(--tm);font-size:.85rem;">Нет фотографий</p>
-                </div>
-                <div style="margin-top:14px;">
-                    <label class="up" for="eFiles" style="padding:14px;">
-                        <i class="fa-solid fa-plus" style="margin-right:6px;"></i> Добавить новые фотографии
-                        <input type="file" id="eFiles" multiple accept="image/*"
-                               onchange="previewPhotos(event,'previewEdit',false)">
-                    </label>
-                    <div id="previewEdit" class="pg"></div>
-                </div>
-                <hr class="dv">
-                <span class="fl"><i class="fa-solid fa-ban" style="color:var(--a);margin-right:5px;"></i>Правила</span>
-                <div id="editRules" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;"></div>
-                <div style="display:flex;gap:8px;margin-top:10px;">
-                    <select id="ruleSelect" style="flex:1;"></select>
-                    <button type="button" class="btn bp sm" onclick="addRule()">
-                        <i class="fa-solid fa-plus"></i>
+                <!-- Табы -->
+                <div class="etabs">
+                    <button type="button" class="etab active" onclick="switchEditTab('amenities',this)">
+                        <i class="fa-solid fa-star"></i> Удобства
+                    </button>
+                    <button type="button" class="etab" onclick="switchEditTab('photos',this)">
+                        <i class="fa-solid fa-images"></i> Фото
+                    </button>
+                    <button type="button" class="etab" onclick="switchEditTab('rules',this)">
+                        <i class="fa-solid fa-ban"></i> Правила
+                    </button>
+                    <button type="button" class="etab" onclick="switchEditTab('nearby',this)">
+                        <i class="fa-solid fa-location-dot"></i> Рядом
                     </button>
                 </div>
 
-                <hr class="dv">
-                <span class="fl"><i class="fa-solid fa-location-dot" style="color:var(--a);margin-right:5px;"></i>Рядом</span>
-                <div id="editNearby" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;"></div>
-                <div style="display:flex;gap:8px;margin-top:10px;">
-                    <select id="nearbySelect" style="flex:1;"></select>
-                    <input type="text" id="nearbyDistance" placeholder="5 мин пешком" style="width:150px;">
-                    <button type="button" class="btn bp sm" onclick="addNearby()">
-                        <i class="fa-solid fa-plus"></i>
-                    </button>
+                <!-- Удобства -->
+                <div class="etab-pane active" id="epane-amenities">
+                    <div id="amenEdit" style="display:flex;flex-wrap:wrap;gap:8px;padding-top:4px;">
+                        <span style="color:var(--tm);font-size:.85rem;">Загрузка...</span>
+                    </div>
+                </div>
+
+                <!-- Фото -->
+                <div class="etab-pane" id="epane-photos">
+                    <div id="editPhotos" class="pg">
+                        <p style="color:var(--tm);font-size:.85rem;">Нет фотографий</p>
+                    </div>
+                    <div style="margin-top:14px;">
+                        <label class="up" for="eFiles" style="padding:14px;">
+                            <i class="fa-solid fa-plus" style="margin-right:6px;"></i> Добавить фотографии
+                            <input type="file" id="eFiles" multiple accept="image/*"
+                                   onchange="previewPhotos(event,'previewEdit',false)">
+                        </label>
+                        <div id="previewEdit" class="pg"></div>
+                    </div>
+                </div>
+
+                <!-- Правила -->
+                <div class="etab-pane" id="epane-rules">
+                    <div id="editRules" style="display:flex;flex-direction:column;gap:8px;margin-top:4px;"></div>
+                    <div style="display:flex;gap:8px;margin-top:10px;">
+                        <select id="ruleSelect" style="flex:1;"></select>
+                        <button type="button" class="btn bp sm" onclick="addRule()">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Рядом -->
+                <div class="etab-pane" id="epane-nearby">
+                    <div id="editNearby" style="display:flex;flex-direction:column;gap:8px;margin-top:4px;"></div>
+                    <div style="display:flex;gap:8px;margin-top:10px;">
+                        <select id="nearbySelect" style="flex:1;"></select>
+                        <input type="text" id="nearbyDistance" placeholder="5 мин пешком" style="width:150px;">
+                        <button type="button" class="btn bp sm" onclick="addNearby()">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="mfoot">
