@@ -19,7 +19,7 @@ public class PhotosController : ControllerBase
     public PhotosController(AppDbContext context, UploadSettings upload)
     {
         _context = context;
-        _uploadRoot = upload.UploadPath;
+        _uploadRoot = upload.ApartmentsUploadPath;
     }
 
     // POST api/apartments/{aptId}/photos

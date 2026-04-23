@@ -42,8 +42,6 @@ public class NearbyPlace
     public int Id { get; set; }
     public string Icon { get; set; } = "";
     public string Name { get; set; } = "";
-    public int? WikiPlaceId { get; set; }
-    public WikiPlace? WikiPlace { get; set; }
 
     public ICollection<ApartmentNearbyPlace> Apartments { get; set; } = [];
 }
@@ -165,6 +163,7 @@ public class WikiPlace
     public string Description { get; set; } = "";
     public string PhotoPath { get; set; } = "";
     public WikiPlaceType Type { get; set; }
+    public int? NearbyPlaceId { get; set; }
     public NearbyPlace? NearbyPlace { get; set; }
 }
 

@@ -1,3 +1,4 @@
+using SutkiVMV.Models;
 using System.ComponentModel.DataAnnotations;
 
 namespace SutkiVMV.ModelsDTO;
@@ -68,21 +69,35 @@ public class AddNearbyToApartmentDto
     public string Distance { get; set; } = "";
 }
 
-public class WikiPlaceConnectToNearbyPlaceDto
+public class WikiPlaceDto
 {
-    public int NearbyPlaceId { get; set; }
-    public int WikiPlaceId { get; set; }
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public string Description { get; set; } = "";
+    public string PhotoPath { get; set; } = "";
+    public WikiPlaceType Type { get; set; }
+    public int? NearbyPlaceId { get; set; }
+
+    public List<ApartmentDto> NearbyApartments { get; set; } = [];
 }
 
 public class CreateWikiPlaceDto
 {
-    public string Name { get; set; } = "";
-    public string Description { get; set; } = "";
-    public int? NearbyId { get; set; }
-    public IFormFile? Photo { get; set; }
-    public string Type { get; set; } = "";
+    [Required] public string Name { get; set; } = "";
+    [Required] public string Description { get; set; } = "";
+    public string PhotoPath { get; set; } = "";
+    [Required] public WikiPlaceType Type { get; set; }
+    public int? NearbyPlaceId { get; set; }
 }
 
+public class UpdateWikiPlaceDto
+{
+    [Required] public string Name { get; set; } = "";
+    [Required] public string Description { get; set; } = "";
+    public string PhotoPath { get; set; } = "";
+    [Required] public WikiPlaceType Type { get; set; }
+    public int? NearbyPlaceId { get; set; }
+}
 public record SetIdsDto(List<int> Ids);
 
 public class GalleryItemDto

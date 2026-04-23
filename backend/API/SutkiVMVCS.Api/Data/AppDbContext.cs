@@ -19,7 +19,7 @@ public class AppDbContext : DbContext
     public DbSet<NearbyPlace>          NearbyPlaces         => Set<NearbyPlace>();
     public DbSet<ApartmentRule>        ApartmentRules       => Set<ApartmentRule>();
     public DbSet<ApartmentNearbyPlace> ApartmentNearby     => Set<ApartmentNearbyPlace>();
-    public DbSet<WikiPlace>            WikiPlace            => Set<WikiPlace>();
+    public DbSet<WikiPlace>            WikiPlaces           => Set<WikiPlace>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

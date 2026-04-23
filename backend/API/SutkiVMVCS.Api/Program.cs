@@ -21,12 +21,17 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // ── File uploads ──────────────────────────────────────────────────────
-var uploadRelPath = builder.Configuration["Storage:UploadPath"]
+var apartmentsUploadRelPath = builder.Configuration["Storage:ApartmentsUploadPath"]
     ?? "../../../../data/uploads";
-var uploadAbsPath = Path.GetFullPath(
-    Path.Combine(builder.Environment.ContentRootPath, uploadRelPath));
-Directory.CreateDirectory(uploadAbsPath);
-builder.Services.AddSingleton(new UploadSettings(uploadAbsPath));
+var apartmentsUploadAbsPath = Path.GetFullPath(
+    Path.Combine(builder.Environment.ContentRootPath, apartmentsUploadRelPath));
+Directory.CreateDirectory(apartmentsUploadAbsPath);
+var wikiUploadRelPath = builder.Configuration["Storage:WikiUploadPath"]
+    ?? "../../../../data/wiki_places";
+var wikiUploadAbsPath = Path.GetFullPath(
+    Path.Combine(builder.Environment.ContentRootPath, apartmentsUploadRelPath));
+Directory.CreateDirectory(wikiUploadAbsPath);
+builder.Services.AddSingleton(new UploadSettings(apartmentsUploadAbsPath, wikiUploadAbsPath));
 
 // ═══════════════════════════════════════════════════════════════════════
 //  AUTHENTICATION & AUTHORISATION
@@ -147,8 +152,14 @@ app.UseStaticFiles();
 
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider        = new PhysicalFileProvider(uploadAbsPath),
+    FileProvider        = new PhysicalFileProvider(apartmentsUploadAbsPath),
     RequestPath         = "/uploads",
+    ContentTypeProvider = new FileExtensionContentTypeProvider()
+});
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider        = new PhysicalFileProvider(wikiUploadAbsPath),
+    RequestPath         = "/wiki_places",
     ContentTypeProvider = new FileExtensionContentTypeProvider()
 });
 
@@ -169,4 +180,4 @@ app.Run();
 //  RECORDS
 // ═══════════════════════════════════════════════════════════════════════
 
-public record UploadSettings(string UploadPath);
+public record UploadSettings(string ApartmentsUploadPath, string WikiUploadPath);
