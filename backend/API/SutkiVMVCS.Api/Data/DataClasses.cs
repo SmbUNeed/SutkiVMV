@@ -42,6 +42,8 @@ public class NearbyPlace
     public int Id { get; set; }
     public string Icon { get; set; } = "";
     public string Name { get; set; } = "";
+    public int? WikiPlaceId { get; set; }
+    public WikiPlace? WikiPlace { get; set; }
 
     public ICollection<ApartmentNearbyPlace> Apartments { get; set; } = [];
 }
@@ -155,3 +157,15 @@ public class PendingRegistration
     public string Token { get; set; } = "";
     public DateTime ExpiresAt { get; set; }
 }
+
+public class WikiPlace
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public string Description { get; set; } = "";
+    public string PhotoPath { get; set; } = "";
+    public WikiPlaceType Type { get; set; }
+    public NearbyPlace? NearbyPlace { get; set; }
+}
+
+public enum WikiPlaceType { Attraction, Nature, Transport, Food, Shopping, Resort, Other }

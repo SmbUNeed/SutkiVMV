@@ -7,18 +7,19 @@ public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-    public DbSet<Apartment>           Apartments           => Set<Apartment>();
-    public DbSet<Booking>             Bookings             => Set<Booking>();
-    public DbSet<Amenity>             Amenities            => Set<Amenity>();
-    public DbSet<Client>              Clients              => Set<Client>();
-    public DbSet<User>                Users                => Set<User>();
-    public DbSet<ApartmentAmenity>    ApartmentAmenities   => Set<ApartmentAmenity>();
-    public DbSet<ApartmentGallery>    ApartmentGallery     => Set<ApartmentGallery>();
-    public DbSet<PendingRegistration> PendingRegistrations => Set<PendingRegistration>();
-    public DbSet<Rule> Rules => Set<Rule>();
-    public DbSet<NearbyPlace> NearbyPlaces => Set<NearbyPlace>();
-    public DbSet<ApartmentRule> ApartmentRules => Set<ApartmentRule>();
-    public DbSet<ApartmentNearbyPlace> ApartmentNearby => Set<ApartmentNearbyPlace>();
+    public DbSet<Apartment>            Apartments           => Set<Apartment>();
+    public DbSet<Booking>              Bookings             => Set<Booking>();
+    public DbSet<Amenity>              Amenities            => Set<Amenity>();
+    public DbSet<Client>               Clients              => Set<Client>();
+    public DbSet<User>                 Users                => Set<User>();
+    public DbSet<ApartmentAmenity>     ApartmentAmenities   => Set<ApartmentAmenity>();
+    public DbSet<ApartmentGallery>     ApartmentGallery     => Set<ApartmentGallery>();
+    public DbSet<PendingRegistration>  PendingRegistrations => Set<PendingRegistration>();
+    public DbSet<Rule>                 Rules                => Set<Rule>();
+    public DbSet<NearbyPlace>          NearbyPlaces         => Set<NearbyPlace>();
+    public DbSet<ApartmentRule>        ApartmentRules       => Set<ApartmentRule>();
+    public DbSet<ApartmentNearbyPlace> ApartmentNearby     => Set<ApartmentNearbyPlace>();
+    public DbSet<WikiPlace>            WikiPlace            => Set<WikiPlace>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
