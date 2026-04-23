@@ -253,13 +253,7 @@ namespace SutkiVMVCS.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("WikiPlaceId")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("WikiPlaceId")
-                        .IsUnique();
 
                     b.ToTable("NearbyPlaces");
                 });
@@ -386,6 +380,9 @@ namespace SutkiVMVCS.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int?>("NearbyPlaceId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("PhotoPath")
                         .IsRequired()
                         .HasColumnType("text");
@@ -395,7 +392,9 @@ namespace SutkiVMVCS.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("WikiPlace");
+                    b.HasIndex("NearbyPlaceId");
+
+                    b.ToTable("WikiPlaces");
                 });
 
             modelBuilder.Entity("SutkiVMV.Models.ApartmentAmenity", b =>
@@ -495,13 +494,13 @@ namespace SutkiVMVCS.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("SutkiVMV.Models.NearbyPlace", b =>
+            modelBuilder.Entity("SutkiVMV.Models.WikiPlace", b =>
                 {
-                    b.HasOne("SutkiVMV.Models.WikiPlace", "WikiPlace")
-                        .WithOne("NearbyPlace")
-                        .HasForeignKey("SutkiVMV.Models.NearbyPlace", "WikiPlaceId");
+                    b.HasOne("SutkiVMV.Models.NearbyPlace", "NearbyPlace")
+                        .WithMany()
+                        .HasForeignKey("NearbyPlaceId");
 
-                    b.Navigation("WikiPlace");
+                    b.Navigation("NearbyPlace");
                 });
 
             modelBuilder.Entity("SutkiVMV.Models.Apartment", b =>
@@ -530,11 +529,6 @@ namespace SutkiVMVCS.Migrations
             modelBuilder.Entity("SutkiVMV.Models.Rule", b =>
                 {
                     b.Navigation("Apartments");
-                });
-
-            modelBuilder.Entity("SutkiVMV.Models.WikiPlace", b =>
-                {
-                    b.Navigation("NearbyPlace");
                 });
 #pragma warning restore 612, 618
         }
