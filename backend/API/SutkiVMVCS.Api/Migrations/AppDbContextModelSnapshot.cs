@@ -253,7 +253,13 @@ namespace SutkiVMVCS.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int?>("WikiPlaceId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("WikiPlaceId")
+                        .IsUnique();
 
                     b.ToTable("NearbyPlaces");
                 });
@@ -364,6 +370,34 @@ namespace SutkiVMVCS.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("SutkiVMV.Models.WikiPlace", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PhotoPath")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("WikiPlace");
+                });
+
             modelBuilder.Entity("SutkiVMV.Models.ApartmentAmenity", b =>
                 {
                     b.HasOne("SutkiVMV.Models.Amenity", "Amenity")
@@ -461,6 +495,15 @@ namespace SutkiVMVCS.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SutkiVMV.Models.NearbyPlace", b =>
+                {
+                    b.HasOne("SutkiVMV.Models.WikiPlace", "WikiPlace")
+                        .WithOne("NearbyPlace")
+                        .HasForeignKey("SutkiVMV.Models.NearbyPlace", "WikiPlaceId");
+
+                    b.Navigation("WikiPlace");
+                });
+
             modelBuilder.Entity("SutkiVMV.Models.Apartment", b =>
                 {
                     b.Navigation("ApartmentAmenities");
@@ -487,6 +530,11 @@ namespace SutkiVMVCS.Migrations
             modelBuilder.Entity("SutkiVMV.Models.Rule", b =>
                 {
                     b.Navigation("Apartments");
+                });
+
+            modelBuilder.Entity("SutkiVMV.Models.WikiPlace", b =>
+                {
+                    b.Navigation("NearbyPlace");
                 });
 #pragma warning restore 612, 618
         }
