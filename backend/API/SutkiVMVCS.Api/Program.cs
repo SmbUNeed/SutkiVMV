@@ -29,7 +29,7 @@ Directory.CreateDirectory(apartmentsUploadAbsPath);
 var wikiUploadRelPath = builder.Configuration["Storage:WikiUploadPath"]
     ?? "../../../../data/wiki_places";
 var wikiUploadAbsPath = Path.GetFullPath(
-    Path.Combine(builder.Environment.ContentRootPath, apartmentsUploadRelPath));
+    Path.Combine(builder.Environment.ContentRootPath, wikiUploadRelPath));
 Directory.CreateDirectory(wikiUploadAbsPath);
 builder.Services.AddSingleton(new UploadSettings(apartmentsUploadAbsPath, wikiUploadAbsPath));
 
