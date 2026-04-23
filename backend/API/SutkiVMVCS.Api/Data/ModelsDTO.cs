@@ -59,12 +59,28 @@ public class CreateNearbyDto
 {
     public string Icon { get; set; } = "";
     public string Name { get; set; } = "";
+    public int? WikiPlaceId { get; set; }
 }
 
 public class AddNearbyToApartmentDto
 {
     public int NearbyPlaceId { get; set; }
     public string Distance { get; set; } = "";
+}
+
+public class WikiPlaceConnectToNearbyPlaceDto
+{
+    public int NearbyPlaceId { get; set; }
+    public int WikiPlaceId { get; set; }
+}
+
+public class CreateWikiPlaceDto
+{
+    public string Name { get; set; } = "";
+    public string Description { get; set; } = "";
+    public int? NearbyId { get; set; }
+    public IFormFile? Photo { get; set; }
+    public string Type { get; set; } = "";
 }
 
 public record SetIdsDto(List<int> Ids);

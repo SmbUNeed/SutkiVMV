@@ -26,10 +26,9 @@ public class ApartmentsController : ControllerBase
             .Include(a => a.ApartmentAmenities).ThenInclude(aa => aa.Amenity)
             .Include(a => a.Bookings)
             .Include(a => a.Rules).ThenInclude(ar => ar.Rule)
-            .Include(a => a.Nearby).ThenInclude(an => an.NearbyPlace)
+            .Include(a => a.Nearby).ThenInclude(an => an.NearbyPlace).ThenInclude(anp => anp.WikiPlaceId)
             .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == id && !a.IsDeleted);
-
         return apt == null ? NotFound() : Ok(ToDto(apt));
     }
 
