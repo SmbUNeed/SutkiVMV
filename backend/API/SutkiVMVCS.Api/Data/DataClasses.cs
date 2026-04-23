@@ -164,7 +164,7 @@ public class WikiPlace
     public string Description { get; set; } = "";
     public string PhotoPath { get; set; } = "";
     public WikiPlaceType Type { get; set; }
-    public NearbyPlace NearbyPlace { get; set; } = new NearbyPlace();
+    public NearbyPlace? NearbyPlace { get; set; }
 }
 
 public enum WikiPlaceType { Attraction, Nature, Transport, Food, Shopping, Resort, Other }
