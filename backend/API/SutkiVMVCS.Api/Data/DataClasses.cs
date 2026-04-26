@@ -167,4 +167,4 @@ public class WikiPlace
     public NearbyPlace? NearbyPlace { get; set; }
 }
 
-public enum WikiPlaceType { Attraction, Nature, Transport, Food, Shopping, Resort, Other }
+public enum WikiPlaceType { Sight=0, Nature=1, Resort=2, Food=3, Shopping=4, Transport=5, Other=6 }

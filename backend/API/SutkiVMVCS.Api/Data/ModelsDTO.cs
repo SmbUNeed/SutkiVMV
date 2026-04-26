@@ -75,7 +75,7 @@ public class WikiPlaceDto
     public string Name { get; set; } = "";
     public string Description { get; set; } = "";
     public string PhotoPath { get; set; } = "";
-    public WikiPlaceType Type { get; set; }
+    public string Type { get; set; } = "";
     public int? NearbyPlaceId { get; set; }
 
     public List<ApartmentDto> NearbyApartments { get; set; } = [];

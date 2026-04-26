@@ -44,6 +44,7 @@ public class WikiPlacesController : ControllerBase
     public async Task<ActionResult<WikiPlaceDto>> GetById(int id)
     {
         var place = await _context.WikiPlaces
+            .Include(w => w.NearbyPlace)
             .AsNoTracking()
             .FirstOrDefaultAsync(w => w.Id == id);
 
@@ -51,22 +52,26 @@ public class WikiPlacesController : ControllerBase
 
         var dto = ToDto(place);
 
-        // Находим квартиры у которых в Nearby есть связанный NearbyPlace
-        if (place.NearbyPlaceId.HasValue)
+        if (place.NearbyPlace != null)
         {
-            var apartments = await _context.Set<ApartmentNearbyPlace>()
-                .Where(an => an.NearbyPlaceId == place.NearbyPlaceId)
+            dto.NearbyApartments = await _context.Set<ApartmentNearbyPlace>()
+                .Where(an => an.NearbyPlaceId == place.NearbyPlace.Id
+                          && an.Apartment.IsActive
+                          && !an.Apartment.IsDeleted)
                 .Include(an => an.Apartment).ThenInclude(a => a.ApartmentGallery)
-                .Include(an => an.Apartment).ThenInclude(a => a.ApartmentAmenities).ThenInclude(aa => aa.Amenity)
-                .Include(an => an.Apartment).ThenInclude(a => a.Rules).ThenInclude(ar => ar.Rule)
-                .Include(an => an.Apartment).ThenInclude(a => a.Nearby).ThenInclude(an2 => an2.NearbyPlace)
-                .Where(an => an.Apartment.IsActive && !an.Apartment.IsDeleted)
                 .AsNoTracking()
+                .Select(an => new ApartmentDto
+                {
+                    Id = an.Apartment.Id,
+                    Title = an.Apartment.Title,
+                    PricePerNight = an.Apartment.PricePerNight,
+                    MainImage = an.Apartment.ApartmentGallery
+                                       .Where(g => g.IsMain).Select(g => g.ImagePath)
+                                       .FirstOrDefault()
+                                  ?? an.Apartment.ApartmentGallery
+                                       .Select(g => g.ImagePath).FirstOrDefault()
+                })
                 .ToListAsync();
-
-            dto.NearbyApartments = apartments
-                .Select(an => ApartmentsController.ToDto(an.Apartment))
-                .ToList();
         }
 
         return Ok(dto);
@@ -204,13 +209,13 @@ public class WikiPlacesController : ControllerBase
     //  ToDto
     // ═══════════════════════════════════════════════════════════════════
 
-    static WikiPlaceDto ToDto(WikiPlace w) => new()
+    static WikiPlaceDto ToDto(WikiPlace wp) => new()
     {
-        Id = w.Id,
-        Name = w.Name,
-        Description = w.Description,
-        PhotoPath = w.PhotoPath,
-        Type = w.Type,
-        NearbyPlaceId = w.NearbyPlaceId
+        Id = wp.Id,
+        Name = wp.Name,
+        Description = wp.Description,
+        PhotoPath = wp.PhotoPath,
+        Type = wp.Type.ToString().ToLower(),
+        NearbyPlaceId = wp.NearbyPlaceId
     };
 }
