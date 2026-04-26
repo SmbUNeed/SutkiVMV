@@ -54,6 +54,7 @@ public class NearbyPlaceDto
     public string Icon { get; set; } = "";
     public string Name { get; set; } = "";
     public string Distance { get; set; } = "";
+    public int? WikiPlaceId { get; set; }
 }
 
 public class CreateNearbyDto
@@ -75,7 +76,7 @@ public class WikiPlaceDto
     public string Name { get; set; } = "";
     public string Description { get; set; } = "";
     public string PhotoPath { get; set; } = "";
-    public WikiPlaceType Type { get; set; }
+    public string Type { get; set; } = "";
     public int? NearbyPlaceId { get; set; }
 
     public List<ApartmentDto> NearbyApartments { get; set; } = [];
@@ -86,7 +87,7 @@ public class CreateWikiPlaceDto
     [Required] public string Name { get; set; } = "";
     [Required] public string Description { get; set; } = "";
     public string PhotoPath { get; set; } = "";
-    [Required] public WikiPlaceType Type { get; set; }
+    [Required] public string Type { get; set; } = "other";
     public int? NearbyPlaceId { get; set; }
 }
 
@@ -95,7 +96,7 @@ public class UpdateWikiPlaceDto
     [Required] public string Name { get; set; } = "";
     [Required] public string Description { get; set; } = "";
     public string PhotoPath { get; set; } = "";
-    [Required] public WikiPlaceType Type { get; set; }
+    [Required] public string Type { get; set; } = "other";
     public int? NearbyPlaceId { get; set; }
 }
 public record SetIdsDto(List<int> Ids);

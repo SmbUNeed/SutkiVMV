@@ -22,6 +22,7 @@
         if (id === 'clients')  loadClients();
         if (id === 'rules')    loadRules();
         if (id === 'nearby')   loadNearby();
+        if (id === 'wiki-places') loadWikiPlaces();
     }
 
     /* ── TOAST ───────────────────────────────────────────── */
@@ -782,12 +783,150 @@
             loadNearby();
         } catch (err) { toast(err.message, 'er'); }
     }
+    /* ── ВИКИ (каталог) ─────────────────────────────────── */
+    async function createWikiPlace(e) {
+        e.preventDefault();
+        try {
+            const body = {
+                name:          document.getElementById('wNewName').value.trim(),
+                description:   document.getElementById('wNewDescription').value.trim(),
+                type:          document.getElementById('wikiPlaceTypeSelect').value,
+                nearbyPlaceId: parseInt(document.getElementById('wikiPlaceNearbySelect').value) || null
+            };
+            const wp = await api('/wiki-places', { method: 'POST', body: JSON.stringify(body) });
+
+            // Фото
+            const file = document.getElementById('wNewPhoto').files[0];
+            if (file) {
+                const fd = new FormData();
+                fd.append('file', file);
+                await fetch(`${API}/wiki-places/${wp.id}/photo`, {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'Authorization': `Bearer ${auth?.token}` }
+                });
+            }
+
+            toast('Место добавлено');
+            document.getElementById('formWikiPlace').reset();
+            loadWikiPlaces();
+        } catch (err) { toast(err.message, 'er'); }
+    }
+
+    async function loadWikiPlaces() {
+        try {
+            const list = await api('/wiki-places');
+            const tb = document.getElementById('tbWikiPlaces');
+            if (!list.length) {
+                tb.innerHTML = '<tr><td colspan="4"><div class="es"><i class="fa-solid fa-map"></i><p>Мест нет</p></div></td></tr>';
+                return;
+            }
+            tb.innerHTML = list.map(w => `
+            <tr>
+                <td style="color:var(--tm);">#${w.id}</td>
+                <td>${w.name}</td>
+                <td style="color:var(--tm);">${w.type}</td>
+                <td style="display:flex;gap:6px;">
+                    <button class="btn bi sm" onclick="openWikiEdit(${w.id})"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn bd sm" onclick="deleteWikiPlace(${w.id})"><i class="fa-solid fa-trash"></i></button>
+                </td>
+            </tr>`).join('');
+        } catch (err) {
+            document.getElementById('tbWikiPlaces').innerHTML =
+                `<tr><td colspan="4" style="color:var(--red);padding:16px;">${err.message}</td></tr>`;
+        }
+    }
+
+    async function openWikiEdit(id) {
+        const wp = await api(`/wiki-places/${id}`);
+        document.getElementById('wpId').value          = wp.id;
+        document.getElementById('wpName').value        = wp.name;
+        document.getElementById('wpDescription').value = wp.description;
+        document.getElementById('wpType').value        = wp.type;
+        const photo = document.getElementById('wpCurrentPhoto');
+        if (wp.photoPath) {
+            photo.src   = imgPath(wp.photoPath);
+            photo.style.display = 'block';
+        } else {
+            photo.style.display = 'none';
+        }
+        document.getElementById('wpNearby').innerHTML = nearbyPlacesCatalog.length
+            ? `<option value=""> -- не указывать -- </option>` + nearbyPlacesCatalog.map(n =>
+                `<option value="${n.id}" ${n.id === wp.nearbyPlaceId ? 'selected' : ''}>
+                    ${n.name}
+                </option>`).join('')
+            : '<option value="" disabled>Нет мест в каталоге</option>';
+        document.getElementById('wikiEditModal').classList.add('open');
+    }
+
+    function closeWikiEdit() {
+        document.getElementById('wikiEditModal').classList.remove('open');
+        document.getElementById('wpPhoto').value = '';
+    }
+
+    async function saveWikiEdit(e) {
+        e.preventDefault();
+        const id = document.getElementById('wpId').value;
+        try {
+            await api(`/wiki-places/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    name:          document.getElementById('wpName').value.trim(),
+                    description:   document.getElementById('wpDescription').value.trim(),
+                    type:          document.getElementById('wpType').value,
+                    nearbyPlaceId: parseInt(document.getElementById('wpNearby').value) || null
+                })
+            });
+
+            const file = document.getElementById('wpPhoto').files[0];
+            if (file) {
+                const fd = new FormData();
+                fd.append('file', file);
+                await fetch(`${API}/wiki-places/${id}/photo`, {
+                    method: 'POST', body: fd,
+                    headers: { 'Authorization': `Bearer ${auth?.token}` }
+                });
+            }
+
+            toast('Место обновлено');
+            closeWikiEdit();
+            loadWikiPlaces();
+        } catch (err) { toast(err.message, 'er'); }
+    }
+
+    async function deleteWikiPhoto(id) {
+        if (!confirm('Удалить фото?')) return;
+        try {
+            await api(`/wiki-places/${id}/photo`, { method: 'DELETE' });
+            document.getElementById('wpCurrentPhoto').style.display = 'none';
+            toast('Фото удалено');
+        } catch (err) { toast(err.message, 'er'); }
+    }
+
+    async function deleteWikiPlace(id) {
+        if (!confirm('Удалить место?')) return;
+        try {
+            await api(`/wiki-places/${id}`, { method: 'DELETE' });
+            toast('Место удалено');
+            loadWikiPlaces();
+        } catch (err) { toast(err.message, 'er'); }
+    }
 
     function switchEditTab(pane, btn) {
         document.querySelectorAll('.etab-pane').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.etab').forEach(el => el.classList.remove('active'));
         document.getElementById(`epane-${pane}`).classList.add('active');
         btn.classList.add('active');
+    }
+
+    function populateWikiNearbySelect() {
+        const sel = document.getElementById('wikiPlaceNearbySelect');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">— не указывать —</option>' +
+            (nearbyPlacesCatalog.length
+                ? nearbyPlacesCatalog.map(n =>
+                    `<option value="${n.id}">${n.name}</option>`).join('')
+                : '');
     }
 
     /* ── INIT ────────────────────────────────────────────── */
@@ -856,5 +995,7 @@
         await loadAmenities();
         await loadRulesCatalog();
         await loadNearbyPlacesCatalog();
+        await loadWikiPlaces();
+        populateWikiNearbySelect();
         renderAmen('amenAdd', []);
     })();

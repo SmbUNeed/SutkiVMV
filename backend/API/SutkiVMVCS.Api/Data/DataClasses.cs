@@ -42,7 +42,8 @@ public class NearbyPlace
     public int Id { get; set; }
     public string Icon { get; set; } = "";
     public string Name { get; set; } = "";
-
+    public int? WikiPlaceId { get; set; }
+    public WikiPlace? WikiPlace { get; set; }
     public ICollection<ApartmentNearbyPlace> Apartments { get; set; } = [];
 }
 
@@ -167,4 +168,4 @@ public class WikiPlace
     public NearbyPlace? NearbyPlace { get; set; }
 }
 
-public enum WikiPlaceType { Attraction, Nature, Transport, Food, Shopping, Resort, Other }
+public enum WikiPlaceType { Sight=0, Nature=1, Resort=2, Food=3, Shopping=4, Transport=5, Other=6 }

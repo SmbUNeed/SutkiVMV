@@ -253,7 +253,12 @@ namespace SutkiVMVCS.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int?>("WikiPlaceId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("WikiPlaceId");
 
                     b.ToTable("NearbyPlaces");
                 });
@@ -494,11 +499,22 @@ namespace SutkiVMVCS.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SutkiVMV.Models.NearbyPlace", b =>
+                {
+                    b.HasOne("SutkiVMV.Models.WikiPlace", "WikiPlace")
+                        .WithMany()
+                        .HasForeignKey("WikiPlaceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("WikiPlace");
+                });
+
             modelBuilder.Entity("SutkiVMV.Models.WikiPlace", b =>
                 {
                     b.HasOne("SutkiVMV.Models.NearbyPlace", "NearbyPlace")
                         .WithMany()
-                        .HasForeignKey("NearbyPlaceId");
+                        .HasForeignKey("NearbyPlaceId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("NearbyPlace");
                 });

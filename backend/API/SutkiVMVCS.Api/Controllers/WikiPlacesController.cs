@@ -8,7 +8,7 @@ using SutkiVMV.ModelsDTO;
 namespace SutkiVMV.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/wiki-places")]
 public class WikiPlacesController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -44,6 +44,7 @@ public class WikiPlacesController : ControllerBase
     public async Task<ActionResult<WikiPlaceDto>> GetById(int id)
     {
         var place = await _context.WikiPlaces
+            .Include(w => w.NearbyPlace)
             .AsNoTracking()
             .FirstOrDefaultAsync(w => w.Id == id);
 
@@ -51,22 +52,26 @@ public class WikiPlacesController : ControllerBase
 
         var dto = ToDto(place);
 
-        // Находим квартиры у которых в Nearby есть связанный NearbyPlace
-        if (place.NearbyPlaceId.HasValue)
+        if (place.NearbyPlace != null)
         {
-            var apartments = await _context.Set<ApartmentNearbyPlace>()
-                .Where(an => an.NearbyPlaceId == place.NearbyPlaceId)
+            dto.NearbyApartments = await _context.Set<ApartmentNearbyPlace>()
+                .Where(an => an.NearbyPlaceId == place.NearbyPlace.Id
+                          && an.Apartment.IsActive
+                          && !an.Apartment.IsDeleted)
                 .Include(an => an.Apartment).ThenInclude(a => a.ApartmentGallery)
-                .Include(an => an.Apartment).ThenInclude(a => a.ApartmentAmenities).ThenInclude(aa => aa.Amenity)
-                .Include(an => an.Apartment).ThenInclude(a => a.Rules).ThenInclude(ar => ar.Rule)
-                .Include(an => an.Apartment).ThenInclude(a => a.Nearby).ThenInclude(an2 => an2.NearbyPlace)
-                .Where(an => an.Apartment.IsActive && !an.Apartment.IsDeleted)
                 .AsNoTracking()
+                .Select(an => new ApartmentDto
+                {
+                    Id = an.Apartment.Id,
+                    Title = an.Apartment.Title,
+                    PricePerNight = an.Apartment.PricePerNight,
+                    MainImage = an.Apartment.ApartmentGallery
+                                       .Where(g => g.IsMain).Select(g => g.ImagePath)
+                                       .FirstOrDefault()
+                                  ?? an.Apartment.ApartmentGallery
+                                       .Select(g => g.ImagePath).FirstOrDefault()
+                })
                 .ToListAsync();
-
-            dto.NearbyApartments = apartments
-                .Select(an => ApartmentsController.ToDto(an.Apartment))
-                .ToList();
         }
 
         return Ok(dto);
@@ -76,7 +81,7 @@ public class WikiPlacesController : ControllerBase
     //  CREATE
     // ═══════════════════════════════════════════════════════════════════
 
-    [HttpPost("create")]
+    [HttpPost]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<WikiPlaceDto>> Create(CreateWikiPlaceDto dto, CancellationToken ct)
     {
@@ -85,11 +90,22 @@ public class WikiPlacesController : ControllerBase
             Name = dto.Name,
             Description = dto.Description,
             PhotoPath = dto.PhotoPath,
-            Type = dto.Type,
+            Type = Enum.TryParse<WikiPlaceType>(dto.Type, true, out var t) ? t : WikiPlaceType.Other,
             NearbyPlaceId = dto.NearbyPlaceId
         };
         _context.WikiPlaces.Add(wikiPlace);
         await _context.SaveChangesAsync(ct);
+
+        if (dto.NearbyPlaceId.HasValue)
+        {
+            var nearby = await _context.NearbyPlaces.FindAsync(dto.NearbyPlaceId.Value);
+            if (nearby != null)
+            {
+                nearby.WikiPlaceId = wikiPlace.Id;
+                await _context.SaveChangesAsync(ct);
+            }
+        }
+
         return Ok(ToDto(wikiPlace));
     }
 
@@ -106,11 +122,26 @@ public class WikiPlacesController : ControllerBase
 
         place.Name = dto.Name;
         place.Description = dto.Description;
-        place.PhotoPath = dto.PhotoPath;
-        place.Type = dto.Type;
-        place.NearbyPlaceId = dto.NearbyPlaceId;
+        place.Type = Enum.TryParse<WikiPlaceType>(dto.Type, true, out var t) ? t : WikiPlaceType.Other;
 
+        var oldNearby = await _context.NearbyPlaces
+            .FirstOrDefaultAsync(n => n.WikiPlaceId == id, ct);
+        if (oldNearby != null) oldNearby.WikiPlaceId = null;
+
+        place.NearbyPlaceId = dto.NearbyPlaceId;
         await _context.SaveChangesAsync(ct);
+
+        // Ставим новую обратную связь
+        if (dto.NearbyPlaceId.HasValue)
+        {
+            var nearby = await _context.NearbyPlaces.FindAsync(dto.NearbyPlaceId.Value);
+            if (nearby != null)
+            {
+                nearby.WikiPlaceId = place.Id;
+                await _context.SaveChangesAsync(ct);
+            }
+        }
+
         return NoContent();
     }
 
@@ -158,7 +189,7 @@ public class WikiPlacesController : ControllerBase
         // Удаляем старое фото если есть
         if (!string.IsNullOrEmpty(place.PhotoPath))
         {
-            var relPath = place.PhotoPath.TrimStart('/').Substring("uploads/wiki/".Length);
+            var relPath = place.PhotoPath.TrimStart('/').Substring("wiki_places/".Length);
             var diskPath = Path.Combine(_uploadRoot, relPath);
             if (System.IO.File.Exists(diskPath)) System.IO.File.Delete(diskPath);
         }
@@ -173,7 +204,7 @@ public class WikiPlacesController : ControllerBase
         await using (var stream = System.IO.File.Create(filePath))
             await file.CopyToAsync(stream, ct);
 
-        place.PhotoPath = $"/uploads/wiki/{id}/{fileName}";
+        place.PhotoPath = $"/wiki_places/{id}/{fileName}";
         await _context.SaveChangesAsync(ct);
 
         return Ok(new { photoPath = place.PhotoPath });
@@ -204,13 +235,13 @@ public class WikiPlacesController : ControllerBase
     //  ToDto
     // ═══════════════════════════════════════════════════════════════════
 
-    static WikiPlaceDto ToDto(WikiPlace w) => new()
+    static WikiPlaceDto ToDto(WikiPlace wp) => new()
     {
-        Id = w.Id,
-        Name = w.Name,
-        Description = w.Description,
-        PhotoPath = w.PhotoPath,
-        Type = w.Type,
-        NearbyPlaceId = w.NearbyPlaceId
+        Id = wp.Id,
+        Name = wp.Name,
+        Description = wp.Description,
+        PhotoPath = wp.PhotoPath,
+        Type = wp.Type.ToString().ToLower(),
+        NearbyPlaceId = wp.NearbyPlaceId
     };
 }
