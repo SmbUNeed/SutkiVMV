@@ -86,7 +86,7 @@ public class CreateWikiPlaceDto
     [Required] public string Name { get; set; } = "";
     [Required] public string Description { get; set; } = "";
     public string PhotoPath { get; set; } = "";
-    [Required] public WikiPlaceType Type { get; set; }
+    [Required] public string Type { get; set; } = "other";
     public int? NearbyPlaceId { get; set; }
 }
 
@@ -95,7 +95,7 @@ public class UpdateWikiPlaceDto
     [Required] public string Name { get; set; } = "";
     [Required] public string Description { get; set; } = "";
     public string PhotoPath { get; set; } = "";
-    [Required] public WikiPlaceType Type { get; set; }
+    [Required] public string Type { get; set; } = "other";
     public int? NearbyPlaceId { get; set; }
 }
 public record SetIdsDto(List<int> Ids);

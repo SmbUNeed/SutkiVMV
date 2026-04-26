@@ -56,6 +56,9 @@
         <div class="ni" onclick="showSec('nearby',this)">
             <i class="fa-solid fa-map"></i> Рядом
         </div>
+        <div class="ni" onclick="showSec('wiki-places',this)">
+            <i class="fa-solid fa-landmark"></i> Вики
+        </div>
     </nav>
     <div class="sb-foot">
         <a href="index.html" target="_blank">
@@ -268,6 +271,54 @@
                 <table>
                     <thead><tr><th>ID</th><th>Иконка</th><th>Название</th><th>Расстояние</th><th></th></tr></thead>
                     <tbody id="tbNearby"><tr><td colspan="5" class="ld">Загрузка...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════ ВИКИ ══════════════════════════════════════════ -->
+    <section id="wiki-places" class="sec">
+        <div class="sec-h">
+            <div class="sec-t">Вики</div>
+            <div class="sec-s">Глобальный каталог вики-мест</div>
+        </div>
+        <div class="card">
+            <div class="ct"><i class="fa-solid fa-plus"></i> Добавить место</div>
+            <form id="formWikiPlace" onsubmit="createWikiPlace(event)">
+                <div class="fg">
+                    <div class="fv"><label>Название</label><input type="text" id="wNewName" placeholder="Городской парк" required></div>
+                    <div class="fv">
+                        <label>Тип</label>
+                        <select id="wikiPlaceTypeSelect">
+                            <option value="sight">Достопримечательность</option>
+                            <option value="nature">Природа</option>
+                            <option value="resort">Курорт</option>
+                            <option value="food">Питание</option>
+                            <option value="shopping">Торговля</option>
+                            <option value="transport">Транспорт</option>
+                            <option value="other">Прочее</option>
+                        </select>
+                    </div>
+                    <div class="fv sp2"><label>Описание</label><input type="text" id="wNewDescription" placeholder="Зелёное сердце города" required></div>
+                    <div class="fv sp2">
+                        <label>Фотография</label>
+                        <label class="up" for="wNewPhoto" style="padding:14px;">
+                            <i class="fa-solid fa-image" style="margin-right:6px;"></i> Выбрать фото
+                            <input type="file" id="wNewPhoto" accept="image/*">
+                        </label>
+                    </div>
+                </div>
+                <button type="submit" class="btn bs" style="margin-top:16px;">
+                    <i class="fa-solid fa-plus"></i> Добавить
+                </button>
+            </form>
+        </div>
+        <div class="card">
+            <div class="ct"><i class="fa-solid fa-list"></i> Все места</div>
+            <div class="tw">
+                <table>
+                    <thead><tr><th>ID</th><th>Название</th><th>Тип</th><th></th></tr></thead>
+                    <tbody id="tbWikiPlaces"><tr><td colspan="4" class="ld">Загрузка...</td></tr></tbody>
                 </table>
             </div>
         </div>

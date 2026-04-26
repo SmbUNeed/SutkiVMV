@@ -1,5 +1,12 @@
-/* ── Theme toggle ──────────────────────────────────────── */
+/* ── Config ────────────────────────────────────────────── */
+const API_URL = 'https://sutkivmv.ru/api';
+function imgUrl(path) {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    return `https://sutkivmv.ru${path}`;
+}
 
+/* ── Theme toggle ──────────────────────────────────────── */
 document.getElementById('themeToggle').addEventListener('click', function() {
     const html = document.documentElement;
     const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -9,45 +16,56 @@ document.getElementById('themeToggle').addEventListener('click', function() {
 
 let wikiPlaces = [];
 let filteredWikiPlaces = [];
-let currentApartment = null;
 const grid = document.getElementById('wikiGrid');
 
 const WIKI_TYPES = {
-    sight:     { icon: 'fa-camera',        label: 'Достопримечательность' },
-    nature:    { icon: 'fa-tree',           label: 'Природа' },
-    resort:    { icon: 'fa-water',          label: 'Курорт' },
-    food:      { icon: 'fa-utensils',       label: 'Питание' },
-    shopping:  { icon: 'fa-basket-shopping',label: 'Торговля' },
-    transport: { icon: 'fa-train',          label: 'Транспорт' },
-    other:     { icon: 'fa-location-dot',   label: 'Прочее' },
+    sight:     { icon: 'fa-camera',         label: 'Достопримечательность' },
+    nature:    { icon: 'fa-tree',            label: 'Природа' },
+    resort:    { icon: 'fa-water',           label: 'Курорт' },
+    food:      { icon: 'fa-utensils',        label: 'Питание' },
+    shopping:  { icon: 'fa-basket-shopping', label: 'Торговля' },
+    transport: { icon: 'fa-train',           label: 'Транспорт' },
+    other:     { icon: 'fa-location-dot',    label: 'Прочее' },
 };
 
-async function apiGetWikiPlaces(){
+/* ── Observer — объявляем ДО init ──────────────────────── */
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+        if (e.isIntersecting) {
+            e.target.style.opacity = '1';
+            e.target.style.transform = 'translateY(0)';
+            observer.unobserve(e.target);
+        }
+    });
+}, { threshold: 0.08 });
+
+async function apiGetWikiPlaces() {
     try {
         const res = await fetch(`${API_URL}/wiki-places`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return await res.json();
-    }
-    catch (err){
+    } catch (err) {
         console.error('Ошибка загрузки мест:', err);
         return [];
     }
 }
 
-function renderGrid(data){
+function renderGrid(data) {
     grid.innerHTML = '';
-    if (!data.length){
+    if (!data.length) {
         grid.innerHTML = `
-            <div class='wiki-no-results'>
+            <div class="wiki-no-results">
                 <i class="fa-solid fa-face-sad-cry"></i>
                 <p>Нет мест в этой категории.<br>Попробуйте другой фильтр.</p>
-            </div>
-        `;
+            </div>`;
         return;
     }
     data.forEach(wp => {
         const type = wp.type ?? 'other';
-        const t = WIKI_TYPES[type] ?? WIKI_TYPES.other;
+        const t    = WIKI_TYPES[type] ?? WIKI_TYPES.other;
+        const bg   = wp.photoPath
+            ? `style="background-image:url('${imgUrl(wp.photoPath)}')"`
+            : '';
 
         grid.insertAdjacentHTML('beforeend', `
             <div class="wiki-card cat-${type}" data-cat="${type}" onclick="openWikiPlaceModal(${wp.id})">
@@ -61,21 +79,26 @@ function renderGrid(data){
                     <div class="wiki-card-title">${wp.name}</div>
                     <div class="wiki-card-desc">${wp.description}</div>
                 </div>
-            </div>
-        `)
-    })
+            </div>`);
+    });
+
+    // Observer после рендера
+    grid.querySelectorAll('.wiki-card').forEach((card, i) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = `opacity 0.4s ease ${i * 0.05}s, transform 0.4s ease ${i * 0.05}s, border-color 0.2s ease, box-shadow 0.2s ease`;
+        observer.observe(card);
+    });
 }
 
 async function openWikiPlaceModal(id) {
-    const wp = await fetch(`${API_URL}/wiki-places/${id}`)
-        .then(r => r.json());
+    const wp = await fetch(`${API_URL}/wiki-places/${id}`).then(r => r.json());
+    const t  = WIKI_TYPES[wp.type] ?? WIKI_TYPES.other;
 
-    const t = WIKI_TYPES[wp.type] ?? WIKI_TYPES.other;
+    const photo = document.getElementById('wikiModalPhoto');
+    photo.style.backgroundImage = wp.photoPath ? `url('${imgUrl(wp.photoPath)}')` : 'none';
 
-    document.getElementById('wikiModalPhoto').style.backgroundImage =
-        wp.photoPath ? `url('${imgUrl(wp.photoPath)}')` : 'none';
-    document.getElementById('wikiModalCat').innerHTML =
-        `<i class="fa-solid ${t.icon}"></i> ${t.label}`;
+    document.getElementById('wikiModalCat').innerHTML  = `<i class="fa-solid ${t.icon}"></i> ${t.label}`;
     document.getElementById('wikiModalTitle').textContent = wp.name;
     document.getElementById('wikiModalDesc').textContent  = wp.description;
 
@@ -91,11 +114,10 @@ async function openWikiPlaceModal(id) {
                         <div class="wiki-apt-price">от ${apt.pricePerNight.toLocaleString('ru')} ₽</div>
                     </div>
                     <i class="fa-solid fa-chevron-right wiki-apt-arrow"></i>
-                </div>
-            `);
+                </div>`);
         });
     } else {
-        aptsEl.innerHTML = '<p style="color:var(--ink-3);font-size:.85rem;">Нет доступных квартир</p>';
+        aptsEl.innerHTML = '<p class="wiki-modal-no-apts">Нет доступных квартир рядом</p>';
     }
 
     document.getElementById('wikiModal').classList.add('open');
@@ -107,10 +129,10 @@ function closeWikiModal() {
     document.body.style.overflow = '';
 }
 
-function filterWiki(cat){
+function filterWiki(cat) {
     document.querySelectorAll('.wiki-cat-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.cat === cat);
-    })
+    });
 
     filteredWikiPlaces = cat === 'all'
         ? wikiPlaces
@@ -119,35 +141,29 @@ function filterWiki(cat){
     renderGrid(filteredWikiPlaces);
 }
 
-async function init(){
+async function init() {
     wikiPlaces = await apiGetWikiPlaces();
+    filteredWikiPlaces = wikiPlaces;
     renderGrid(wikiPlaces);
-
-    document.querySelectorAll('.wiki-card').forEach((card, i) => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            card.style.transition = `opacity 0.4s ease ${i * 0.05}s, transform 0.4s ease ${i * 0.05}s, border-color 0.2s ease, box-shadow 0.2s ease`;
-            observer.observe(card);
-        });
 }
 
 /* ── Climate rows ──────────────────────────────────────── */
 const climate = [
-    { m: 'Январь',   t: -2,  hi: 4,  emoji: '❄️' },
-    { m: 'Февраль',  t: -1,  hi: 6,  emoji: '❄️' },
-    { m: 'Март',     t: 5,   hi: 12, emoji: '🌧️' },
-    { m: 'Апрель',   t: 11,  hi: 18, emoji: '🌤️' },
-    { m: 'Май',      t: 16,  hi: 23, emoji: '☀️' },
-    { m: 'Июнь',     t: 20,  hi: 27, emoji: '☀️' },
-    { m: 'Июль',     t: 23,  hi: 30, emoji: '🌡️' },
-    { m: 'Август',   t: 22,  hi: 29, emoji: '🌡️' },
-    { m: 'Сентябрь', t: 17,  hi: 24, emoji: '🍂' },
-    { m: 'Октябрь',  t: 10,  hi: 17, emoji: '🍂' },
-    { m: 'Ноябрь',   t: 4,   hi: 10, emoji: '🌧️' },
-    { m: 'Декабрь',  t: 0,   hi: 6,  emoji: '❄️' },
+    { m: 'Январь',   hi: 4,  emoji: '❄️' },
+    { m: 'Февраль',  hi: 6,  emoji: '❄️' },
+    { m: 'Март',     hi: 12, emoji: '🌧️' },
+    { m: 'Апрель',   hi: 18, emoji: '🌤️' },
+    { m: 'Май',      hi: 23, emoji: '☀️' },
+    { m: 'Июнь',     hi: 27, emoji: '☀️' },
+    { m: 'Июль',     hi: 30, emoji: '🌡️' },
+    { m: 'Август',   hi: 29, emoji: '🌡️' },
+    { m: 'Сентябрь', hi: 24, emoji: '🍂' },
+    { m: 'Октябрь',  hi: 17, emoji: '🍂' },
+    { m: 'Ноябрь',   hi: 10, emoji: '🌧️' },
+    { m: 'Декабрь',  hi: 6,  emoji: '❄️' },
 ];
 const maxHi = Math.max(...climate.map(c => c.hi));
-const rows = document.getElementById('climateRows');
+const rows  = document.getElementById('climateRows');
 rows.innerHTML = climate.map(c => {
     const pct = Math.round((c.hi / maxHi) * 100);
     return `
@@ -160,20 +176,4 @@ rows.innerHTML = climate.map(c => {
     </div>`;
 }).join('');
 
-/* ── Staggered card entrance animation ─────────────────── */
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-        if (e.isIntersecting) {
-            e.target.style.opacity = '1';
-            e.target.style.transform = 'translateY(0)';
-            observer.unobserve(e.target);
-        }
-    });
-}, { threshold: 0.08 });
-
-document.querySelectorAll('.wiki-card').forEach((card, i) => {
-    card.style.opacity = '0';
-    card.style.transform = 'translateY(20px)';
-    card.style.transition = `opacity 0.4s ease ${i * 0.05}s, transform 0.4s ease ${i * 0.05}s, border-color 0.2s ease, box-shadow 0.2s ease`;
-    observer.observe(card);
-});
+init();

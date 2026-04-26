@@ -22,6 +22,7 @@
         if (id === 'clients')  loadClients();
         if (id === 'rules')    loadRules();
         if (id === 'nearby')   loadNearby();
+        if (id === 'wiki-places') loadWikiPlaces();
     }
 
     /* ── TOAST ───────────────────────────────────────────── */
@@ -782,6 +783,64 @@
             loadNearby();
         } catch (err) { toast(err.message, 'er'); }
     }
+    /* ── ВИКИ (каталог) ─────────────────────────────────── */
+    async function createWikiPlace(e) {
+        e.preventDefault();
+        try {
+            const body = {
+                name:        document.getElementById('wNewName').value.trim(),
+                description: document.getElementById('wNewDescription').value.trim(),
+                type:        document.getElementById('wikiPlaceTypeSelect').value
+            };
+            const wp = await api('/wiki-places', { method: 'POST', body: JSON.stringify(body) });
+
+            // Фото
+            const file = document.getElementById('wNewPhoto').files[0];
+            if (file) {
+                const fd = new FormData();
+                fd.append('photo', file);
+                await fetch(`${API_URL}/wiki-places/${wp.id}/photo`, {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'Authorization': `Bearer ${auth?.token}` }
+                });
+            }
+
+            toast('Место добавлено');
+            document.getElementById('formWikiPlace').reset();
+            loadWikiPlaces();
+        } catch (err) { toast(err.message, 'er'); }
+    }
+
+    async function loadWikiPlaces() {
+        try {
+            const list = await api('/wiki-places');
+            const tb = document.getElementById('tbWikiPlaces');
+            if (!list.length) {
+                tb.innerHTML = '<tr><td colspan="4"><div class="es"><i class="fa-solid fa-map"></i><p>Мест нет</p></div></td></tr>';
+                return;
+            }
+            tb.innerHTML = list.map(w => `
+            <tr>
+                <td style="color:var(--tm);">#${w.id}</td>
+                <td>${w.name}</td>
+                <td style="color:var(--tm);">${w.type}</td>
+                <td><button class="btn bd sm" onclick="deleteWikiPlace(${w.id})"><i class="fa-solid fa-trash"></i></button></td>
+            </tr>`).join('');
+        } catch (err) {
+            document.getElementById('tbWikiPlaces').innerHTML =
+                `<tr><td colspan="4" style="color:var(--red);padding:16px;">${err.message}</td></tr>`;
+        }
+    }
+
+    async function deleteWikiPlace(id) {
+        if (!confirm('Удалить место?')) return;
+        try {
+            await api(`/wiki-places/${id}`, { method: 'DELETE' });
+            toast('Место удалено');
+            loadWikiPlaces();
+        } catch (err) { toast(err.message, 'er'); }
+    }
 
     function switchEditTab(pane, btn) {
         document.querySelectorAll('.etab-pane').forEach(el => el.classList.remove('active'));
@@ -856,5 +915,6 @@
         await loadAmenities();
         await loadRulesCatalog();
         await loadNearbyPlacesCatalog();
+        await loadWikiPlaces();
         renderAmen('amenAdd', []);
     })();

@@ -81,7 +81,7 @@ public class WikiPlacesController : ControllerBase
     //  CREATE
     // ═══════════════════════════════════════════════════════════════════
 
-    [HttpPost("create")]
+    [HttpPost]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<WikiPlaceDto>> Create(CreateWikiPlaceDto dto, CancellationToken ct)
     {
@@ -90,7 +90,7 @@ public class WikiPlacesController : ControllerBase
             Name = dto.Name,
             Description = dto.Description,
             PhotoPath = dto.PhotoPath,
-            Type = dto.Type,
+            Type = Enum.TryParse<WikiPlaceType>(dto.Type, true, out var t) ? t : WikiPlaceType.Other,
             NearbyPlaceId = dto.NearbyPlaceId
         };
         _context.WikiPlaces.Add(wikiPlace);
@@ -112,7 +112,7 @@ public class WikiPlacesController : ControllerBase
         place.Name = dto.Name;
         place.Description = dto.Description;
         place.PhotoPath = dto.PhotoPath;
-        place.Type = dto.Type;
+        place.Type = Enum.TryParse<WikiPlaceType>(dto.Type, true, out var t) ? t : WikiPlaceType.Other;
         place.NearbyPlaceId = dto.NearbyPlaceId;
 
         await _context.SaveChangesAsync(ct);
