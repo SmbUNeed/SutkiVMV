@@ -844,7 +844,7 @@
         document.getElementById('weType').value        = wp.type;
         const photo = document.getElementById('weCurrentPhoto');
         if (wp.photoPath) {
-            photo.src   = imgUrl(wp.photoPath);
+            photo.src   = imgPath(wp.photoPath);
             photo.style.display = 'block';
         } else {
             photo.style.display = 'none';
