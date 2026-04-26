@@ -111,7 +111,6 @@ public class WikiPlacesController : ControllerBase
 
         place.Name = dto.Name;
         place.Description = dto.Description;
-        place.PhotoPath = dto.PhotoPath;
         place.Type = Enum.TryParse<WikiPlaceType>(dto.Type, true, out var t) ? t : WikiPlaceType.Other;
         place.NearbyPlaceId = dto.NearbyPlaceId;
 

@@ -798,7 +798,7 @@
             const file = document.getElementById('wNewPhoto').files[0];
             if (file) {
                 const fd = new FormData();
-                fd.append('photo', file);
+                fd.append('file', file);
                 await fetch(`${API_URL}/wiki-places/${wp.id}/photo`, {
                     method: 'POST',
                     body: fd,
@@ -825,12 +825,74 @@
                 <td style="color:var(--tm);">#${w.id}</td>
                 <td>${w.name}</td>
                 <td style="color:var(--tm);">${w.type}</td>
-                <td><button class="btn bd sm" onclick="deleteWikiPlace(${w.id})"><i class="fa-solid fa-trash"></i></button></td>
+                <td style="display:flex;gap:6px;">
+                    <button class="btn bi sm" onclick="openWikiEdit(${w.id})"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn bd sm" onclick="deleteWikiPlace(${w.id})"><i class="fa-solid fa-trash"></i></button>
+                </td>
             </tr>`).join('');
         } catch (err) {
             document.getElementById('tbWikiPlaces').innerHTML =
                 `<tr><td colspan="4" style="color:var(--red);padding:16px;">${err.message}</td></tr>`;
         }
+    }
+
+    async function openWikiEdit(id) {
+        const wp = await api(`/wiki-places/${id}`);
+        document.getElementById('weId').value          = wp.id;
+        document.getElementById('weName').value        = wp.name;
+        document.getElementById('weDescription').value = wp.description;
+        document.getElementById('weType').value        = wp.type;
+        const photo = document.getElementById('weCurrentPhoto');
+        if (wp.photoPath) {
+            photo.src   = imgUrl(wp.photoPath);
+            photo.style.display = 'block';
+        } else {
+            photo.style.display = 'none';
+        }
+        document.getElementById('wikiEditModal').classList.add('open');
+    }
+
+    function closeWikiEdit() {
+        document.getElementById('wikiEditModal').classList.remove('open');
+        document.getElementById('wePhoto').value = '';
+    }
+
+    async function saveWikiEdit(e) {
+        e.preventDefault();
+        const id = document.getElementById('weId').value;
+        try {
+            await api(`/wiki-places/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    name:        document.getElementById('weName').value.trim(),
+                    description: document.getElementById('weDescription').value.trim(),
+                    type:        document.getElementById('weType').value
+                })
+            });
+
+            const file = document.getElementById('wePhoto').files[0];
+            if (file) {
+                const fd = new FormData();
+                fd.append('file', file);
+                await fetch(`${API_URL}/wiki-places/${id}/photo`, {
+                    method: 'POST', body: fd,
+                    headers: { 'Authorization': `Bearer ${auth?.token}` }
+                });
+            }
+
+            toast('Место обновлено');
+            closeWikiEdit();
+            loadWikiPlaces();
+        } catch (err) { toast(err.message, 'er'); }
+    }
+
+    async function deleteWikiPhoto(id) {
+        if (!confirm('Удалить фото?')) return;
+        try {
+            await api(`/wiki-places/${id}/photo`, { method: 'DELETE' });
+            document.getElementById('weCurrentPhoto').style.display = 'none';
+            toast('Фото удалено');
+        } catch (err) { toast(err.message, 'er'); }
     }
 
     async function deleteWikiPlace(id) {
