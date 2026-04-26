@@ -8,7 +8,7 @@ using SutkiVMV.ModelsDTO;
 namespace SutkiVMV.Controllers;
 
 [ApiController]
-[Route("api/wiki-places")]
+[Route("api/[controller]")]
 public class WikiPlacesController : ControllerBase
 {
     private readonly AppDbContext _context;
