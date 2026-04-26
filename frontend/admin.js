@@ -799,7 +799,7 @@
             if (file) {
                 const fd = new FormData();
                 fd.append('file', file);
-                await fetch(`${API_URL}/wiki-places/${wp.id}/photo`, {
+                await fetch(`${API}/wiki-places/${wp.id}/photo`, {
                     method: 'POST',
                     body: fd,
                     headers: { 'Authorization': `Bearer ${auth?.token}` }
@@ -874,7 +874,7 @@
             if (file) {
                 const fd = new FormData();
                 fd.append('file', file);
-                await fetch(`${API_URL}/wiki-places/${id}/photo`, {
+                await fetch(`${API}/wiki-places/${id}/photo`, {
                     method: 'POST', body: fd,
                     headers: { 'Authorization': `Bearer ${auth?.token}` }
                 });
