@@ -162,7 +162,7 @@ public class WikiPlacesController : ControllerBase
         // Удаляем старое фото если есть
         if (!string.IsNullOrEmpty(place.PhotoPath))
         {
-            var relPath = place.PhotoPath.TrimStart('/').Substring("uploads/wiki/".Length);
+            var relPath = place.PhotoPath.TrimStart('/').Substring("wiki_places/".Length);
             var diskPath = Path.Combine(_uploadRoot, relPath);
             if (System.IO.File.Exists(diskPath)) System.IO.File.Delete(diskPath);
         }
@@ -177,7 +177,7 @@ public class WikiPlacesController : ControllerBase
         await using (var stream = System.IO.File.Create(filePath))
             await file.CopyToAsync(stream, ct);
 
-        place.PhotoPath = $"/uploads/wiki/{id}/{fileName}";
+        place.PhotoPath = $"/wiki_places/{id}/{fileName}";
         await _context.SaveChangesAsync(ct);
 
         return Ok(new { photoPath = place.PhotoPath });
