@@ -253,7 +253,7 @@ function guardNumberInputs() {
 }
 
 // ── Modal ────────────────────────────────────────────────
-function openModal(apartmentId) {
+function openModal(apartmentId, clearParams = false) {
     const apt = apartments.find(a => a.id === apartmentId);
     if (!apt) return;
     currentApartment = apt;
@@ -343,6 +343,8 @@ function openModal(apartmentId) {
     switchTab('desc');
     document.querySelectorAll('.modal-tab').forEach(el => el.classList.remove('active'));
     document.querySelector('.modal-tab').classList.add('active');
+
+    if (clearParams) history.replaceState(null, '', window.location.pathname);
 }
 
 function closeModal() {
@@ -537,7 +539,6 @@ async function init() {
     const aptId = params.get('apt');
     if (aptId) {
         openModal(parseInt(aptId));
-        history.replaceState(null, '', window.location.pathname);
     }
 }
 
