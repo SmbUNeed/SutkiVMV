@@ -286,7 +286,9 @@
             <div class="ct"><i class="fa-solid fa-plus"></i> Добавить место</div>
             <form id="formWikiPlace" onsubmit="createWikiPlace(event)">
                 <div class="fg">
-                    <div class="fv"><label>Название</label><input type="text" id="wNewName" placeholder="Городской парк" required></div>
+                    <div class="fv"><label>Название</label>
+                        <input type="text" id="wNewName" placeholder="Городской парк" required>
+                    </div>
                     <div class="fv">
                         <label>Тип</label>
                         <select id="wikiPlaceTypeSelect">
@@ -298,6 +300,10 @@
                             <option value="transport">Транспорт</option>
                             <option value="other">Прочее</option>
                         </select>
+                    </div>
+                    <div class="fv">
+                        <label>Тип</label>
+                        <select id="wikiPlaceNearbySelect"></select>
                     </div>
                     <div class="fv sp2"><label>Описание</label><input type="text" id="wNewDescription" placeholder="Зелёное сердце города" required></div>
                     <div class="fv sp2">
@@ -335,12 +341,12 @@
         </div>
         <form onsubmit="saveWikiEdit(event)">
             <div class="mbody">
-                <input type="hidden" id="weId">
+                <input type="hidden" id="wpId">
                 <div class="fg">
-                    <div class="fv"><label>Название</label><input type="text" id="weName" required></div>
+                    <div class="fv"><label>Название</label><input type="text" id="wpName" required></div>
                     <div class="fv">
                         <label>Тип</label>
-                        <select id="weType">
+                        <select id="wpType">
                             <option value="sight">Достопримечательность</option>
                             <option value="nature">Природа</option>
                             <option value="resort">Курорт</option>
@@ -350,11 +356,15 @@
                             <option value="other">Прочее</option>
                         </select>
                     </div>
-                    <div class="fv sp2"><label>Описание</label><textarea id="weDescription"></textarea></div>
+                    <div class="fv">
+                        <label>Тип</label>
+                        <select id="wpNearby"></select>
+                    </div>
+                    <div class="fv sp2"><label>Описание</label><textarea id="wDescription"></textarea></div>
                     <div class="fv sp2">
                         <label>Текущее фото</label>
                         <div style="display:flex;align-items:center;gap:12px;margin-top:4px;">
-                            <img id="weCurrentPhoto" src="" style="display:none;width:120px;height:80px;object-fit:cover;border-radius:7px;border:1px solid var(--bl);">
+                            <img id="wpCurrentPhoto" src="" style="display:none;width:120px;height:80px;object-fit:cover;border-radius:7px;border:1px solid var(--bl);">
                             <button type="button" class="btn bd sm" onclick="deleteWikiPhoto(document.getElementById('weId').value)">
                                 <i class="fa-solid fa-trash"></i> Удалить фото
                             </button>
@@ -362,9 +372,9 @@
                     </div>
                     <div class="fv sp2">
                         <label>Новое фото</label>
-                        <label class="up" for="wePhoto" style="padding:14px;">
+                        <label class="up" for="wpPhoto" style="padding:14px;">
                             <i class="fa-solid fa-image" style="margin-right:6px;"></i> Выбрать фото
-                            <input type="file" id="wePhoto" accept="image/*">
+                            <input type="file" id="wpPhoto" accept="image/*">
                         </label>
                     </div>
                 </div>
