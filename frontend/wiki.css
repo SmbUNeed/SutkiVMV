@@ -155,6 +155,8 @@
     transition: all 0.22s ease;
     cursor: default;
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 .wiki-card:hover {
     border-color: var(--primary-lt);
@@ -221,7 +223,12 @@
 }
 .wiki-card-dist-tag i { font-size: 0.6rem; }
 
-.wiki-card-body { padding: 14px 16px 16px; }
+.wiki-card-body {
+    padding: 14px 16px 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
 .wiki-card-title {
     font-family: var(--font-head);
     font-size: 1.0rem; font-weight: 800;
@@ -232,6 +239,10 @@
     font-size: 0.82rem; color: var(--ink-3);
     font-weight: 500; line-height: 1.6;
     margin-bottom: 10px;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 .wiki-card-tags {
     display: flex; flex-wrap: wrap; gap: 5px;
