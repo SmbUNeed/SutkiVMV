@@ -254,6 +254,7 @@ function guardNumberInputs() {
 
 // ── Modal ────────────────────────────────────────────────
 function openModal(apartmentId, clearParams = false) {
+    if (clearParams) history.replaceState(null, '', window.location.pathname);
     const apt = apartments.find(a => a.id === apartmentId);
     if (!apt) return;
     currentApartment = apt;
@@ -343,8 +344,6 @@ function openModal(apartmentId, clearParams = false) {
     switchTab('desc');
     document.querySelectorAll('.modal-tab').forEach(el => el.classList.remove('active'));
     document.querySelector('.modal-tab').classList.add('active');
-
-    if (clearParams) history.replaceState(null, '', window.location.pathname);
 }
 
 function closeModal() {
