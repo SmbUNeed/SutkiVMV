@@ -852,10 +852,10 @@
         }
         document.getElementById('wpNearby').innerHTML = nearbyPlacesCatalog.length
             ? nearbyPlacesCatalog.map(n =>
-            `<option value="${n.id}" ${n.id === wp.nearbyPlaceId ? 'selected' : ''}>
-                ${s.name}
-            </option>`).join('')
-        : `<option value="" disabled>Нет мест в каталоге</option>`
+                `<option value="${n.id}" ${n.id === wp.nearbyPlaceId ? 'selected' : ''}>
+                    ${n.name}
+                </option>`).join('')
+            : '<option value="" disabled>Нет мест в каталоге</option>';
         document.getElementById('wikiEditModal').classList.add('open');
     }
 

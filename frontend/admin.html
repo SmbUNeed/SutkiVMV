@@ -302,7 +302,7 @@
                         </select>
                     </div>
                     <div class="fv">
-                        <label>Тип</label>
+                        <label>Связать с "Рядом"</label>
                         <select id="wikiPlaceNearbySelect"></select>
                     </div>
                     <div class="fv sp2"><label>Описание</label><input type="text" id="wNewDescription" placeholder="Зелёное сердце города" required></div>
@@ -357,15 +357,15 @@
                         </select>
                     </div>
                     <div class="fv">
-                        <label>Тип</label>
+                        <label>Связать с "Рядом"</label>
                         <select id="wpNearby"></select>
                     </div>
-                    <div class="fv sp2"><label>Описание</label><textarea id="wDescription"></textarea></div>
+                    <div class="fv sp2"><label>Описание</label><textarea id="wpDescription"></textarea></div>
                     <div class="fv sp2">
                         <label>Текущее фото</label>
                         <div style="display:flex;align-items:center;gap:12px;margin-top:4px;">
                             <img id="wpCurrentPhoto" src="" style="display:none;width:120px;height:80px;object-fit:cover;border-radius:7px;border:1px solid var(--bl);">
-                            <button type="button" class="btn bd sm" onclick="deleteWikiPhoto(document.getElementById('weId').value)">
+                            <button type="button" class="btn bd sm" onclick="deleteWikiPhoto(document.getElementById('wpId').value)">
                                 <i class="fa-solid fa-trash"></i> Удалить фото
                             </button>
                         </div>
