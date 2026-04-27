@@ -855,6 +855,18 @@ textarea { resize: vertical; min-height: 90px; }
 .modal-nearby span:nth-child(2) { flex: 1; }
 .modal-nearby-dist { color: var(--ink-3); font-size: .8rem; }
 
+.modal-nearby.linked {
+    padding: 8px 10px;
+    border-radius: var(--r-sm);
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+.modal-nearby.linked:last-child { border-bottom: none; }
+.modal-nearby.linked:hover {
+    background: var(--primary-bg);
+    border-color: var(--primary-glow);
+}
+
 /* ── RESPONSIVE ──────────────────────────────────────────── */
 @media (max-width: 960px) {
     .modal-body { grid-template-columns: 1fr; }

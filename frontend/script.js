@@ -331,7 +331,7 @@ function openModal(apartmentId) {
     const nearbyEl = document.getElementById('modalNearby');
     nearbyEl.innerHTML = (apt.nearby && apt.nearby.length)
         ? apt.nearby.map(n => `
-            <div class="modal-nearby"
+            <div class="modal-nearby ${n.wikiPlaceId ? 'linked' : ''}"
                  ${n.wikiPlaceId ? `onclick="window.location.href='wiki.html?place=${n.wikiPlaceId}'" style="cursor:pointer;"` : ''}>
                 <i class="fa-solid ${n.icon}"></i>
                 <span>${n.name}</span>
