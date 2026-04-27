@@ -331,7 +331,7 @@ function openModal(apartmentId) {
     const nearbyEl = document.getElementById('modalNearby');
     nearbyEl.innerHTML = (apt.nearby && apt.nearby.length)
         ? apt.nearby.map(n => `
-            <div class="modal-nearby">
+            <div class="modal-nearby" ${n.wikiPlaceId?}>
                 <i class="fa-solid ${n.icon}"></i>
                 <span>${n.name}</span>
                 <span class="modal-nearby-dist">${n.distance}</span>
@@ -531,6 +531,10 @@ async function init() {
         const el = document.getElementById(id);
         if (el) el.addEventListener('input', applyFilters);
     });
+
+    const params = new URLSearchParams(window.location.search);
+    const aptId = params.get('apt');
+    if (aptId) openModal(parseInt(aptId));
 }
 
 init();

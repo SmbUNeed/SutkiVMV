@@ -107,7 +107,7 @@ async function openWikiPlaceModal(id) {
     if (wp.nearbyApartments?.length) {
         wp.nearbyApartments.forEach(apt => {
             aptsEl.insertAdjacentHTML('beforeend', `
-                <div class="wiki-apt-card" onclick="openModal(${apt.id})">
+                <div class="wiki-apt-card" onclick="window.location.href='index.html?apt=${apt.id}'">
                     <img src="${imgUrl(apt.mainImage)}" alt="${apt.title}">
                     <div class="wiki-apt-info">
                         <div class="wiki-apt-name">${apt.title}</div>
@@ -117,7 +117,7 @@ async function openWikiPlaceModal(id) {
                 </div>`);
         });
     } else {
-        aptsEl.innerHTML = '<p class="wiki-modal-no-apts">Нет доступных квартир рядом</p>';
+        aptsEl.innerHTML = '';
     }
 
     document.getElementById('wikiModal').classList.add('open');

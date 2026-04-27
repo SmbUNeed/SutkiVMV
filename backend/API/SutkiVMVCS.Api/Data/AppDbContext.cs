@@ -56,5 +56,17 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<ApartmentNearbyPlace>()
             .HasKey(an => new { an.ApartmentId, an.NearbyPlaceId });
+
+        modelBuilder.Entity<WikiPlace>()
+            .HasOne(w => w.NearbyPlace)
+            .WithMany()
+            .HasForeignKey(w => w.NearbyPlaceId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<NearbyPlace>()
+            .HasOne(n => n.WikiPlace)
+            .WithMany()
+            .HasForeignKey(n => n.WikiPlaceId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
