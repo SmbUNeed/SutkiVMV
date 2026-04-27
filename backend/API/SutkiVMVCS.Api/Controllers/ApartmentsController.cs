@@ -336,7 +336,8 @@ public class ApartmentsController : ControllerBase
                          Id = an.NearbyPlace.Id,
                          Icon = an.NearbyPlace.Icon,
                          Name = an.NearbyPlace.Name,
-                         Distance = an.Distance
+                         Distance = an.Distance,
+                         WikiPlaceId = an.NearbyPlace.WikiPlaceId
                      }).ToList()
                      };
 }

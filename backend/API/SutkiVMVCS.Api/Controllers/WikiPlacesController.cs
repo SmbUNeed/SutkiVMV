@@ -95,6 +95,17 @@ public class WikiPlacesController : ControllerBase
         };
         _context.WikiPlaces.Add(wikiPlace);
         await _context.SaveChangesAsync(ct);
+
+        if (dto.NearbyPlaceId.HasValue)
+        {
+            var nearby = await _context.NearbyPlaces.FindAsync(dto.NearbyPlaceId.Value);
+            if (nearby != null)
+            {
+                nearby.WikiPlaceId = wikiPlace.Id;
+                await _context.SaveChangesAsync(ct);
+            }
+        }
+
         return Ok(ToDto(wikiPlace));
     }
 
@@ -112,9 +123,25 @@ public class WikiPlacesController : ControllerBase
         place.Name = dto.Name;
         place.Description = dto.Description;
         place.Type = Enum.TryParse<WikiPlaceType>(dto.Type, true, out var t) ? t : WikiPlaceType.Other;
-        place.NearbyPlaceId = dto.NearbyPlaceId;
 
+        var oldNearby = await _context.NearbyPlaces
+            .FirstOrDefaultAsync(n => n.WikiPlaceId == id, ct);
+        if (oldNearby != null) oldNearby.WikiPlaceId = null;
+
+        place.NearbyPlaceId = dto.NearbyPlaceId;
         await _context.SaveChangesAsync(ct);
+
+        // Ставим новую обратную связь
+        if (dto.NearbyPlaceId.HasValue)
+        {
+            var nearby = await _context.NearbyPlaces.FindAsync(dto.NearbyPlaceId.Value);
+            if (nearby != null)
+            {
+                nearby.WikiPlaceId = place.Id;
+                await _context.SaveChangesAsync(ct);
+            }
+        }
+
         return NoContent();
     }
 

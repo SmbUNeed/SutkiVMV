@@ -145,6 +145,13 @@ async function init() {
     wikiPlaces = await apiGetWikiPlaces();
     filteredWikiPlaces = wikiPlaces;
     renderGrid(wikiPlaces);
+
+    const params = new URLSearchParams(window.location.search);
+    const placeId = params.get('place');
+    if (placeId) {
+        openWikiPlaceModal(parseInt(placeId));
+        history.replaceState(null, '', window.location.pathname);
+    }
 }
 
 /* ── Climate rows ──────────────────────────────────────── */

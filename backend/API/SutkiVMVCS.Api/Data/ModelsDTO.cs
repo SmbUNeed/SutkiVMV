@@ -54,6 +54,7 @@ public class NearbyPlaceDto
     public string Icon { get; set; } = "";
     public string Name { get; set; } = "";
     public string Distance { get; set; } = "";
+    public int? WikiPlaceId { get; set; }
 }
 
 public class CreateNearbyDto
