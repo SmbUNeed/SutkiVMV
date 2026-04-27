@@ -10,10 +10,10 @@ namespace SutkiVMVCS.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateIndex(
-                name: "IX_WikiPlaces_NearbyPlaceId",
-                table: "WikiPlaces",
-                column: "NearbyPlaceId");
+            migrationBuilder.Sql(@"
+                CREATE INDEX IF NOT EXISTS ""IX_WikiPlaces_NearbyPlaceId"" 
+                ON ""WikiPlaces"" (""NearbyPlaceId"");
+            ");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_WikiPlaces_NearbyPlaces_NearbyPlaceId",
