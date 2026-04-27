@@ -851,7 +851,7 @@
             photo.style.display = 'none';
         }
         document.getElementById('wpNearby').innerHTML = nearbyPlacesCatalog.length
-            ? nearbyPlacesCatalog.map(n =>
+            ? `<option value=""> -- не указывать -- </option>` + nearbyPlacesCatalog.map(n =>
                 `<option value="${n.id}" ${n.id === wp.nearbyPlaceId ? 'selected' : ''}>
                     ${n.name}
                 </option>`).join('')
