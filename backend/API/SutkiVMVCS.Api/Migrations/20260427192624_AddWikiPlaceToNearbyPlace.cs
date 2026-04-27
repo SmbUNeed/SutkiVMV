@@ -15,13 +15,20 @@ namespace SutkiVMVCS.Migrations
                 ON ""WikiPlaces"" (""NearbyPlaceId"");
             ");
 
-            migrationBuilder.AddForeignKey(
-                name: "FK_WikiPlaces_NearbyPlaces_NearbyPlaceId",
-                table: "WikiPlaces",
-                column: "NearbyPlaceId",
-                principalTable: "NearbyPlaces",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.SetNull);
+            migrationBuilder.Sql(@"
+                DO $$ BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM pg_constraint 
+                        WHERE conname = 'FK_WikiPlaces_NearbyPlaces_NearbyPlaceId'
+                    ) THEN
+                        ALTER TABLE ""WikiPlaces"" 
+                        ADD CONSTRAINT ""FK_WikiPlaces_NearbyPlaces_NearbyPlaceId""
+                        FOREIGN KEY (""NearbyPlaceId"") 
+                        REFERENCES ""NearbyPlaces""(""Id"")
+                        ON DELETE SET NULL;
+                    END IF;
+                END $$;
+            ");
 
             migrationBuilder.AddColumn<int>(
                 name: "WikiPlaceId",
