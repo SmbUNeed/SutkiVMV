@@ -537,9 +537,7 @@ async function init() {
 
     const params = new URLSearchParams(window.location.search);
     const aptId = params.get('apt');
-    if (aptId) {
-        openModal(parseInt(aptId));
-    }
+    if (aptId) openModal(parseInt(aptId), true);
 }
 
 init();
