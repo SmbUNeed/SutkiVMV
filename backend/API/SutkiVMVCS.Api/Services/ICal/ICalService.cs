@@ -12,12 +12,8 @@ public class ICalService
 {
     private readonly AppDbContext _context;
 
-    public ICalService(AppDbContext context)
-    {
-        _context = context;
-    }
+    public ICalService(AppDbContext context) => _context = context;
 
-    // Экспорт броней квартиры в .ics
     public async Task<string> ExportAsync(int apartmentId)
     {
         var apt = await _context.Apartments
@@ -61,7 +57,6 @@ public class ICalService
         return new CalendarSerializer().SerializeToString(calendar) ?? "";
     }
 
-    // Импорт броней из внешнего ics URL
     public async Task ImportAsync(ExternalCalendar extCal)
     {
         using var http = new HttpClient();
@@ -93,7 +88,6 @@ public class ICalService
             }
         }
 
-        // Удалить брони которых больше нет в календаре
         var uids = calendar.Events.Select(e => e.Uid).ToHashSet();
         var toDelete = await _context.ExternalBookings
             .Where(e => e.ApartmentId == extCal.ApartmentId
