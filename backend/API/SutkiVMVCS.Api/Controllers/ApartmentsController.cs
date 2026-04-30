@@ -105,7 +105,7 @@ public class ApartmentsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult> Update(int id, Apartment updated, CancellationToken ct)
     {
-        var apt = await _context.Apartments.FindAsync(id);
+        var apt = await _context.Apartments.FindAsync(id, ct);
         if (apt == null || apt.IsDeleted) return NotFound();
 
         apt.Title = updated.Title;
@@ -125,14 +125,14 @@ public class ApartmentsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult> SetAmenities(int id, SetAmenitiesDto dto, CancellationToken ct)
     {
-        var apt = await _context.Apartments.FindAsync(id);
+        var apt = await _context.Apartments.FindAsync(id, ct);
         if (apt == null) return NotFound();
 
-        var old = await _context.ApartmentAmenities.Where(aa => aa.ApartmentId == id).ToListAsync();
+        var old = await _context.ApartmentAmenities.Where(aa => aa.ApartmentId == id).ToListAsync(ct);
         _context.ApartmentAmenities.RemoveRange(old);
 
         foreach (var amenityId in dto.AmenityIds.Distinct())
-            if (await _context.Amenities.AnyAsync(a => a.Id == amenityId))
+            if (await _context.Amenities.AnyAsync(a => a.Id == amenityId, ct))
                 _context.ApartmentAmenities.Add(new ApartmentAmenity { ApartmentId = id, AmenityId = amenityId });
 
         await _context.SaveChangesAsync(ct);
@@ -203,7 +203,7 @@ public class ApartmentsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult> Restore(int id, CancellationToken ct)
     {
-        var apt = await _context.Apartments.FindAsync(id);
+        var apt = await _context.Apartments.FindAsync(id, ct);
         if (apt == null) return NotFound();
         apt.IsDeleted = false;
         apt.IsActive = true;
@@ -215,7 +215,7 @@ public class ApartmentsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult> Delete(int id, CancellationToken ct)
     {
-        var apt = await _context.Apartments.FindAsync(id);
+        var apt = await _context.Apartments.FindAsync(id, ct);
         if (apt == null) return NotFound();
         apt.IsDeleted = true;
         apt.IsActive = false;
@@ -227,7 +227,7 @@ public class ApartmentsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult> ChangeActivity(int id, bool isActive, CancellationToken ct)
     {
-        var apt = await _context.Apartments.FindAsync(id);
+        var apt = await _context.Apartments.FindAsync(id, ct);
         if (apt == null) return NotFound();
         apt.IsActive = isActive;
         await _context.SaveChangesAsync(ct);
@@ -260,7 +260,7 @@ public class ApartmentsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult> DeleteRule(int ruleId, CancellationToken ct)
     {
-        var rule = await _context.Rules.FindAsync(ruleId);
+        var rule = await _context.Rules.FindAsync(ruleId, ct);
         if (rule == null) return NotFound();
         _context.Rules.Remove(rule);
         await _context.SaveChangesAsync(ct);
@@ -293,7 +293,7 @@ public class ApartmentsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult> DeleteNearbyPlace(int nearbyId, CancellationToken ct)
     {
-        var place = await _context.NearbyPlaces.FindAsync(nearbyId);
+        var place = await _context.NearbyPlaces.FindAsync(nearbyId, ct);
         if (place == null) return NotFound();
         _context.NearbyPlaces.Remove(place);
         await _context.SaveChangesAsync(ct);

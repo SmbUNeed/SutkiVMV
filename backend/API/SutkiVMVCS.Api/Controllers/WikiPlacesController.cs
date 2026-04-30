@@ -98,7 +98,7 @@ public class WikiPlacesController : ControllerBase
 
         if (dto.NearbyPlaceId.HasValue)
         {
-            var nearby = await _context.NearbyPlaces.FindAsync(dto.NearbyPlaceId.Value);
+            var nearby = await _context.NearbyPlaces.FindAsync(dto.NearbyPlaceId.Value, ct);
             if (nearby != null)
             {
                 nearby.WikiPlaceId = wikiPlace.Id;
@@ -117,7 +117,7 @@ public class WikiPlacesController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult> Update(int id, UpdateWikiPlaceDto dto, CancellationToken ct)
     {
-        var place = await _context.WikiPlaces.FindAsync(id);
+        var place = await _context.WikiPlaces.FindAsync(id, ct);
         if (place == null) return NotFound();
 
         place.Name = dto.Name;
@@ -134,7 +134,7 @@ public class WikiPlacesController : ControllerBase
         // Ставим новую обратную связь
         if (dto.NearbyPlaceId.HasValue)
         {
-            var nearby = await _context.NearbyPlaces.FindAsync(dto.NearbyPlaceId.Value);
+            var nearby = await _context.NearbyPlaces.FindAsync(dto.NearbyPlaceId.Value, ct);
             if (nearby != null)
             {
                 nearby.WikiPlaceId = place.Id;
@@ -153,7 +153,7 @@ public class WikiPlacesController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult> Delete(int id, CancellationToken ct)
     {
-        var place = await _context.WikiPlaces.FindAsync(id);
+        var place = await _context.WikiPlaces.FindAsync(id, ct);
         if (place == null) return NotFound();
 
         // Удаляем фото с диска если есть
@@ -218,7 +218,7 @@ public class WikiPlacesController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult> DeletePhoto(int id, CancellationToken ct)
     {
-        var place = await _context.WikiPlaces.FindAsync(id);
+        var place = await _context.WikiPlaces.FindAsync(id, ct);
         if (place == null) return NotFound();
         if (string.IsNullOrEmpty(place.PhotoPath)) return NoContent();
 

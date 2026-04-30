@@ -58,7 +58,7 @@ public class ICalService
             });
         }
 
-        return new CalendarSerializer().SerializeToString(calendar);
+        return new CalendarSerializer().SerializeToString(calendar) ?? "";
     }
 
     // Импорт броней из внешнего ics URL
@@ -70,6 +70,7 @@ public class ICalService
         catch { return; }
 
         var calendar = Calendar.Load(icsContent);
+        if (calendar == null) return;
 
         foreach (var ev in calendar.Events)
         {
@@ -78,6 +79,7 @@ public class ICalService
             var exists = await _context.ExternalBookings
                 .AnyAsync(e => e.ExternalId == uid);
 
+            if (ev.DtStart == null || ev.DtEnd == null) continue;
             if (!exists)
             {
                 _context.ExternalBookings.Add(new ExternalBooking
