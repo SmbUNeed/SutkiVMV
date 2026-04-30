@@ -234,3 +234,9 @@ public class ConfirmEmailDto
 }
 
 public record ResetPasswordDto(string Email, string Token, string NewPassword);
+
+public class AddExternalCalendarDto
+{
+    public string Name { get; set; } = "";
+    public string ICalUrl { get; set; } = "";
+}

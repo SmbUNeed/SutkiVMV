@@ -169,3 +169,26 @@ public class WikiPlace
 }
 
 public enum WikiPlaceType { Sight=0, Nature=1, Resort=2, Food=3, Shopping=4, Transport=5, Other=6 }
+
+public class ExternalCalendar
+{
+    public int Id { get; set; }
+    public int ApartmentId { get; set; }
+    public string Name { get; set; } = "";
+    public string ICalUrl { get; set; } = "";
+    public DateTime? LastSync { get; set; }
+
+    public Apartment Apartment { get; set; } = null!;
+}
+
+public class ExternalBooking
+{
+    public int Id { get; set; }
+    public int ApartmentId { get; set; }
+    public string ExternalId { get; set; } = "";
+    public string Source { get; set; } = "";
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+
+    public Apartment Apartment { get; set; } = null!;
+}

@@ -18,8 +18,10 @@ public class AppDbContext : DbContext
     public DbSet<Rule>                 Rules                => Set<Rule>();
     public DbSet<NearbyPlace>          NearbyPlaces         => Set<NearbyPlace>();
     public DbSet<ApartmentRule>        ApartmentRules       => Set<ApartmentRule>();
-    public DbSet<ApartmentNearbyPlace> ApartmentNearby     => Set<ApartmentNearbyPlace>();
+    public DbSet<ApartmentNearbyPlace> ApartmentNearby      => Set<ApartmentNearbyPlace>();
     public DbSet<WikiPlace>            WikiPlaces           => Set<WikiPlace>();
+    public DbSet<ExternalCalendar> ExternalCalendars        => Set<ExternalCalendar>();
+    public DbSet<ExternalBooking> ExternalBookings          => Set<ExternalBooking>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

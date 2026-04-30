@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <!-- JWT -->
+    <PackageReference Include="Ical.Net" Version="5.2.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.3" />
 
     <!-- Entity Framework Core + PostgreSQL -->

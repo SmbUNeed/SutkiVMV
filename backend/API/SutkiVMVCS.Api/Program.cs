@@ -134,6 +134,9 @@ builder.Services.AddSingleton<MaxBotWorker>();
 builder.Services.AddSingleton<IMaxService>(sp => sp.GetRequiredService<MaxBotWorker>());
 builder.Services.AddHostedService(sp => sp.GetRequiredService<MaxBotWorker>());
 
+builder.Services.AddScoped<ICalService>();
+builder.Services.AddHostedService<ICalSyncService>();
+
 // ═══════════════════════════════════════════════════════════════════════
 //  HOST OPTIONS — не останавливать хост если BackgroundService упал
 // ═══════════════════════════════════════════════════════════════════════
