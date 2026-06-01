@@ -23,6 +23,7 @@
         if (id === 'rules')    loadRules();
         if (id === 'nearby')   loadNearby();
         if (id === 'wiki-places') loadWikiPlaces();
+        if (id === 'ical')     loadICal();
     }
 
     /* ── TOAST ───────────────────────────────────────────── */
@@ -927,6 +928,10 @@
                 ? nearbyPlacesCatalog.map(n =>
                     `<option value="${n.id}">${n.name}</option>`).join('')
                 : '');
+    }
+    /* ── ICal ────────────────────────────────────────────── */
+    function loadICal(){
+        
     }
 
     /* ── INIT ────────────────────────────────────────────── */

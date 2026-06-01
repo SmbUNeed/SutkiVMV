@@ -62,4 +62,16 @@ public class AmenitiesController : ControllerBase
         await _context.SaveChangesAsync(ct);
         return Ok();
     }
+
+    [HttpPut("{id:int}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult> UpdateAmenity(int id, CreateAmenityDto dto, CancellationToken ct)
+    {
+        var amenity = await _context.Amenities.FindAsync(id, ct);
+        if (amenity == null) return NotFound();
+        amenity.Name = dto.Name;
+        amenity.Icon = dto.Icon;
+        await _context.SaveChangesAsync(ct);
+        return Ok();
+    }
 }

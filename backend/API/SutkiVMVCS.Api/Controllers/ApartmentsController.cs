@@ -267,6 +267,18 @@ public class ApartmentsController : ControllerBase
         return NoContent();
     }
 
+    [HttpPut("rules/{ruleId:int}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult> UpdateRule(int ruleId, CreateRuleDto dto, CancellationToken ct)
+    {
+        var rule = await _context.Rules.FindAsync(ruleId, ct);
+        if (rule == null) return NotFound();
+        rule.Text = dto.Text;
+        rule.Icon = dto.Icon;
+        await _context.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
     // ═══════════════════════════════════════════════════════════════════
     //  ГЛОБАЛЬНЫЕ МЕСТА РЯДОМ
     // ═══════════════════════════════════════════════════════════════════
@@ -296,6 +308,19 @@ public class ApartmentsController : ControllerBase
         var place = await _context.NearbyPlaces.FindAsync(nearbyId, ct);
         if (place == null) return NotFound();
         _context.NearbyPlaces.Remove(place);
+        await _context.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    [HttpPut("nearby-places/{nearbyId:int}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult> UpdateNearbyPlace(int nearbyId, CreateNearbyDto dto, CancellationToken ct)
+    {
+        var place = await _context.NearbyPlaces.FindAsync(nearbyId, ct);
+        if (place == null) return NotFound();
+        place.Name = dto.Name;
+        place.Icon = dto.Icon;
+        place.WikiPlaceId = dto.WikiPlaceId;
         await _context.SaveChangesAsync(ct);
         return NoContent();
     }
