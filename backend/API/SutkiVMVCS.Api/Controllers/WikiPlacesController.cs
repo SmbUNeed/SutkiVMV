@@ -88,7 +88,7 @@ public class WikiPlacesController : ControllerBase
         var wikiPlace = new WikiPlace
         {
             Name = dto.Name,
-            Description = dto.Description,
+            Description = dto.Description,  
             PhotoPath = dto.PhotoPath,
             Type = Enum.TryParse<WikiPlaceType>(dto.Type, true, out var t) ? t : WikiPlaceType.Other,
             NearbyPlaceId = dto.NearbyPlaceId

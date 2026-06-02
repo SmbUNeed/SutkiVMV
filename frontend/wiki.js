@@ -104,7 +104,10 @@ async function openWikiPlaceModal(id) {
 
     const aptsEl = document.getElementById('wikiModalApts');
     aptsEl.innerHTML = '';
+    const aptsTitle = document.querySelector('.wiki-modal-apts-title');
+
     if (wp.nearbyApartments?.length) {
+        aptsTitle.style.display = 'block';
         wp.nearbyApartments.forEach(apt => {
             aptsEl.insertAdjacentHTML('beforeend', `
                 <div class="wiki-apt-card" onclick="window.location.href='index.html?apt=${apt.id}'">
@@ -117,6 +120,7 @@ async function openWikiPlaceModal(id) {
                 </div>`);
         });
     } else {
+        aptsTitle.style.display = 'none';
         aptsEl.innerHTML = '';
     }
 
