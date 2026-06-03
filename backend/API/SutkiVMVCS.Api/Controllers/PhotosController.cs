@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SutkiVMV.Data;
 using SutkiVMV.Models;
+using SutkiVMVCS.Services;
 
 namespace SutkiVMV.Controllers;
 
@@ -20,6 +21,43 @@ public class PhotosController : ControllerBase
     {
         _context = context;
         _uploadRoot = upload.ApartmentsUploadPath;
+    }
+
+    [HttpPost("migrate-images")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult> MigrateImages(CancellationToken ct)
+    {
+        var gallery = await _context.ApartmentGallery.ToListAsync(ct);
+        int converted = 0;
+
+        foreach (var item in gallery)
+        {
+            // /uploads/{aptId}/{file.jpg}
+            var oldRelPath = item.ImagePath.TrimStart('/'); // uploads/{aptId}/{file.jpg}
+            var oldDiskPath = Path.Combine(_uploadRoot, oldRelPath.Substring("uploads/".Length));
+
+            if (!System.IO.File.Exists(oldDiskPath)) continue;
+            if (oldDiskPath.EndsWith(".webp")) continue; // уже webp
+
+            try
+            {
+                var dir = Path.GetDirectoryName(oldDiskPath)!;
+                using var stream = System.IO.File.OpenRead(oldDiskPath);
+                var newFileName = await ImageHelper.SaveAsWebp(stream, dir);
+
+                // Удаляем старый файл
+                System.IO.File.Delete(oldDiskPath);
+
+                // Обновляем путь в БД
+                var aptId = Path.GetFileName(dir);
+                item.ImagePath = $"/uploads/{aptId}/{newFileName}";
+                converted++;
+            }
+            catch { continue; }
+        }
+
+        await _context.SaveChangesAsync(ct);
+        return Ok(new { message = $"Конвертировано: {converted}" });
     }
 
     // POST api/apartments/{aptId}/photos
@@ -47,11 +85,7 @@ public class PhotosController : ControllerBase
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (!AllowedExtensions.Contains(ext)) continue;
 
-            var fileName = $"{Guid.NewGuid()}{ext}";
-            var filePath = Path.Combine(aptDir, fileName);
-
-            await using (var stream = System.IO.File.Create(filePath))
-                await file.CopyToAsync(stream);
+            var fileName = await ImageHelper.SaveAsWebp(file.OpenReadStream(), aptDir);
 
             // mainPhotoIndex == -1 → не менять главное при добавлении фото в редакторе
             bool isMain = (!hasExisting && i == 0)
