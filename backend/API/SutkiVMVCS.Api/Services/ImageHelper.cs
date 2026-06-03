@@ -1,6 +1,4 @@
-﻿using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Webp;
-using SixLabors.ImageSharp.Processing;
+﻿using SkiaSharp;
 
 namespace SutkiVMVCS.Services
 {
@@ -8,23 +6,24 @@ namespace SutkiVMVCS.Services
     {
         public static async Task<string> SaveAsWebp(Stream inputStream, string directory, int maxWidth = 1200)
         {
-            var filename = $"{Guid.NewGuid()}.webp";
-            var filePath = Path.Combine(directory, filename);
+            var fileName = $"{Guid.NewGuid()}.webp";
+            var filePath = Path.Combine(directory, fileName);
 
-            using var image = await Image.LoadAsync(inputStream);
+            using var bitmap = SKBitmap.Decode(inputStream);
 
-            if (image.Width > maxWidth)
-            {
-                image.Mutate(x => x.Resize(new ResizeOptions
-                {
-                    Mode = ResizeMode.Max,
-                    Size = new Size(maxWidth, 0)
-                }));
-            }
+            var targetWidth = bitmap.Width > maxWidth ? maxWidth : bitmap.Width;
+            var targetHeight = bitmap.Width > maxWidth
+                ? (int)(bitmap.Height * ((float)maxWidth / bitmap.Width))
+                : bitmap.Height;
 
-            await image.SaveAsWebpAsync(filePath, new WebpEncoder { Quality = 80 });
+            using var resized = bitmap.Resize(new SKImageInfo(targetWidth, targetHeight), SKSamplingOptions.Default);
+            using var image = SKImage.FromBitmap(resized);
+            using var data = image.Encode(SKEncodedImageFormat.Webp, 80);
 
-            return filename;
+            await using var fileStream = System.IO.File.Create(filePath);
+            data.SaveTo(fileStream);
+
+            return fileName;
         }
     }
 }
