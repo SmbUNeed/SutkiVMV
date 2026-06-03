@@ -23,39 +23,6 @@ public class WikiPlacesController : ControllerBase
         _uploadRoot = upload.WikiUploadPath;
     }
 
-    [HttpPost("migrate-images")]
-    [Authorize(Roles = "Admin")]
-    public async Task<ActionResult> MigrateImages(CancellationToken ct)
-    {
-        var wikiPlaces = await _context.WikiPlaces
-            .Where(w => !string.IsNullOrEmpty(w.PhotoPath))
-            .ToListAsync(ct);
-        int converted = 0;
-
-        foreach (var place in wikiPlaces)
-        {
-            var oldRelPath = place.PhotoPath.TrimStart('/'); // wiki_places/{id}/{file}
-            var oldDiskPath = Path.Combine(_uploadRoot, oldRelPath.Substring("wiki_places/".Length));
-
-            if (!System.IO.File.Exists(oldDiskPath)) continue;
-            if (oldDiskPath.EndsWith(".webp")) continue;
-
-            var dir = Path.GetDirectoryName(oldDiskPath)!;
-            using var stream = System.IO.File.OpenRead(oldDiskPath);
-            var newFileName = await ImageHelper.SaveAsWebp(stream, dir);
-
-            System.IO.File.Delete(oldDiskPath);
-
-            var id = Path.GetFileName(dir);
-            place.PhotoPath = $"/wiki_places/{id}/{newFileName}";
-
-            converted++;
-        }
-
-        await _context.SaveChangesAsync(ct);
-        return Ok($"Конвертировано: {converted}");
-    }
-
     // ═══════════════════════════════════════════════════════════════════
     //  GET ALL
     // ═══════════════════════════════════════════════════════════════════
