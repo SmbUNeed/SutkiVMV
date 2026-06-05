@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SutkiVMV.Data;
 using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
+using SutkiVMVCS.Services;
 
 namespace SutkiVMV.Controllers;
 
@@ -56,7 +57,7 @@ public class ClientsController : ControllerBase
         var client = new Client
         {
             FullName = dto.FullName.Trim(),
-            PhoneNumber = dto.PhoneNumber.Trim(),
+            PhoneNumber = PhoneHelper.Normalize(dto.PhoneNumber.Trim())!,
             Email = dto.Email.Trim(),
             AdminTag = dto.AdminTag?.Trim(),
             AdminNote = dto.AdminNote?.Trim(),
@@ -74,7 +75,7 @@ public class ClientsController : ControllerBase
         var client = await _context.Clients.FindAsync(id);
         if (client == null) return NotFound();
         client.FullName = updated.FullName;
-        client.PhoneNumber = updated.PhoneNumber;
+        client.PhoneNumber = PhoneHelper.Normalize(updated.PhoneNumber)!;
         client.Email = updated.Email;
         client.AdminTag = updated.AdminTag;
         client.AdminNote = updated.AdminNote;
