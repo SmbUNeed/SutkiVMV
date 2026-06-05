@@ -186,12 +186,18 @@ public class ClientDto
     public string PhoneNumber { get; set; } = "";
     public string Email       { get; set; } = "";
     public int?   UserId      { get; set; }
+    public string? AdminTag { get; set; }
+    public string? AdminNote { get; set; }
+    public bool InBlackList { get; set; } = false;
 }
 public class CreateClientDto
 {
     [Required, MaxLength(200)] public string FullName { get; set; } = "";
     [Required, MaxLength(20)] public string PhoneNumber { get; set; } = "";
     [EmailAddress] public string Email { get; set; } = "";
+    [MaxLength(200)] public string? AdminTag { get; set; }
+    [MaxLength(200)] public string? AdminNote { get; set; }
+    public bool InBlackList { get; set; } = false;
 }
 public class UpdateProfileDto
 {

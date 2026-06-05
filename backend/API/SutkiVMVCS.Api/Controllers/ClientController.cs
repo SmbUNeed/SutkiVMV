@@ -57,8 +57,10 @@ public class ClientsController : ControllerBase
         {
             FullName = dto.FullName.Trim(),
             PhoneNumber = dto.PhoneNumber.Trim(),
-            Email = dto.Email.Trim()
-            // UserId — не принимаем извне
+            Email = dto.Email.Trim(),
+            AdminTag = dto.AdminTag?.Trim(),
+            AdminNote = dto.AdminNote?.Trim(),
+            InBlackList = dto.InBlackList
         };
         _context.Clients.Add(client);
         await _context.SaveChangesAsync(ct);
@@ -74,6 +76,9 @@ public class ClientsController : ControllerBase
         client.FullName = updated.FullName;
         client.PhoneNumber = updated.PhoneNumber;
         client.Email = updated.Email;
+        client.AdminTag = updated.AdminTag;
+        client.AdminNote = updated.AdminNote;
+        client.InBlackList = updated.InBlackList;
         await _context.SaveChangesAsync(ct);
         return NoContent();
     }
@@ -95,6 +100,9 @@ public class ClientsController : ControllerBase
         FullName = c.FullName,
         PhoneNumber = c.PhoneNumber,
         Email = c.Email,
-        UserId = c.UserId
+        UserId = c.UserId,
+        AdminTag = c.AdminTag,
+        AdminNote = c.AdminNote,
+        InBlackList = c.InBlackList,
     };
 }

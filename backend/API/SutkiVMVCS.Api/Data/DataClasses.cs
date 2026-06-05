@@ -95,10 +95,13 @@ public class Amenity
 
 public class Client
 {
-    public int    Id          { get; set; }
-    public string FullName    { get; set; } = "";
-    public string PhoneNumber { get; set; } = "";
-    public string Email       { get; set; } = "";
+    public int     Id          { get; set; }
+    public string  FullName    { get; set; } = "";
+    public string  PhoneNumber { get; set; } = "";
+    public string  Email       { get; set; } = "";
+    public string? AdminTag    { get; set; } = null;
+    public string? AdminNote { get; set; } = null;
+    public bool InBlackList { get; set; } = false;
 
     // null = гостевое бронирование без регистрации
     public int?  UserId { get; set; }
