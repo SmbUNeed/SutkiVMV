@@ -97,6 +97,7 @@ public class ApartmentsController : ControllerBase
     {
         var apartment = new Apartment
         {
+            AdminTag = dto.AdminTag,
             Title = dto.Title,
             Address = dto.Address,
             Description = dto.Description,
@@ -118,6 +119,7 @@ public class ApartmentsController : ControllerBase
         var apt = await _context.Apartments.FindAsync(id, ct);
         if (apt == null || apt.IsDeleted) return NotFound();
 
+        apt.AdminTag = updated.AdminTag;
         apt.Title = updated.Title;
         apt.Address = updated.Address;
         apt.Description = updated.Description;
@@ -342,6 +344,7 @@ public class ApartmentsController : ControllerBase
     internal static ApartmentDto ToDto(Apartment a) => new()
     {
         Id = a.Id,
+        AdminTag = a.AdminTag,
         Title = a.Title,
         Address = a.Address,
         Description = a.Description,

@@ -7,6 +7,7 @@ namespace SutkiVMV.ModelsDTO;
 public class ApartmentDto
 {
     public int Id { get; set; }
+    public string AdminTag { get; set; } = "";
     public string Title { get; set; } = "";
     public string Address { get; set; } = "";
     public string Description { get; set; } = "";
@@ -26,6 +27,7 @@ public class ApartmentDto
 }
 public class CreateApartmentDto
 {
+    public string AdminTag { get; set; } = "";
     [Required, MaxLength(200)] public string Title { get; set; } = "";
     [Required, MaxLength(300)] public string Address { get; set; } = "";
     public string Description { get; set; } = "";
@@ -40,6 +42,7 @@ public class ApartmentShortDto
 {
     public int Id { get; set; }
     public string Title { get; set; } = "";
+    public string AdminTag { get; set; } = "";
 }
 public class RuleDto
 {

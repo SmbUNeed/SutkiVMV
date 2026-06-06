@@ -55,6 +55,10 @@ namespace SutkiVMVCS.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("AdminTag")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<decimal>("Area")
                         .HasColumnType("numeric");
 
