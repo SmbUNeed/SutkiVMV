@@ -167,6 +167,33 @@ public class BookingsController : ControllerBase
         return NoContent();
     }
 
+    [HttpPut("{id:int}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult> Update(int id, [FromBody] CreateBookingDto dto, CancellationToken ct)
+    {
+        var booking = await _context.Bookings.FindAsync(id, ct);
+        if (booking == null) return NotFound();
+
+        booking.ApartmentId = dto.ApartmentId;
+        booking.ClientId = dto.ClientId;
+        booking.StartDate = dto.StartDate;
+        booking.EndDate = dto.EndDate;
+
+        await _context.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult> Delete(int id, CancellationToken ct)
+    {
+        var booking = await _context.Bookings.FindAsync(id, ct);
+        if (booking == null) return NotFound();
+        _context.Bookings.Remove(booking);
+        await _context.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private static AdminBookingDto ToAdminDto(Booking b) => new()
