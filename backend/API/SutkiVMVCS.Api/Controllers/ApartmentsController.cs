@@ -47,6 +47,16 @@ public class ApartmentsController : ControllerBase
         return Ok(apts.Select(ToDto));
     }
 
+    [HttpGet("short")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<IEnumerable<ApartmentShortDto>>> GetShort()
+    {
+        var apts = await _context.Apartments
+            .Select(a => new ApartmentShortDto { Id = a.Id, Title = a.Title })
+            .ToListAsync();
+        return Ok(apts);
+    }
+
     [HttpGet("detailed")]
     public async Task<ActionResult<IEnumerable<ApartmentDto>>> GetDetailed()
     {

@@ -35,6 +35,12 @@ public class CreateApartmentDto
     [Range(1, 10000)] public decimal Area { get; set; }
     public bool IsActive { get; set; } = true;
 }
+
+public class ApartmentShortDto
+{
+    public int Id { get; set; }
+    public string Title { get; set; } = "";
+}
 public class RuleDto
 {
     public int Id { get; set; }
