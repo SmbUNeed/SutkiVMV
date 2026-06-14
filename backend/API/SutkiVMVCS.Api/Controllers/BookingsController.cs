@@ -203,6 +203,7 @@ public class BookingsController : ControllerBase
         ApartmentId = b.ApartmentId,
         ApartmentTitle = b.Apartment?.Title ?? "",
         ClientId = b.ClientId,
+        ClientTag = b.Client?.AdminTag ?? "",
         ClientName = b.Client?.FullName ?? "",
         ClientPhone = b.Client?.PhoneNumber ?? "",
         StartDate = b.StartDate,
