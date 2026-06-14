@@ -291,6 +291,7 @@ public class AuthController : ControllerBase
         else
         {
             client.UserId = user.Id;
+            client.FullName = pending.FullName;
         }
         _context.PendingRegistrations.Remove(pending);
         await _context.SaveChangesAsync(ct);
