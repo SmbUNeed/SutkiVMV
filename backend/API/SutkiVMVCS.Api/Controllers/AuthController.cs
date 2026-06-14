@@ -10,6 +10,7 @@ using SutkiVMV.Data;
 using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
 using SutkiVMV.Services;
+using SutkiVMVCS.Services;
 
 namespace SutkiVMV.Controllers;
 
@@ -37,6 +38,7 @@ public class AuthController : ControllerBase
     public async Task<ActionResult> Register(RegisterDto dto, CancellationToken ct)
     {
         dto.Email = dto.Email.Trim().ToLowerInvariant();
+        dto.PhoneNumber = PhoneHelper.Normalize(dto.PhoneNumber)!;
 
         if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
             return Conflict(new { message = "Пользователь с таким email уже существует" });
@@ -58,7 +60,7 @@ public class AuthController : ControllerBase
             Email = dto.Email,
             PasswordHash = HashPassword(dto.Password),
             FullName = dto.FullName.Trim(),
-            PhoneNumber = dto.PhoneNumber.Trim(),
+            PhoneNumber = dto.PhoneNumber,
             Token = token,
             ExpiresAt = DateTime.UtcNow.AddHours(24)
         };
@@ -271,17 +273,27 @@ public class AuthController : ControllerBase
         _context.Users.Add(user);
         await _context.SaveChangesAsync(ct);
 
-        var client = new Client
+        Client client;
+
+        client = await _context.Clients.FirstAsync(c => c.PhoneNumber == pending.PhoneNumber);
+
+        if (client == null)
         {
-            FullName = pending.FullName,
-            PhoneNumber = pending.PhoneNumber,
-            Email = pending.Email,
-            UserId = user.Id
-        };
-        _context.Clients.Add(client);
+            client = new Client
+            {
+                FullName = pending.FullName,
+                PhoneNumber = pending.PhoneNumber,
+                Email = pending.Email,
+                UserId = user.Id
+            };
+            _context.Clients.Add(client);
+        }
+        else
+        {
+            client.UserId = user.Id;
+        }
         _context.PendingRegistrations.Remove(pending);
         await _context.SaveChangesAsync(ct);
-
         return Ok(new { message = "Email подтверждён! Теперь вы можете войти." });
     }
 
