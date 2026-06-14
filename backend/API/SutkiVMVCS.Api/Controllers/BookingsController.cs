@@ -110,6 +110,7 @@ public class BookingsController : ControllerBase
             ApartmentId = apartment.Id,
             ApartmentTitle = string.IsNullOrEmpty(apartment.AdminTag) ? apartment.Title : apartment.AdminTag,
             ClientId = client.Id,
+            ClientTag = client.AdminTag ?? "",
             ClientName = client.FullName,
             ClientPhone = client.PhoneNumber,
             StartDate = booking.StartDate,

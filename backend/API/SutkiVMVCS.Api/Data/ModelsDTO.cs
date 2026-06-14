@@ -171,6 +171,7 @@ public class AdminBookingDto
     public int      ApartmentId    { get; set; }
     public string   ApartmentTitle { get; set; } = "";
     public int      ClientId       { get; set; }
+    public string   ClientTag      { get; set; } = "";
     public string   ClientName     { get; set; } = "";
     public string   ClientPhone    { get; set; } = "";
     public DateTime StartDate      { get; set; }
