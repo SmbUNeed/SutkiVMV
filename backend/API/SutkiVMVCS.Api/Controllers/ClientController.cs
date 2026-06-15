@@ -58,7 +58,7 @@ public class ClientsController : ControllerBase
         {
             FullName = dto.FullName.Trim(),
             PhoneNumber = PhoneHelper.Normalize(dto.PhoneNumber.Trim())!,
-            Email = dto.Email.Trim(),
+            Email = dto.Email?.Trim(),
             AdminTag = dto.AdminTag?.Trim(),
             AdminNote = dto.AdminNote?.Trim(),
             InBlackList = dto.InBlackList
