@@ -249,6 +249,26 @@ namespace SutkiVMVCS.Migrations
                     b.ToTable("Clients");
                 });
 
+            modelBuilder.Entity("SutkiVMV.Models.DeviceToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DeviceTokens");
+                });
+
             modelBuilder.Entity("SutkiVMV.Models.ExternalBooking", b =>
                 {
                     b.Property<int>("Id")

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SutkiVMV.Data;
 using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
+using SutkiVMVCS.Services;
 
 namespace SutkiVMV.Controllers;
 
@@ -12,7 +13,10 @@ namespace SutkiVMV.Controllers;
 public class BookingsController : ControllerBase
 {
     private readonly AppDbContext _context;
-    public BookingsController(AppDbContext context) => _context = context;
+    public BookingsController(AppDbContext context)
+    {
+        _context = context;
+    }
 
     // GET /api/bookings — для административной панели
     [HttpGet]

@@ -196,3 +196,10 @@ public class ExternalBooking
 
     public Apartment Apartment { get; set; } = null!;
 }
+
+public class DeviceToken
+{
+    public int Id { get; set; }
+    public string Token { get; set; } = "";
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+}

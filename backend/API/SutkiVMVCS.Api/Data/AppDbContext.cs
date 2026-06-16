@@ -20,8 +20,9 @@ public class AppDbContext : DbContext
     public DbSet<ApartmentRule>        ApartmentRules       => Set<ApartmentRule>();
     public DbSet<ApartmentNearbyPlace> ApartmentNearby      => Set<ApartmentNearbyPlace>();
     public DbSet<WikiPlace>            WikiPlaces           => Set<WikiPlace>();
-    public DbSet<ExternalCalendar> ExternalCalendars        => Set<ExternalCalendar>();
-    public DbSet<ExternalBooking> ExternalBookings          => Set<ExternalBooking>();
+    public DbSet<ExternalCalendar>     ExternalCalendars    => Set<ExternalCalendar>();
+    public DbSet<ExternalBooking>      ExternalBookings     => Set<ExternalBooking>();
+    public DbSet<DeviceToken>          DeviceTokens         => Set<DeviceToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

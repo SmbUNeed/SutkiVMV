@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Resend;
 using SutkiVMV.Data;
 using SutkiVMV.Services;
+using SutkiVMVCS.Services;
 using System.Text;
 using Telegram.Bot;
 
@@ -100,6 +101,7 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+builder.Services.AddSingleton<FcmService>();
 
 // ═══════════════════════════════════════════════════════════════════════
 //  CORS

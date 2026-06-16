@@ -19,13 +19,15 @@ namespace SutkiVMV.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly AppDbContext    _context;
+    private readonly FcmService _fcm;
     private readonly IConfiguration _config;
     private readonly IEmailService _emailService;
     private readonly IMaxService _maxBotService;
 
-    public AuthController(AppDbContext context, IConfiguration config, IMaxService maxService, IEmailService emailService)
+    public AuthController(AppDbContext context, FcmService fcm, IConfiguration config, IMaxService maxService, IEmailService emailService)
     {
         _context = context;
+        _fcm = fcm;
         _config  = config;
         _maxBotService = maxService;
 	    _emailService = emailService;
@@ -246,6 +248,20 @@ public class AuthController : ControllerBase
         catch (Exception ex)
         {
             Console.WriteLine($"[MaxBot] SendBookingNotification error: {ex.Message}");
+        }
+
+        var token = await _context.DeviceTokens.FirstOrDefaultAsync();
+        if (token != null)
+        {
+            await _fcm.SendAsync(
+                token.Token,
+                "Новая бронь",
+                $"{apartment.Title}: {dto.StartDate:dd.MM} — {dto.EndDate:dd.MM}",
+                new Dictionary<string, string>
+                {
+                    { "bookingId", booking.Id.ToString() }
+                }
+            );
         }
 
         return Ok(booking);
