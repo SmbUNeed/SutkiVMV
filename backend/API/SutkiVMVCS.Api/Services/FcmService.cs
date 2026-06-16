@@ -8,15 +8,13 @@ namespace SutkiVMVCS.Services
     {
         public FcmService(IConfiguration config)
         {
-            if (FirebaseApp.DefaultInstance == null)
+            FirebaseApp.Create(new AppOptions
             {
-                FirebaseApp.Create(new AppOptions
-                {
-                    Credential = GoogleCredential.FromFile(
-                        config["Firebase:ServiceAccountPath"]!
-                    )
-                });
-            }
+#pragma warning disable
+                Credential = GoogleCredential
+                    .FromFile(config["Firebase:ServiceAccountPath"]!)
+                    .CreateScoped("https://www.googleapis.com/auth/firebase.messaging")
+            });
         }
 
         public async Task SendAsync(string token, string title, string body,
