@@ -1,7 +1,3 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +7,11 @@ using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
 using SutkiVMV.Services;
 using SutkiVMVCS.Services;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SutkiVMV.Controllers;
 
@@ -207,7 +208,7 @@ public class AuthController : ControllerBase
 
         var userId = GetUserId();
         var client = await _context.Clients.FirstOrDefaultAsync(c => c.UserId == userId);
-        if (client == null)
+        if (client == null || client.InBlackList)
             return BadRequest(new { message = "Профиль клиента не найден. Обратитесь в поддержку." });
 
         var apartment = await _context.Apartments.FindAsync(dto.ApartmentId);
@@ -250,18 +251,16 @@ public class AuthController : ControllerBase
             Console.WriteLine($"[MaxBot] SendBookingNotification error: {ex.Message}");
         }
 
-        var token = await _context.DeviceTokens.FirstOrDefaultAsync();
-        if (token != null)
+        var data = new Dictionary<string, string>
         {
-            await _fcm.SendAsync(
-                token.Token,
-                "Новая бронь",
-                $"{apartment.Title}: {dto.StartDate:dd.MM} — {dto.EndDate:dd.MM}",
-                new Dictionary<string, string>
-                {
-                    { "bookingId", booking.Id.ToString() }
-                }
-            );
+            { "bookingId", booking.Id.ToString() }
+        };
+
+        var tokens = await _context.DeviceTokens.Select(t => t.Token).ToListAsync();
+
+        foreach (var token in tokens)
+        {
+            await _fcm.SendAsync(token, "Новая бронь", $"{apartment.Title}: {dto.StartDate:dd.MM} — {dto.EndDate:dd.MM}", data);
         }
 
         return Ok(booking);

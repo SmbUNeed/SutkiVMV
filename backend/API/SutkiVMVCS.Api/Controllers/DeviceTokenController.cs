@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SutkiVMV.Data;
 using SutkiVMV.Models;
+using System.Security.Claims;
 
 namespace SutkiVMVCS.Controllers
 {
@@ -19,10 +20,12 @@ namespace SutkiVMVCS.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> Register([FromBody] DeviceTokenDto dto)
         {
-            // у нас один админ — просто обновляем единственную запись
-            var existing = await _context.DeviceTokens.FirstOrDefaultAsync();
+            int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int userId);
+
+            var existing = await _context.DeviceTokens.FirstOrDefaultAsync(t => t.UserId == userId);
             if (existing != null)
             {
                 existing.Token = dto.Token;
@@ -30,7 +33,7 @@ namespace SutkiVMVCS.Controllers
             }
             else
             {
-                _context.DeviceTokens.Add(new DeviceToken { Token = dto.Token });
+                _context.DeviceTokens.Add(new DeviceToken { UserId = userId, Token = dto.Token });
             }
 
             await _context.SaveChangesAsync();
