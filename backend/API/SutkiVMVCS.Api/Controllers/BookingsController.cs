@@ -45,6 +45,7 @@ public class BookingsController : ControllerBase
 
         return Ok(bookings.Select(b => new BookingDto
         {
+            Id = b.Id,
             StartDate = b.StartDate,
             EndDate = b.EndDate,
             Status = b.Status

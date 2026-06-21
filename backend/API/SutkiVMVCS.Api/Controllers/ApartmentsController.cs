@@ -364,7 +364,7 @@ public class ApartmentsController : ControllerBase
                      .Select(aa => new AmenityDto { Id = aa.Amenity.Id, Name = aa.Amenity.Name, Icon = aa.Amenity.Icon })
                      .ToList(),
         Bookings = a.Bookings
-                     .Select(b => new BookingDto { StartDate = b.StartDate, EndDate = b.EndDate, Status = b.Status })
+                     .Select(b => new BookingDto { Id = b.Id, StartDate = b.StartDate, EndDate = b.EndDate, Status = b.Status })
                      .ToList(),
         Rules = a.Rules
                      .Select(ar => new RuleDto { Id = ar.Rule.Id, Icon = ar.Rule.Icon, Text = ar.Rule.Text })
