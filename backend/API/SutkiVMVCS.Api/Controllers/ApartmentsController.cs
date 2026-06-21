@@ -135,7 +135,7 @@ public class ApartmentsController : ControllerBase
 
     [HttpPost("{id:int}/amenities")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult> SetAmenities(int id, SetAmenitiesDto dto, CancellationToken ct)
+    public async Task<ActionResult> SetAmenities(int id, SetIdsDto dto, CancellationToken ct)
     {
         var apt = await _context.Apartments.FindAsync(id, ct);
         if (apt == null) return NotFound();
@@ -143,7 +143,7 @@ public class ApartmentsController : ControllerBase
         var old = await _context.ApartmentAmenities.Where(aa => aa.ApartmentId == id).ToListAsync(ct);
         _context.ApartmentAmenities.RemoveRange(old);
 
-        foreach (var amenityId in dto.AmenityIds.Distinct())
+        foreach (var amenityId in dto.Ids.Distinct())
             if (await _context.Amenities.AnyAsync(a => a.Id == amenityId, ct))
                 _context.ApartmentAmenities.Add(new ApartmentAmenity { ApartmentId = id, AmenityId = amenityId });
 

@@ -129,10 +129,6 @@ public class CreateAmenityDto
     public string Name { get; set; } = "";
     public string Icon { get; set; } = "fa-check";
 }
-public class SetAmenitiesDto
-{
-    public List<int> AmenityIds { get; set; } = [];
-}
 
 // ── Booking ────────────────────────────────────────────────────────────
 public class BookingDto
