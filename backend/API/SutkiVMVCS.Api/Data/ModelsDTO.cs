@@ -43,6 +43,7 @@ public class ApartmentShortDto
     public int Id { get; set; }
     public string Title { get; set; } = "";
     public string AdminTag { get; set; } = "";
+    public List<BusyPeriodDto> BusyDates { get; set; } = new List<BusyPeriodDto>();
 }
 public class RuleDto
 {
@@ -245,11 +246,11 @@ public class ConfirmEmailDto
     public string Email { get; set; } = "";
     public string Token { get; set; } = "";
 }
-
-public record ResetPasswordDto(string Email, string Token, string NewPassword);
-
 public class AddExternalCalendarDto
 {
     public string Name { get; set; } = "";
     public string ICalUrl { get; set; } = "";
 }
+
+public record ResetPasswordDto(string Email, string Token, string NewPassword);
+public record BusyPeriodDto(string StartDate, string EndDate);
