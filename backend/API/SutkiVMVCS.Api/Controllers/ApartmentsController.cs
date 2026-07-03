@@ -42,6 +42,7 @@ public class ApartmentsController : ControllerBase
             .Include(a => a.ApartmentAmenities).ThenInclude(aa => aa.Amenity)
             .Include(a => a.Rules).ThenInclude(ar => ar.Rule)
             .Include(a => a.Nearby).ThenInclude(an => an.NearbyPlace)
+            .Include(a => a.Bookings)
             .AsNoTracking()
             .ToListAsync();
         return Ok(apts.Select(ToDto));
