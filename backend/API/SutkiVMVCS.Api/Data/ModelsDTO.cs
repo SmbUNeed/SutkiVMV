@@ -45,6 +45,40 @@ public class ApartmentShortDto
     public string AdminTag { get; set; } = "";
     public List<BusyPeriodDto> BusyDates { get; set; } = new List<BusyPeriodDto>();
 }
+
+public record ApartmentSummaryDto(
+    int Id,
+    string Title,
+    string? MainImage,
+    decimal PricePerNight,
+    int Guests,
+    decimal Area,
+    int RoomsCount,
+    List<string> Amenities 
+);
+
+public class ApartmentDetailDto()
+{
+    public int Id { get; set; }
+    public string AdminTag { get; set; } = "";
+    public string Title { get; set; } = "";
+    public string Address { get; set; } = "";
+    public string Description { get; set; } = "";
+    public int Guests { get; set; }
+    public decimal PricePerNight { get; set; }
+    public int RoomsCount { get; set; }
+    public decimal Area { get; set; }
+    public bool IsActive { get; set; }
+    public bool IsDeleted { get; set; }
+    public string? MainImage { get; set; }
+
+    public List<GalleryItemDto> Gallery { get; set; } = [];
+    public List<AmenityDto> Amenities { get; set; } = [];
+    public List<BusyPeriodDto> BusyPeriods { get; set; } = [];
+    public List<RuleDto> Rules { get; set; } = [];
+    public List<NearbyPlaceDto> Nearby { get; set; } = [];
+}
+
 public class RuleDto
 {
     public int Id { get; set; }
@@ -202,7 +236,7 @@ public class CreateClientDto
 {
     [MaxLength(200)] public string FullName { get; set; } = "";
     [Required, MaxLength(20)] public string PhoneNumber { get; set; } = "";
-    [EmailAddress] public string? Email { get; set; }
+    [EmailAddress] public string Email { get; set; } = "";
     [MaxLength(200)] public string? AdminTag { get; set; }
     [MaxLength(200)] public string? AdminNote { get; set; }
     public bool InBlackList { get; set; } = false;

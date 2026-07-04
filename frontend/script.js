@@ -43,7 +43,7 @@ function closeMobileMenu() {
 // ── API ─────────────────────────────────────────────────
 async function apiGetApartments() {
     try {
-        const res = await fetch(`${API_URL}/apartments/detailed`);
+        const res = await fetch(`${API_URL}/apartments/summary`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return await res.json();
     } catch (err) {
@@ -102,8 +102,9 @@ function renderGrid(data) {
     }
     data.forEach(apt => {
         const imgSrc  = imgUrl(apt.mainImage);
-        const amenText = (apt.amenities && apt.amenities.length)
-            ? apt.amenities.map(a => a.name).slice(0, 3).join(', ') + (apt.amenities.length > 3 ? '...' : '')
+        const amenNames = apt.amenities || [];
+        const amenText = amenNames.length
+            ? amenNames.slice(0, 3).join(', ') + (amenNames.length > 3 ? '...' : '')
             : '—';
 
         grid.insertAdjacentHTML('beforeend', `
@@ -143,7 +144,7 @@ function applyFilters() {
         if (apt.pricePerNight > priceMax)    return false;
         // Мультивыбор удобств: квартира должна иметь ВСЕ выбранные удобства
         if (selectedAmenities.size > 0) {
-            const aptAmenityNames = (apt.amenities || []).map(a => a.name);
+            const aptAmenityNames = apt.amenities || [];
             for (const name of selectedAmenities) {
                 if (!aptAmenityNames.includes(name)) return false;
             }
@@ -277,11 +278,39 @@ function guardNumberInputs() {
 }
 
 // ── Modal ────────────────────────────────────────────────
-function openModal(apartmentId, clearParams = false) {
+function showModalSkeleton() {
+    document.getElementById('modalTitle').innerHTML = '<span class="skeleton skeleton-box skeleton-line" style="width:70%;height:24px;"></span>';
+    document.getElementById('modalSpecs').innerHTML = '';
+    document.getElementById('modalDesc').innerHTML = '<span class="skeleton skeleton-box skeleton-line"></span><span class="skeleton skeleton-box skeleton-line short"></span>';
+    document.getElementById('modalMainImg').style.display = 'none';
+    document.getElementById('modalThumbs').innerHTML = '';
+    document.getElementById('modalPrice').innerHTML = '';
+    document.getElementById('bookingCalendar').innerHTML = '<div class="skeleton skeleton-box" style="height:260px;border-radius:var(--r);"></div>';
+}
+function hideModalSkeleton() {
+    document.getElementById('modalMainImg').style.display = 'block';
+}
+async function openModal(apartmentId, clearParams = false) {
     if (clearParams) history.replaceState(null, '', window.location.pathname);
-    const apt = apartments.find(a => a.id === apartmentId);
-    if (!apt) return;
+
+    document.getElementById('apartmentModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    showModalSkeleton();
+
+    let apt;
+    try {
+        const res = await fetch(`${API_URL}/apartments/${apartmentId}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        apt = await res.json();
+    } catch (err) {
+        console.error('Ошибка загрузки квартиры:', err);
+        closeModal();
+        alert('Не удалось загрузить квартиру. Попробуйте ещё раз.');
+        return;
+    }
+
     currentApartment = apt;
+    hideModalSkeleton();
 
     document.getElementById('modalTitle').textContent = apt.title;
     document.getElementById('modalSpecs').innerHTML = `
@@ -333,14 +362,11 @@ function openModal(apartmentId, clearParams = false) {
 
     // Сброс дат
     selectedCheckIn = selectedCheckOut = null;
-    currentAptBookedDates = getBookedDates(apt.bookings || []);
+    currentAptBookedDates = getBookedDates(apt.busyPeriods || []);
     currentDate = new Date();
     updateBookingSummary();
     renderCalendar();
     renderBookingWidget();
-
-    document.getElementById('apartmentModal').classList.add('open');
-    document.body.style.overflow = 'hidden';
 
     // Правила
     const rulesEl = document.getElementById('modalRules');
@@ -434,12 +460,11 @@ const MONTH_NAMES = [
     'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'
 ];
 
-function getBookedDates(bookings) {
+function getBookedDates(busyPeriods) {
     const dates = [];
-    for (const b of bookings) {
-        if (b.status === 'Cancelled') continue;
-        const start = new Date(b.startDate);
-        const end   = new Date(b.endDate);
+    for (const p of busyPeriods) {
+        const start = new Date(p.startDate);
+        const end   = new Date(p.endDate);
         for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1))
             dates.push(d.toISOString().slice(0, 10));
     }

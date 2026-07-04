@@ -19,18 +19,26 @@ public class ApartmentsController : ControllerBase
     // ═══════════════════════════════════════════════════════════════════
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<ApartmentDto>> GetById(int id)
+    public async Task<ActionResult<ApartmentDetailDto>> GetById(int id)
     {
         var apt = await _context.Apartments
             .Include(a => a.ApartmentGallery)
             .Include(a => a.ApartmentAmenities).ThenInclude(aa => aa.Amenity)
-            .Include(a => a.Bookings)
             .Include(a => a.Rules).ThenInclude(ar => ar.Rule)
             .Include(a => a.Nearby).ThenInclude(an => an.NearbyPlace)
             .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == id && !a.IsDeleted);
 
-        return apt == null ? NotFound() : Ok(ToDto(apt));
+        if (apt == null) return NotFound();
+
+        var busyPeriods = await _context.Bookings
+            .Where(b => b.ApartmentId == id && b.Status != "Cancelled")
+            .Select(b => new BusyPeriodDto(
+                b.StartDate.ToString("yyyy-MM-dd"),
+                b.EndDate.ToString("yyyy-MM-dd")))
+            .ToListAsync();
+
+        return Ok(ToDetailDto(apt, busyPeriods));
     }
 
     [HttpGet("all")]
@@ -82,6 +90,31 @@ public class ApartmentsController : ControllerBase
             .AsNoTracking()
             .ToListAsync();
         return Ok(apts.Select(ToDto));
+    }
+
+    [HttpGet("summary")]
+    public async Task<ActionResult<IEnumerable<ApartmentSummaryDto>>> GetSummary()
+    {
+        var apts = await _context.Apartments
+            .Where(a => a.IsActive && !a.IsDeleted)
+            .Select(a => new ApartmentSummaryDto(
+                a.Id,
+                a.Title,
+                a.ApartmentGallery.Where(g => g.IsMain).Select(g => g.ImagePath).FirstOrDefault()
+                    ?? a.ApartmentGallery.Select(g => g.ImagePath).FirstOrDefault(),
+                a.PricePerNight,
+                a.Guests,
+                a.Area,
+                a.RoomsCount,
+                a.ApartmentAmenities
+                    .OrderBy(aa => aa.Amenity.Name)
+                    .Select(aa => aa.Amenity.Name)
+                    .ToList()
+            ))
+            .AsNoTracking()
+            .ToListAsync();
+
+        return Ok(apts);
     }
 
     [HttpGet("filter")]
@@ -390,4 +423,41 @@ public class ApartmentsController : ControllerBase
                          WikiPlaceId = an.NearbyPlace.WikiPlaceId
                      }).ToList()
                      };
+
+    internal static ApartmentDetailDto ToDetailDto(Apartment a, List<BusyPeriodDto> busyPeriods) => new()
+    {
+        Id = a.Id,
+        AdminTag = a.AdminTag,
+        Title = a.Title,
+        Address = a.Address,
+        Description = a.Description,
+        Guests = a.Guests,
+        PricePerNight = a.PricePerNight,
+        RoomsCount = a.RoomsCount,
+        Area = a.Area,
+        IsActive = a.IsActive,
+        IsDeleted = a.IsDeleted,
+        MainImage = a.ApartmentGallery.FirstOrDefault(g => g.IsMain)?.ImagePath
+                         ?? a.ApartmentGallery.FirstOrDefault()?.ImagePath,
+        Gallery = a.ApartmentGallery
+                         .OrderByDescending(g => g.IsMain)
+                         .Select(g => new GalleryItemDto { Id = g.Id, ImagePath = g.ImagePath, IsMain = g.IsMain })
+                         .ToList(),
+        Amenities = a.ApartmentAmenities
+                         .Select(aa => new AmenityDto { Id = aa.Amenity.Id, Name = aa.Amenity.Name, Icon = aa.Amenity.Icon })
+                         .ToList(),
+        BusyPeriods = busyPeriods,
+        Rules = a.Rules
+                         .Select(ar => new RuleDto { Id = ar.Rule.Id, Icon = ar.Rule.Icon, Text = ar.Rule.Text })
+                         .ToList(),
+        Nearby = a.Nearby
+                         .Select(an => new NearbyPlaceDto
+                         {
+                             Id = an.NearbyPlace.Id,
+                             Icon = an.NearbyPlace.Icon,
+                             Name = an.NearbyPlace.Name,
+                             Distance = an.Distance,
+                             WikiPlaceId = an.NearbyPlace.WikiPlaceId
+                         }).ToList()
+                    };
 }

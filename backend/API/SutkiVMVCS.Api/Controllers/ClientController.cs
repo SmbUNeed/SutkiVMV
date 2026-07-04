@@ -32,9 +32,9 @@ public class ClientsController : ControllerBase
 
         q = q.Trim().ToLower();
         var clients = await _context.Clients
-            .Where(c => c.FullName.ToLower().Contains(q)
+            .Where(c => c.FullName.Contains(q, StringComparison.CurrentCultureIgnoreCase)
                      || c.PhoneNumber.Contains(q)
-                     || c.Email.ToLower().Contains(q))
+                     || c.Email.Contains(q, StringComparison.CurrentCultureIgnoreCase))
             .Take(20)
             .AsNoTracking()
             .ToListAsync();
@@ -58,7 +58,7 @@ public class ClientsController : ControllerBase
         {
             FullName = dto.FullName.Trim(),
             PhoneNumber = PhoneHelper.Normalize(dto.PhoneNumber.Trim())!,
-            Email = dto.Email?.Trim(),
+            Email = dto.Email.Trim(),
             AdminTag = dto.AdminTag?.Trim(),
             AdminNote = dto.AdminNote?.Trim(),
             InBlackList = dto.InBlackList
