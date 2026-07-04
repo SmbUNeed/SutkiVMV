@@ -50,6 +50,26 @@ async function apiGetWikiPlaces() {
     }
 }
 
+/* ── Мобильное меню (шапка) ───────────────────────────── */
+function toggleMobileMenu() {
+    const actions = document.getElementById('headerActions');
+    if (actions.classList.contains('open')) closeMobileMenu();
+    else openMobileMenu();
+}
+function openMobileMenu() {
+    document.getElementById('headerActions').classList.add('open');
+    document.getElementById('mobileMenuOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeMobileMenu() {
+    document.getElementById('headerActions').classList.remove('open');
+    document.getElementById('mobileMenuOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+}
+window.addEventListener('resize', () => {
+    if (window.innerWidth > 680) closeMobileMenu();
+});
+
 function renderGrid(data) {
     grid.innerHTML = '';
     if (!data.length) {
