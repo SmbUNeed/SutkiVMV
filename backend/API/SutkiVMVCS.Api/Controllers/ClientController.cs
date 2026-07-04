@@ -34,6 +34,7 @@ public class ClientsController : ControllerBase
         var clients = await _context.Clients
             .Where(c => c.FullName.Contains(q, StringComparison.CurrentCultureIgnoreCase)
                      || c.PhoneNumber.Contains(q)
+#pragma warning disable
                      || c.Email.Contains(q, StringComparison.CurrentCultureIgnoreCase))
             .Take(20)
             .AsNoTracking()
@@ -100,6 +101,7 @@ public class ClientsController : ControllerBase
         Id = c.Id,
         FullName = c.FullName,
         PhoneNumber = c.PhoneNumber,
+#pragma warning disable
         Email = c.Email,
         UserId = c.UserId,
         AdminTag = c.AdminTag,
