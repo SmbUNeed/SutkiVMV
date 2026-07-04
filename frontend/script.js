@@ -21,6 +21,25 @@ function imgUrl(path) {
     return API_BASE + path;
 }
 
+// ── Мобильное меню (шапка) ───────────────────────────────
+function toggleMobileMenu() {
+    const actions = document.getElementById('headerActions');
+    if (actions.classList.contains('open')) closeMobileMenu();
+    else openMobileMenu();
+}
+
+function openMobileMenu() {
+    document.getElementById('headerActions').classList.add('open');
+    document.getElementById('mobileMenuOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeMobileMenu() {
+    document.getElementById('headerActions').classList.remove('open');
+    document.getElementById('mobileMenuOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
 // ── API ─────────────────────────────────────────────────
 async function apiGetApartments() {
     try {
@@ -185,25 +204,6 @@ function resetFilters() {
         el.querySelector('.amenity-checkmark').innerHTML = '';
     });
     applyFilters();
-}
-
-// ── Мобильное меню (шапка) ───────────────────────────────
-function toggleMobileMenu() {
-    const actions = document.getElementById('headerActions');
-    if (actions.classList.contains('open')) closeMobileMenu();
-    else openMobileMenu();
-}
-
-function openMobileMenu() {
-    document.getElementById('headerActions').classList.add('open');
-    document.getElementById('mobileMenuOverlay').classList.add('open');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeMobileMenu() {
-    document.getElementById('headerActions').classList.remove('open');
-    document.getElementById('mobileMenuOverlay').classList.remove('open');
-    document.body.style.overflow = '';
 }
 
 // Закрыть меню, если экран расширили до десктопного
