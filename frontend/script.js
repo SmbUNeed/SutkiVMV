@@ -187,6 +187,30 @@ function resetFilters() {
     applyFilters();
 }
 
+// ── Мобильное меню (шапка) ───────────────────────────────
+function toggleMobileMenu() {
+    const actions = document.getElementById('headerActions');
+    if (actions.classList.contains('open')) closeMobileMenu();
+    else openMobileMenu();
+}
+
+function openMobileMenu() {
+    document.getElementById('headerActions').classList.add('open');
+    document.getElementById('mobileMenuOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeMobileMenu() {
+    document.getElementById('headerActions').classList.remove('open');
+    document.getElementById('mobileMenuOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+// Закрыть меню, если экран расширили до десктопного
+window.addEventListener('resize', () => {
+    if (window.innerWidth > 680) closeMobileMenu();
+});
+
 // ── Фильтр-панель ────────────────────────────────────────
 function openFilterPanel() {
     document.getElementById('filterPanel').classList.add('open');
@@ -575,8 +599,13 @@ function renderLightbox() {
 
 document.addEventListener('keydown', e => {
     const lb = document.getElementById('lightbox');
-    if (!lb.classList.contains('open')) return;
-    if (e.key === 'ArrowRight') lightboxStep(1);
-    if (e.key === 'ArrowLeft')  lightboxStep(-1);
-    if (e.key === 'Escape')     closeLightbox();
+    if (lb.classList.contains('open')) {
+        if (e.key === 'ArrowRight') lightboxStep(1);
+        if (e.key === 'ArrowLeft')  lightboxStep(-1);
+        if (e.key === 'Escape')     closeLightbox();
+        return;
+    }
+    if (e.key === 'Escape' && document.getElementById('headerActions').classList.contains('open')) {
+        closeMobileMenu();
+    }
 });
