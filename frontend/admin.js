@@ -918,7 +918,7 @@
         document.querySelectorAll('.etab').forEach(el => el.classList.remove('active'));
         document.getElementById(`epane-${pane}`).classList.add('active');
         btn.classList.add('active');
-        if (name === 'ical') loadIcal();
+        if (pane === 'ical') loadIcal();
     }
 
     function populateWikiNearbySelect() {
