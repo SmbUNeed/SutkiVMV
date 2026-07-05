@@ -221,7 +221,12 @@ public class AuthController : ControllerBase
             b.StartDate.ToUniversalTime()   <  dto.EndDate.ToUniversalTime() &&
             b.EndDate.ToUniversalTime() >  dto.StartDate.ToUniversalTime());
 
-        if (overlap) return Conflict(new { message = "Квартира занята в выбранные даты" });
+        bool externalOverlap = await _context.ExternalBookings.AnyAsync(e =>
+            e.ApartmentId == dto.ApartmentId &&
+            e.StartDate < dto.EndDate.ToUniversalTime() &&
+            e.EndDate > dto.StartDate.ToUniversalTime());
+
+        if (overlap || externalOverlap) return Conflict(new { message = "Квартира занята в выбранные даты" });
 
         var nights  = (dto.EndDate - dto.StartDate).Days;
         var booking = new Booking

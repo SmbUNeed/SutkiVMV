@@ -918,6 +918,7 @@
         document.querySelectorAll('.etab').forEach(el => el.classList.remove('active'));
         document.getElementById(`epane-${pane}`).classList.add('active');
         btn.classList.add('active');
+        if (name === 'ical') loadIcal();
     }
 
     function populateWikiNearbySelect() {
@@ -929,9 +930,84 @@
                     `<option value="${n.id}">${n.name}</option>`).join('')
                 : '');
     }
-    /* ── ICal ────────────────────────────────────────────── */
-    function loadICal(){
-        
+
+    /* ── ICAL ─────────────────────────────────────────────── */
+    async function loadIcal(aptId) {
+        const id = aptId || document.getElementById('eId').value;
+
+        // Ссылка для экспорта
+        document.getElementById('icalExportUrl').value =
+            `https://sutkivmv.ru/api/ical/${id}/export`;
+
+        // Список внешних календарей
+        const list = document.getElementById('icalList');
+        list.innerHTML = '<span style="color:var(--tm);font-size:.85rem;">Загрузка...</span>';
+
+        try {
+            const cals = await api(`/ical/${id}/external`);
+            if (!cals.length) {
+                list.innerHTML = '<span style="color:var(--tm);font-size:.85rem;">Нет подключённых календарей</span>';
+                return;
+            }
+            list.innerHTML = cals.map(c => `
+                <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;
+                            background:var(--bg3);border-radius:6px;border:1px solid var(--bl);">
+                    <i class="fa-solid fa-calendar" style="color:var(--a);flex-shrink:0;"></i>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:700;font-size:.875rem;">${c.name}</div>
+                        <div style="color:var(--tm);font-size:.75rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.iCalUrl}</div>
+                        ${c.lastSync ? `<div style="color:var(--tm);font-size:.72rem;">Синхр: ${new Date(c.lastSync).toLocaleString('ru-RU')}</div>` : ''}
+                    </div>
+                    <button type="button" class="btn bi sm" onclick="syncIcal(${c.id})">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                    </button>
+                    <button type="button" class="btn bd sm" onclick="deleteIcal(${c.id})">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>`).join('');
+        } catch (err) { toast(err.message, 'er'); }
+    }
+
+    async function addIcal() {
+        const id   = document.getElementById('eId').value;
+        const name = document.getElementById('icalName').value.trim();
+        const url  = document.getElementById('icalUrl').value.trim();
+        if (!name || !url) { toast('Заполните название и URL', 'er'); return; }
+        try {
+            await api(`/ical/${id}/external`, {
+                method: 'POST',
+                body: JSON.stringify({ name, iCalUrl: url })
+            });
+            document.getElementById('icalName').value = '';
+            document.getElementById('icalUrl').value  = '';
+            await loadIcal(id);
+            toast('Календарь добавлен');
+        } catch (err) { toast(err.message, 'er'); }
+    }
+
+    async function deleteIcal(calId) {
+        if (!confirm('Удалить этот календарь?')) return;
+        try {
+            await api(`/ical/external/${calId}`, { method: 'DELETE' });
+            await loadIcal();
+            toast('Календарь удалён');
+        } catch (err) { toast(err.message, 'er'); }
+    }
+
+    async function syncIcal(calId) {
+        const id = document.getElementById('eId').value;
+        try {
+            await api(`/ical/${id}/sync`, { method: 'POST' });
+            await loadIcal(id);
+            toast('Синхронизация выполнена');
+        } catch (err) { toast(err.message, 'er'); }
+    }
+
+    function copyIcalUrl() {
+        const input = document.getElementById('icalExportUrl');
+        input.select();
+        navigator.clipboard.writeText(input.value);
+        toast('Ссылка скопирована');
     }
 
     /* ── INIT ────────────────────────────────────────────── */

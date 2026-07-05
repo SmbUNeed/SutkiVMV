@@ -54,13 +54,14 @@
             <i class="fa-solid fa-ban"></i> Правила
         </div>
         <div class="ni" onclick="showSec('nearby',this)">
-            <i class="fa-solid fa-map"></i> Рядом
+            <i class="fa-solid fa-location-dot"></i> Рядом
         </div>
         <div class="ni" onclick="showSec('wiki-places',this)">
-            <i class="fa-solid fa-landmark"></i> Вики
+            <i class="fa-solid fa-book-open"></i> Путеводитель
         </div>
-        <div class="ni" onclick="showSec('ical',this)">
-            <i class="fa-solid fa-landmark"></i> ICal
+        <div class="sb-grp">Интеграции</div>
+        <div class="ni" onclick="showSec('sync',this)">
+            <i class="fa-solid fa-arrows-rotate"></i> Синхронизация
         </div>
     </nav>
     <div class="sb-foot">
@@ -430,6 +431,9 @@
                     <button type="button" class="etab" onclick="switchEditTab('nearby',this)">
                         <i class="fa-solid fa-location-dot"></i> Рядом
                     </button>
+                    <button type="button" class="etab" onclick="switchEditTab('ical',this)">
+                        <i class="fa-solid fa-arrows-rotate"></i> Календари
+                    </button>
                 </div>
 
                 <!-- Удобства -->
@@ -472,6 +476,40 @@
                         <select id="nearbySelect" style="flex:1;"></select>
                         <input type="text" id="nearbyDistance" placeholder="5 мин пешком" style="width:150px;">
                         <button type="button" class="btn bp sm" onclick="addNearby()">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Календари -->
+                <div class="etab-pane" id="epane-ical">
+                    <!-- Ваша ссылка для экспорта -->
+                    <div style="margin-top:4px;margin-bottom:16px;">
+                        <span class="fl"><i class="fa-solid fa-link" style="color:var(--a);margin-right:5px;"></i>Ваша ссылка для Ostrovok / Airbnb</span>
+                        <div style="display:flex;gap:8px;margin-top:6px;">
+                            <input type="text" id="icalExportUrl" readonly
+                                   style="flex:1;color:var(--tm);font-size:.8rem;cursor:pointer;"
+                                   onclick="this.select()">
+                            <button type="button" class="btn bg0 sm" onclick="copyIcalUrl()">
+                                <i class="fa-solid fa-copy"></i>
+                            </button>
+                        </div>
+                        <p style="color:var(--tm);font-size:.78rem;margin-top:6px;">
+                            Вставьте эту ссылку в настройки синхронизации на платформе бронирования
+                        </p>
+                    </div>
+
+                    <hr class="dv">
+
+                    <!-- Внешние календари -->
+                    <span class="fl"><i class="fa-solid fa-calendar" style="color:var(--a);margin-right:5px;"></i>Внешние календари</span>
+                    <div id="icalList" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;"></div>
+
+                    <!-- Добавить -->
+                    <div style="display:flex;gap:8px;margin-top:10px;">
+                        <input type="text" id="icalName" placeholder="Название (Ostrovok, Airbnb...)" style="width:160px;">
+                        <input type="text" id="icalUrl" placeholder="https://..." style="flex:1;">
+                        <button type="button" class="btn bp sm" onclick="addIcal()">
                             <i class="fa-solid fa-plus"></i>
                         </button>
                     </div>
