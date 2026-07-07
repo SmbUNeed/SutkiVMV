@@ -162,7 +162,7 @@ public class ApartmentsController : ControllerBase
     public async Task<ActionResult> Update(int id, Apartment updated, CancellationToken ct)
     {
         var apt = await _context.Apartments.FindAsync(id, ct);
-        if (apt == null || apt.IsDeleted) return NotFound();
+        if (apt == null) return NotFound();
 
         apt.AdminTag = updated.AdminTag;
         apt.Title = updated.Title;
