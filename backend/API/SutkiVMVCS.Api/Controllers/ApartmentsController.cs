@@ -345,7 +345,7 @@ public class ApartmentsController : ControllerBase
     public async Task<ActionResult<IEnumerable<NearbyPlaceDto>>> GetAllNearbyPlaces()
     {
         var nearby = await _context.NearbyPlaces.AsNoTracking().ToListAsync();
-        return Ok(nearby.Select(n => new NearbyPlaceDto { Id = n.Id, Icon = n.Icon, Name = n.Name }));
+        return Ok(nearby.Select(n => new NearbyPlaceDto { Id = n.Id, Icon = n.Icon, Name = n.Name, WikiPlaceId = n.WikiPlaceId }));
     }
 
     [HttpPost("nearby-places")]
