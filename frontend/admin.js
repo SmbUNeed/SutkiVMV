@@ -303,6 +303,9 @@
                                 <i class="fa-solid fa-rotate-left"></i> Восстановить</button>`
                     : `<button class="btn bd sm" onclick="deleteApt(${a.id})">
                                 <i class="fa-solid fa-trash"></i></button>`}
+                        <button class="share-btn" id="shareBtn" onclick="shareApartment()">
+                            <i class="fa-solid fa-share-nodes"></i>
+                        </button>
                     </div>
                 </div>
             </div>`;
@@ -327,6 +330,22 @@
             toast('Квартира восстановлена');
             loadGrid();
         } catch (err) { toast(err.message, 'er'); }
+    }
+
+    function shareApartment() {
+        if (!currentApartment) return;
+
+        const url   = `${location.origin}/?apt=${currentApartment.id}`;
+        const title = currentApartment.title;
+        const text  = `${currentApartment.title} — ${currentApartment.pricePerNight.toLocaleString('ru-RU')} ₽/ночь`;
+
+        if (navigator.share) {
+            navigator.share({ title, text, url }).catch(() => {});
+        } else {
+            navigator.clipboard.writeText(url).then(() => {
+                toast('Ссылка скопирована');
+            });
+        }
     }
 
     /* ── РЕДАКТИРОВАНИЕ ──────────────────────────────────── */

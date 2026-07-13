@@ -186,6 +186,12 @@ namespace SutkiVMVCS.Migrations
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PaymentId")
+                        .HasColumnType("text");
+
                     b.Property<string>("Source")
                         .IsRequired()
                         .HasColumnType("text");

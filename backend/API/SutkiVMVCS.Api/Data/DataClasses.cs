@@ -85,6 +85,9 @@ public class Booking
     public Apartment Apartment { get; set; } = null!;
     public Client    Client    { get; set; } = null!;
     public string    Source    { get; set; } = null!;
+
+    public string? PaymentId { get; set; }
+    public DateTime? PaidAt { get; set; }
 }
 
 public class Amenity

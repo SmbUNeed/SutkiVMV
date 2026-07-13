@@ -396,6 +396,38 @@ async function openModal(apartmentId, clearParams = false) {
     document.querySelector('.modal-tab').classList.add('active');
 }
 
+function shareApartment() {
+    if (!currentApartment) return;
+
+    const url   = `${location.origin}/?apt=${currentApartment.id}`;
+    const title = currentApartment.title;
+    const text  = `${currentApartment.title} — ${currentApartment.pricePerNight.toLocaleString('ru-RU')} ₽/ночь`;
+
+    if (navigator.share) {
+        // Мобилка — нативный шаринг
+        navigator.share({ title, text, url }).catch(() => {});
+    } else {
+        // Десктоп — копируем ссылку
+        navigator.clipboard.writeText(url).then(() => {
+            showToast('Ссылка скопирована');
+        });
+    }
+}
+
+function showToast(msg) {
+    // Если у вас уже есть тост — используйте его
+    // Иначе временный алерт
+    const toast = document.createElement('div');
+    toast.textContent = msg;
+    toast.style.cssText = `
+        position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
+        background:var(--ink);color:#fff;padding:10px 20px;
+        border-radius:var(--r-full);font-size:.875rem;
+        z-index:9999;pointer-events:none;`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+}
+
 function closeModal() {
     document.getElementById('apartmentModal').classList.remove('open');
     document.body.style.overflow = '';

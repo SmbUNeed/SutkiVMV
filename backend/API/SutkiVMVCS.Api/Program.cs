@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Resend;
 using SutkiVMV.Data;
 using SutkiVMV.Services;
+using SutkiVMVCS.Controllers;
 using SutkiVMVCS.Services;
 using System.Text;
 using Telegram.Bot;
@@ -127,6 +128,7 @@ builder.Services.AddCors(options =>
 // ═══════════════════════════════════════════════════════════════════════
 
 builder.Services.AddHttpClient<ResendClient>();
+builder.Services.AddHttpClient<PaymentsController>();
 builder.Services.Configure<ResendClientOptions>(options =>
     options.ApiToken = builder.Configuration["Resend:ApiKey"]!);
 builder.Services.AddTransient<IResend, ResendClient>();
