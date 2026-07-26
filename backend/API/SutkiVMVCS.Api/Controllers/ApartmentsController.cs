@@ -41,6 +41,24 @@ public class ApartmentsController : ControllerBase
         return Ok(ToDetailDto(apt, busyPeriods));
     }
 
+    [HttpGet("admin/{id:int}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApartmentDto>> GetByIdAdmin(int id)
+    {
+        var apt = await _context.Apartments
+            .Include(a => a.ApartmentGallery)
+            .Include(a => a.ApartmentAmenities).ThenInclude(aa => aa.Amenity)
+            .Include(a => a.Rules).ThenInclude(ar => ar.Rule)
+            .Include(a => a.Nearby).ThenInclude(an => an.NearbyPlace)
+            .Include(a => a.Bookings)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == id);
+
+        if (apt == null) return NotFound();
+
+        return Ok(ToDto(apt));
+    }
+
     [HttpGet("all")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<IEnumerable<ApartmentDto>>> GetAll()
@@ -54,6 +72,31 @@ public class ApartmentsController : ControllerBase
             .AsNoTracking()
             .ToListAsync();
         return Ok(apts.Select(ToDto));
+    }
+
+    [HttpGet("admin-summary")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<IEnumerable<ApartmentSummaryDto>>> GetAdminSummary()
+    {
+        var apts = await _context.Apartments
+            .Select(a => new ApartmentSummaryDto(
+                a.Id,
+                a.Title,
+                a.ApartmentGallery.Where(g => g.IsMain).Select(g => g.ImagePath).FirstOrDefault()
+                    ?? a.ApartmentGallery.Select(g => g.ImagePath).FirstOrDefault(),
+                a.PricePerNight,
+                a.Guests,
+                a.Area,
+                a.RoomsCount,
+                a.ApartmentAmenities
+                    .OrderBy(aa => aa.Amenity.Name)
+                    .Select(aa => aa.Amenity.Name)
+                    .ToList()
+            ))
+            .AsNoTracking()
+            .ToListAsync();
+
+        return Ok(apts);
     }
 
     [HttpGet("short")]
