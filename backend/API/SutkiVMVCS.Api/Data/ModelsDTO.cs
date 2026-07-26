@@ -57,6 +57,14 @@ public record ApartmentSummaryDto(
     List<string> Amenities 
 );
 
+public record AdminApartmentSummaryDto(
+    int Id,
+    string Title,
+    string AdminTag,
+    string? MainImage,
+    decimal PricePerNight
+);
+
 public class ApartmentDetailDto()
 {
     public int Id { get; set; }

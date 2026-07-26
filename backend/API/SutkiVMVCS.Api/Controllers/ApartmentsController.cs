@@ -76,22 +76,16 @@ public class ApartmentsController : ControllerBase
 
     [HttpGet("admin-summary")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<IEnumerable<ApartmentSummaryDto>>> GetAdminSummary()
+    public async Task<ActionResult<IEnumerable<AdminApartmentSummaryDto>>> GetAdminSummary()
     {
         var apts = await _context.Apartments
-            .Select(a => new ApartmentSummaryDto(
+            .Select(a => new AdminApartmentSummaryDto(
                 a.Id,
                 a.Title,
+                a.AdminTag,
                 a.ApartmentGallery.Where(g => g.IsMain).Select(g => g.ImagePath).FirstOrDefault()
                     ?? a.ApartmentGallery.Select(g => g.ImagePath).FirstOrDefault(),
-                a.PricePerNight,
-                a.Guests,
-                a.Area,
-                a.RoomsCount,
-                a.ApartmentAmenities
-                    .OrderBy(aa => aa.Amenity.Name)
-                    .Select(aa => aa.Amenity.Name)
-                    .ToList()
+                a.PricePerNight
             ))
             .AsNoTracking()
             .ToListAsync();
