@@ -597,13 +597,13 @@ function checkOutOverpay(hour) {
 }
 
 function getCheckInBlockedHours(date) {
-    const b = currentAptBookingTimes && currentAptBookingTimes[date];
+    const b = currentAptBookedDates && currentAptBookedDates[date];
     if (!b || b.checkOut == null) return [];
     const until = Math.min(23, b.checkOut + 1);
     return Array.from({length: until}, (_, h) => h);
 }
 function getCheckOutBlockedHours(date) {
-    const b = currentAptBookingTimes && currentAptBookingTimes[date];
+    const b = currentAptBookedDates && currentAptBookedDates[date];
     if (!b || b.checkIn == null) return [];
     const max = b.checkIn - 1;
     return Array.from({length: 24}, (_, h) => h).filter(h => h >= max);
@@ -716,7 +716,7 @@ function pluralNights(n) {
     return 'ночей';
 }
 
-function switchTab(tab) {
+function switchTab(tab, btn) {
     document.querySelectorAll('.modal-tab-content').forEach(el => el.style.display = 'none');
     document.querySelectorAll('.modal-tab').forEach(el => el.classList.remove('active'));
     document.getElementById(`tab-${tab}`).style.display = 'block';
