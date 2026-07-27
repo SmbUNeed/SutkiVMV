@@ -593,7 +593,7 @@ function checkInLabelText(hour) {
     return 'Стандарт';
 }
 function checkOutOverpay(hour) {
-    return hour > 12 ? (hour - 12) * hourOverpayment : 0;
+    return hour > 12 ? (hour - 12) * currentApartment.hourOverpayment : 0;
 }
 
 function getCheckInBlockedHours(date) {
@@ -692,7 +692,7 @@ function updateBookingSummary() {
 
         if (checkInHour <= 7) nights += 1;
         else if (checkInHour <= 11) additional += currentApartment.pricePerNight / 2;
-        if (checkOutHour > 12) additional += (checkOutHour - 12) * hourOverpayment;
+        if (checkOutHour > 12) additional += (checkOutHour - 12) * currentApartment.hourOverpayment;
 
         const total = nights * currentApartment.pricePerNight + additional;
         const label = pluralNights(nights);
