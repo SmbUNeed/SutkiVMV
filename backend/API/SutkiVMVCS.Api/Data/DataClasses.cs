@@ -11,10 +11,14 @@ public class Apartment
     public string  Address       { get; set; } = "";
     public string  Description   { get; set; } = "";
     public int     Guests        { get; set; }
+    public decimal GuestOverprice { get; set; }
+    public int Kids { get; set; } = 0;
+    public decimal KidOverprice { get; set; } = 0;
     public decimal PricePerNight { get; set; }
+    public decimal HourOverPrice { get; set; } = 100;
     public int     RoomsCount    { get; set; }
-    public bool    IsActive      { get; set; }
     public decimal Area          { get; set; }
+    public bool    IsActive      { get; set; }
     public bool    IsDeleted     { get; set; }
 
     public ICollection<Booking>           Bookings           { get; set; } = [];
@@ -73,6 +77,8 @@ public class Booking
     public int      Id          { get; set; }
     public int      ApartmentId { get; set; }
     public int      ClientId    { get; set; }
+    public int Kids { get; set; } = 0;
+    public int Guests { get; set; } = 0;
     public DateTime StartDate   { get; set; }
     public DateTime EndDate     { get; set; }
 

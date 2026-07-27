@@ -66,14 +66,26 @@ namespace SutkiVMVCS.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<decimal>("GuestOverprice")
+                        .HasColumnType("numeric");
+
                     b.Property<int>("Guests")
                         .HasColumnType("integer");
+
+                    b.Property<decimal>("HourOverPrice")
+                        .HasColumnType("numeric");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
+
+                    b.Property<decimal>("KidOverprice")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("Kids")
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("PricePerNight")
                         .HasColumnType("numeric");
@@ -185,6 +197,12 @@ namespace SutkiVMVCS.Migrations
 
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Guests")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Kids")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("PaidAt")
                         .HasColumnType("timestamp with time zone");

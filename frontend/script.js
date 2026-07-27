@@ -558,8 +558,11 @@ function selectDate(ds) {
     if (!selectedCheckIn || (selectedCheckIn && selectedCheckOut)) {
         selectedCheckIn  = ds;
         selectedCheckOut = null;
+        checkInHour = 14;
+        checkOutHour = 12;
     } else if (ds <= selectedCheckIn) {
         selectedCheckIn  = ds;
+        checkInHour = 14;
     } else {
         let conflict = false;
         for (let d = new Date(selectedCheckIn); d < new Date(ds); d.setDate(d.getDate()+1)) {
@@ -569,28 +572,148 @@ function selectDate(ds) {
             alert('В выбранном диапазоне есть занятые даты. Выберите другой период.');
             selectedCheckIn  = ds;
             selectedCheckOut = null;
+            checkInHour = 14;
+            checkOutHour = 12;
         } else {
             selectedCheckOut = ds;
+            checkOutHour = 12;
         }
     }
     renderCalendar();
     updateBookingSummary();
+    renderTimeSliders();
+}
+
+let checkInHour = 14;
+let checkOutHour = 12;
+
+function checkInLabelText(hour) {
+    if (hour <= 7) return 'Очень ранний заезд';
+    if (hour <= 11) return 'Ранний заезд';
+    return 'Стандарт';
+}
+function checkOutOverpay(hour) {
+    return hour > 12 ? (hour - 12) * hourOverpayment : 0;
+}
+
+function getCheckInBlockedHours(date) {
+    const b = currentAptBookingTimes && currentAptBookingTimes[date];
+    if (!b || b.checkOut == null) return [];
+    const until = Math.min(23, b.checkOut + 1);
+    return Array.from({length: until}, (_, h) => h);
+}
+function getCheckOutBlockedHours(date) {
+    const b = currentAptBookingTimes && currentAptBookingTimes[date];
+    if (!b || b.checkIn == null) return [];
+    const max = b.checkIn - 1;
+    return Array.from({length: 24}, (_, h) => h).filter(h => h >= max);
+}
+
+function renderHourTrack(id, blocked, active) {
+    document.getElementById(id).innerHTML = Array.from({length: 24}, (_, h) => {
+        let cls = 'hour-tick';
+        if (blocked.includes(h)) cls += ' blocked';
+        if (h === active) cls += ' active';
+        return `<span class="${cls}"></span>`;
+    }).join('');
+}
+
+function renderTimeSliders() {
+    const el = document.getElementById('timeSliders');
+    if (!selectedCheckIn || !selectedCheckOut) { el.style.display = 'none'; return; }
+    el.style.display = 'block';
+
+    const inBlocked = getCheckInBlockedHours(selectedCheckIn);
+    const outBlocked = getCheckOutBlockedHours(selectedCheckOut);
+    const free = list => Array.from({length: 24}, (_, h) => h).filter(h => !list.includes(h));
+
+    if (inBlocked.includes(checkInHour))  checkInHour  = free(inBlocked)[0] ?? checkInHour;
+    if (outBlocked.includes(checkOutHour)) checkOutHour = free(outBlocked).slice(-1)[0] ?? checkOutHour;
+
+    el.innerHTML = `
+        <div class="time-slider-block">
+            <div class="time-slider-title">Время заезда</div>
+            <div class="time-slider-hours" id="checkInTrack"></div>
+            <input type="range" min="0" max="23" step="1" value="${checkInHour}" id="checkInSlider" oninput="onCheckInChange(this.value)">
+            <div class="time-slider-value" id="checkInLabel"></div>
+        </div>
+        <div class="time-slider-block">
+            <div class="time-slider-title">Время выезда</div>
+            <div class="time-slider-hours" id="checkOutTrack"></div>
+            <input type="range" min="0" max="23" step="1" value="${checkOutHour}" id="checkOutSlider" oninput="onCheckOutChange(this.value)">
+            <div class="time-slider-value" id="checkOutLabel"></div>
+        </div>`;
+
+    renderHourTrack('checkInTrack', inBlocked, checkInHour);
+    renderHourTrack('checkOutTrack', outBlocked, checkOutHour);
+    updateCheckInLabel();
+    updateCheckOutLabel();
+}
+
+function onCheckInChange(v) {
+    const hour = parseInt(v);
+    const blocked = getCheckInBlockedHours(selectedCheckIn);
+    if (blocked.includes(hour)) { document.getElementById('checkInSlider').value = checkInHour; return; }
+    checkInHour = hour;
+    renderHourTrack('checkInTrack', blocked, checkInHour);
+    updateCheckInLabel();
+    updateBookingSummary();
+}
+function onCheckOutChange(v) {
+    const hour = parseInt(v);
+    const blocked = getCheckOutBlockedHours(selectedCheckOut);
+    if (blocked.includes(hour)) { document.getElementById('checkOutSlider').value = checkOutHour; return; }
+    checkOutHour = hour;
+    renderHourTrack('checkOutTrack', blocked, checkOutHour);
+    updateCheckOutLabel();
+    updateBookingSummary();
+}
+
+function updateCheckInLabel() {
+    let note = '';
+    if (checkInHour <= 7) note = ' (+1 ночь)';
+    else if (checkInHour <= 11) note = ' (+50% за ночь)';
+    document.getElementById('checkInLabel').textContent =
+        `${String(checkInHour).padStart(2,'0')}:00 — ${checkInLabelText(checkInHour)}${note}`;
+}
+
+function updateCheckOutLabel() {
+    const extra = checkOutOverpay(checkOutHour);
+    document.getElementById('checkOutLabel').textContent =
+        `${String(checkOutHour).padStart(2,'0')}:00` + (extra ? ` — +${extra}₽` : '');
 }
 
 function updateBookingSummary() {
     const el = document.getElementById('bookingSummary');
     if (!el) return;
     if (selectedCheckIn && selectedCheckOut && currentApartment) {
-        const nights = (new Date(selectedCheckOut) - new Date(selectedCheckIn)) / 86_400_000;
-        const total  = nights * currentApartment.pricePerNight;
-        const label  = nights === 1 ? 'ночь' : nights < 5 ? 'ночи' : 'ночей';
+        let nights = (new Date(selectedCheckOut) - new Date(selectedCheckIn)) / 86_400_000;
+        let additional = 0;
+
+        if (checkInHour <= 7) nights += 1;
+        else if (checkInHour <= 11) additional += currentApartment.pricePerNight / 2;
+        if (checkOutHour > 12) additional += (checkOutHour - 12) * hourOverpayment;
+
+        const total = nights * currentApartment.pricePerNight + additional;
+        const label = pluralNights(nights);
+
         el.innerHTML = `
             <div class="row"><span>${nights} ${label}</span><span>${currentApartment.pricePerNight.toLocaleString('ru-RU')} ₽/ночь</span></div>
+            ${additional ? `<div class="row"><span>Доплата за время</span><span>${additional.toLocaleString('ru-RU')} ₽</span></div>` : ''}
             <div class="row total"><span>Итого</span><strong>${total.toLocaleString('ru-RU')} ₽</strong></div>`;
         el.style.display = 'block';
     } else {
         el.style.display = 'none';
     }
+}
+
+function pluralNights(n) {
+    const mod10 = n % 10;
+    const mod100 = n % 100;
+    if (mod100 >= 11 && mod100 <= 14) return 'ночей';
+    if (mod10 === 1) return 'ночь';
+    if (mod10 >= 2 && mod10 <= 4) return 'ночи';
+    return 'ночей';
 }
 
 function switchTab(tab) {

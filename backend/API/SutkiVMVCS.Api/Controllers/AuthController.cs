@@ -228,14 +228,28 @@ public class AuthController : ControllerBase
 
         if (overlap || externalOverlap) return Conflict(new { message = "Квартира занята в выбранные даты" });
 
-        var nights  = (dto.EndDate - dto.StartDate).Days;
+        decimal additional = 0;
+        DateTime sd = dto.StartDate;
+        DateTime ed = dto.EndDate;
+
+        int nights = (ed.Date - sd.Date).Days;
+        if (sd.Hour <= 7) nights += 1;
+        else if (sd.Hour <= 11) additional += apartment.PricePerNight / 2;
+        if (ed.Hour > 12) additional += (ed.Hour - 12) * apartment.HourOverPrice;
+
+        int overkid = dto.Kids > apartment.Kids ? dto.Kids - apartment.Kids : 0;
+        int overguest = dto.Adults - apartment.Guests;
+
+        if (overguest > 0) additional += overguest * apartment.GuestOverprice + overkid * apartment.KidOverprice;
+        else additional += overguest + overkid > 0 ? (overguest + overkid) * apartment.KidOverprice : 0;
+
         var booking = new Booking
         {
             ApartmentId = dto.ApartmentId,
             ClientId    = client.Id,
             StartDate   = dto.StartDate.ToUniversalTime(),
             EndDate     = dto.EndDate.ToUniversalTime(),
-            TotalPrice  = apartment.PricePerNight * nights,
+            TotalPrice  = apartment.PricePerNight * nights + additional,
             Status      = "Pending",
             Source      = "Site",
             CreatedAt   = DateTime.UtcNow.ToUniversalTime()

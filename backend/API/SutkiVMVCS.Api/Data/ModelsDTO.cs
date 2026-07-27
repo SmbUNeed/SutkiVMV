@@ -187,6 +187,8 @@ public class CreateBookingDto
     public int      ClientId    { get; set; }
     public DateTime StartDate   { get; set; }
     public DateTime EndDate     { get; set; }
+    public int      Adults      { get; set; } = 0;
+    public int      Kids        { get; set; } = 0;
 }
 public class ChangeStatusDto
 {
@@ -227,6 +229,8 @@ public class UserCreateBookingDto
     public int      ApartmentId { get; set; }
     public DateTime StartDate   { get; set; }
     public DateTime EndDate     { get; set; }
+    public int Adults { get; set; } = 0;
+    public int Kids { get; set; } = 0;
 }
 // ── Client ─────────────────────────────────────────────────────────────
 public class ClientDto
