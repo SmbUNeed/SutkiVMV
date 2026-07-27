@@ -671,6 +671,42 @@ textarea { resize: vertical; min-height: 90px; }
 .time-slider-title { font-size: 13px; color: var(--ink-3); }
 .time-slider-value { font-size: 13px; font-weight: 500; color: var(--ink); }
 
+input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: transparent;
+    margin: 2px 0;
+}
+input[type=range]::-webkit-slider-runnable-track {
+    height: 4px;
+    background: transparent;
+}
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 2px solid var(--paper);
+    box-shadow: var(--shadow-xs);
+    margin-top: -6px;
+    cursor: pointer;
+}
+input[type=range]::-moz-range-track {
+    height: 4px;
+    background: transparent;
+}
+input[type=range]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 2px solid var(--paper);
+    box-shadow: var(--shadow-xs);
+    cursor: pointer;
+}
 /* ── FOOTER ──────────────────────────────────────────────── */
 .footer {
     background: var(--ink); color: rgba(255,255,255,0.65);
