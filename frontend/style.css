@@ -664,12 +664,12 @@ textarea { resize: vertical; min-height: 90px; }
 
 .time-sliders { margin-top: 12px; display: flex; flex-direction: column; gap: 14px; }
 .time-slider-block { display: flex; flex-direction: column; gap: 4px; }
-.time-slider-title { font-size: 13px; color: #666; }
 .time-slider-hours { display: flex; gap: 1px; }
-.hour-tick { flex: 1; height: 6px; background: #2ecc71; border-radius: 1px; }
-.hour-tick.blocked { background: #ccc; }
-.hour-tick.active { outline: 2px solid #000; }
-.time-slider-value { font-size: 13px; font-weight: 500; }
+.hour-tick { flex: 1; height: 6px; background: var(--primary); border-radius: 1px; }
+.hour-tick.blocked { background: var(--border-dk); }
+.hour-tick.active { outline: 2px solid var(--ink); }
+.time-slider-title { font-size: 13px; color: var(--ink-3); }
+.time-slider-value { font-size: 13px; font-weight: 500; color: var(--ink); }
 
 /* ── FOOTER ──────────────────────────────────────────────── */
 .footer {
