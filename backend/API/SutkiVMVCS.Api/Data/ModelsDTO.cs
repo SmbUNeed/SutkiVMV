@@ -12,7 +12,11 @@ public class ApartmentDto
     public string Address { get; set; } = "";
     public string Description { get; set; } = "";
     public int Guests { get; set; }
+    public decimal GuestOverprice { get; set; }
+    public int Kids { get; set; }
+    public decimal KidOverprice { get; set; }
     public decimal PricePerNight { get; set; }
+    public decimal HourOverprice { get; set; }
     public int RoomsCount { get; set; }
     public decimal Area { get; set; }
     public bool IsActive { get; set; }
@@ -73,6 +77,10 @@ public class ApartmentDetailDto()
     public string Address { get; set; } = "";
     public string Description { get; set; } = "";
     public int Guests { get; set; }
+    public decimal GuestOverprice { get; set; }
+    public int Kids { get; set; }
+    public decimal KidOverprice { get; set; }
+    public decimal HourOverPrice { get; set; }
     public decimal PricePerNight { get; set; }
     public int RoomsCount { get; set; }
     public decimal Area { get; set; }

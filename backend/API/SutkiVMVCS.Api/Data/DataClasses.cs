@@ -12,8 +12,8 @@ public class Apartment
     public string  Description   { get; set; } = "";
     public int     Guests        { get; set; }
     public decimal GuestOverprice { get; set; }
-    public int Kids { get; set; } = 0;
-    public decimal KidOverprice { get; set; } = 0;
+    public int     Kids          { get; set; } = 0;
+    public decimal KidOverprice  { get; set; } = 0;
     public decimal PricePerNight { get; set; }
     public decimal HourOverPrice { get; set; } = 100;
     public int     RoomsCount    { get; set; }
