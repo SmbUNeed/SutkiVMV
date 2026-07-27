@@ -66,13 +66,13 @@ namespace SutkiVMVCS.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<decimal>("GuestOverprice")
+                    b.Property<decimal>("GuestOverpayment")
                         .HasColumnType("numeric");
 
                     b.Property<int>("Guests")
                         .HasColumnType("integer");
 
-                    b.Property<decimal>("HourOverPrice")
+                    b.Property<decimal>("HourOverpayment")
                         .HasColumnType("numeric");
 
                     b.Property<bool>("IsActive")
@@ -81,7 +81,7 @@ namespace SutkiVMVCS.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<decimal>("KidOverprice")
+                    b.Property<decimal>("KidOverpayment")
                         .HasColumnType("numeric");
 
                     b.Property<int>("Kids")

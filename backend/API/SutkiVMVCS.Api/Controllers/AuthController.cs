@@ -235,13 +235,13 @@ public class AuthController : ControllerBase
         int nights = (ed.Date - sd.Date).Days;
         if (sd.Hour <= 7) nights += 1;
         else if (sd.Hour <= 11) additional += apartment.PricePerNight / 2;
-        if (ed.Hour > 12) additional += (ed.Hour - 12) * apartment.HourOverPrice;
+        if (ed.Hour > 12) additional += (ed.Hour - 12) * apartment.HourOverpayment;
 
         int overkid = dto.Kids > apartment.Kids ? dto.Kids - apartment.Kids : 0;
         int overguest = dto.Adults - apartment.Guests;
 
-        if (overguest > 0) additional += overguest * apartment.GuestOverprice + overkid * apartment.KidOverprice;
-        else additional += overguest + overkid > 0 ? (overguest + overkid) * apartment.KidOverprice : 0;
+        if (overguest > 0) additional += overguest * apartment.GuestOverpayment + overkid * apartment.KidOverpayment;
+        else additional += overguest + overkid > 0 ? (overguest + overkid) * apartment.KidOverpayment : 0;
 
         var booking = new Booking
         {

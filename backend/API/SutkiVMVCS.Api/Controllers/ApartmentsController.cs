@@ -206,12 +206,12 @@ public class ApartmentsController : ControllerBase
         apt.Address = updated.Address;
         apt.Description = updated.Description;
         apt.PricePerNight = updated.PricePerNight;
-        apt.HourOverPrice = updated.HourOverPrice;
+        apt.HourOverpayment = updated.HourOverpayment;
         apt.RoomsCount = updated.RoomsCount;
         apt.Guests = updated.Guests;
-        apt.GuestOverprice = updated.GuestOverprice;
+        apt.GuestOverpayment = updated.GuestOverpayment;
         apt.Kids = updated.Kids;
-        apt.KidOverprice = updated.KidOverprice;
+        apt.KidOverpayment = updated.KidOverpayment;
         apt.Area = updated.Area;
         apt.IsActive = updated.IsActive;
 
@@ -435,11 +435,11 @@ public class ApartmentsController : ControllerBase
         Address = a.Address,
         Description = a.Description,
         Guests = a.Guests,
-        GuestOverprice = a.GuestOverprice,
+        GuestOverpayment = a.GuestOverpayment,
         Kids = a.Kids,
-        KidOverprice = a.KidOverprice,
+        KidOverpayment = a.KidOverpayment,
         PricePerNight = a.PricePerNight,
-        HourOverprice = a.HourOverPrice,
+        HourOverpayment = a.HourOverpayment,
         RoomsCount = a.RoomsCount,
         Area = a.Area,
         IsActive = a.IsActive,
@@ -477,11 +477,11 @@ public class ApartmentsController : ControllerBase
         Address = a.Address,
         Description = a.Description,
         Guests = a.Guests,
-        GuestOverprice = a.GuestOverprice,
+        GuestOverpayment = a.GuestOverpayment,
         Kids = a.Kids,
-        KidOverprice = a.KidOverprice,
+        KidOverpayment = a.KidOverpayment,
         PricePerNight = a.PricePerNight,
-        HourOverPrice = a.HourOverPrice,
+        HourOverpayment = a.HourOverpayment,
         RoomsCount = a.RoomsCount,
         Area = a.Area,
         IsActive = a.IsActive,
