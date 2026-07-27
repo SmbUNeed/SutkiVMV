@@ -707,6 +707,20 @@ input[type=range]::-moz-range-thumb {
     box-shadow: var(--shadow-xs);
     cursor: pointer;
 }
+
+input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: transparent;
+    accent-color: transparent;
+    margin: 2px 0;
+}
+input[type=range]::-moz-range-progress {
+    background: transparent;
+}
+
 /* ── FOOTER ──────────────────────────────────────────────── */
 .footer {
     background: var(--ink); color: rgba(255,255,255,0.65);
