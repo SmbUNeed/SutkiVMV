@@ -419,6 +419,41 @@ namespace SutkiVMVCS.Migrations
                     b.ToTable("PendingRegistrations");
                 });
 
+            modelBuilder.Entity("SutkiVMV.Models.PriceRule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ApartmentId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal?>("FixedMarkup")
+                        .HasColumnType("numeric");
+
+                    b.Property<bool>("IsRecurringYearly")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("Multiplier")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PriceRules");
+                });
+
             modelBuilder.Entity("SutkiVMV.Models.Rule", b =>
                 {
                     b.Property<int>("Id")
@@ -438,6 +473,32 @@ namespace SutkiVMVCS.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Rules");
+                });
+
+            modelBuilder.Entity("SutkiVMV.Models.SiteSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("DefaultHourOverpayment")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("HeaderDescription")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("MaxBookingRangeDays")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MinBookingDaysAhead")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SiteSettings");
                 });
 
             modelBuilder.Entity("SutkiVMV.Models.User", b =>
