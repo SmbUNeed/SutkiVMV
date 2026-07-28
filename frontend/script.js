@@ -366,6 +366,7 @@ async function openModal(apartmentId, clearParams = false) {
     currentDate = new Date();
     updateBookingSummary();
     renderCalendar();
+    renderTimeSliders();
     renderBookingWidget();
 
     // Правила
