@@ -633,14 +633,18 @@ function renderTimeSliders() {
     el.innerHTML = `
         <div class="time-slider-block">
             <div class="time-slider-title">Время заезда</div>
-            <div class="time-slider-hours" id="checkInTrack"></div>
-            <input type="range" min="0" max="23" step="1" value="${checkInHour}" id="checkInSlider" oninput="onCheckInChange(this.value)">
+            <div class="time-slider-wrap">
+                <div class="time-slider-hours" id="checkInTrack"></div>
+                <input type="range" min="0" max="23" step="1" value="${checkInHour}" id="checkInSlider" oninput="onCheckInChange(this.value)">
+            </div>
             <div class="time-slider-value" id="checkInLabel"></div>
         </div>
         <div class="time-slider-block">
             <div class="time-slider-title">Время выезда</div>
-            <div class="time-slider-hours" id="checkOutTrack"></div>
-            <input type="range" min="0" max="23" step="1" value="${checkOutHour}" id="checkOutSlider" oninput="onCheckOutChange(this.value)">
+            <div class="time-slider-wrap">
+                <div class="time-slider-hours" id="checkOutTrack"></div>
+                <input type="range" min="0" max="23" step="1" value="${checkOutHour}" id="checkOutSlider" oninput="onCheckOutChange(this.value)">
+            </div>
             <div class="time-slider-value" id="checkOutLabel"></div>
         </div>`;
 
