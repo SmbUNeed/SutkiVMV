@@ -236,7 +236,7 @@ public class AdminBookingDto : IDetailedBooking
     public int Adults { get; set; }
     public int Kids { get; set; }
 }
-public class UserCreateBookingDto
+public class UserCreateBookingDto : IDetailedBooking
 {
     public int      ApartmentId { get; set; }
     public DateTime StartDate   { get; set; }
