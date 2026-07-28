@@ -724,7 +724,7 @@ function switchTab(tab, btn) {
     document.querySelectorAll('.modal-tab-content').forEach(el => el.style.display = 'none');
     document.querySelectorAll('.modal-tab').forEach(el => el.classList.remove('active'));
     document.getElementById(`tab-${tab}`).style.display = 'block';
-    event.target.classList.add('active');
+    if (btn) btn.classList.add('active');
 }
 
 // ── Инициализация ────────────────────────────────────────
