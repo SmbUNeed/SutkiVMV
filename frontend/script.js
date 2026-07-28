@@ -14,6 +14,13 @@ let selectedCheckOut   = null;
 // Выбранные удобства (Set имён)
 let selectedAmenities = new Set();
 
+let siteSettings = { minBookingDaysAhead: 0, maxBookingRangeDays: 365 };
+
+async function loadSiteSettings() {
+    const res = await fetch('/api/settings');
+    siteSettings = await res.json();
+}
+
 // ── Хелпер URL для изображений ──────────────────────────
 function imgUrl(path) {
     if (!path) return null;
@@ -512,7 +519,14 @@ function renderCalendar() {
     const firstDay = new Date(year, month, 1).getDay();
     const lastDay  = new Date(year, month + 1, 0).getDate();
     const startDay = firstDay === 0 ? 6 : firstDay - 1;
-    const todayStr = toDateStr(new Date());
+
+    const minDate = new Date();
+    minDate.setDate(minDate.getDate() + siteSettings.minBookingDaysAhead);
+    const minDateStr = toDateStr(minDate);
+
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + siteSettings.maxBookingRangeDays);
+    const maxDateStr = toDateStr(maxDate);
 
     let html = `
         <div class="cal-header">
@@ -527,7 +541,7 @@ function renderCalendar() {
 
     for (let i = 1; i <= lastDay; i++) {
         const ds       = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-        const isPast   = ds < todayStr;
+        const isPast   = ds < minDateStr || ds > maxDateStr;
         const isBooked = currentAptBookedDates.includes(ds);
         const isStart  = ds === selectedCheckIn;
         const isEnd    = ds === selectedCheckOut;
@@ -731,6 +745,7 @@ function switchTab(tab, btn) {
 // ── Инициализация ────────────────────────────────────────
 async function init() {
     showSkeletons();
+    await loadSiteSettings();
     await loadAmenityFilter();
     apartments = await apiGetApartments();
     filteredApartments = [...apartments];
