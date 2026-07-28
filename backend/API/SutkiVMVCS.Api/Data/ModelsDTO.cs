@@ -189,7 +189,7 @@ public class BookingDto
     public DateTime EndDate   { get; set; }
     public string   Status    { get; set; } = "";
 }
-public class CreateBookingDto
+public class CreateBookingDto : IDetailedBooking
 {
     public int      ApartmentId { get; set; }
     public int      ClientId    { get; set; }
@@ -202,7 +202,7 @@ public class ChangeStatusDto
 {
     public string Status { get; set; } = "";
 }
-public class BookingDetailDto
+public class BookingDetailDto : IDetailedBooking
 {
     public int      Id             { get; set; }
     public int      ApartmentId    { get; set; }
@@ -214,8 +214,10 @@ public class BookingDetailDto
     public string   Status         { get; set; } = "";
     public DateTime CreatedAt      { get; set; }
     public int      Nights         => (EndDate - StartDate).Days;
+    public int Adults { get; set; }
+    public int Kids { get; set; }
 }
-public class AdminBookingDto
+public class AdminBookingDto : IDetailedBooking
 {
     public int      Id             { get; set; }
     public int      ApartmentId    { get; set; }
@@ -231,6 +233,8 @@ public class AdminBookingDto
     public DateTime CreatedAt      { get; set; }
     public int      Nights         => (EndDate - StartDate).Days;
     public string   Source         { get; set; } = "Вручную";
+    public int Adults { get; set; }
+    public int Kids { get; set; }
 }
 public class UserCreateBookingDto
 {
@@ -308,3 +312,10 @@ public class AddExternalCalendarDto
 
 public record ResetPasswordDto(string Email, string Token, string NewPassword);
 public record BusyPeriodDto(string StartDate, string EndDate);
+public interface IDetailedBooking {
+    public int ApartmentId { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+    public int Adults { get; set; }
+    public int Kids { get; set; }
+}

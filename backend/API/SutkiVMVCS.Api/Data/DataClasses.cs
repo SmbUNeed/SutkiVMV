@@ -40,6 +40,29 @@ public class Rule
 
     public ICollection<ApartmentRule> Apartments { get; set; } = new List<ApartmentRule>();
 }
+public class Booking
+{
+    public int      Id          { get; set; }
+    public int      ApartmentId { get; set; }
+    public int      ClientId    { get; set; }
+    public int Kids { get; set; } = 0;
+    public int Guests { get; set; } = 0;
+    public DateTime StartDate   { get; set; }
+    public DateTime EndDate     { get; set; }
+
+    [Precision(18, 2)]
+    public decimal  TotalPrice  { get; set; }
+
+    public string   Status    { get; set; } = "";
+    public DateTime CreatedAt { get; set; }
+
+    public Apartment Apartment { get; set; } = null!;
+    public Client    Client    { get; set; } = null!;
+    public string    Source    { get; set; } = null!;
+
+    public string? PaymentId { get; set; }
+    public DateTime? PaidAt { get; set; }
+}
 
 // Глобальное место рядом
 public class NearbyPlace
@@ -72,29 +95,6 @@ public class ApartmentNearbyPlace
     public NearbyPlace NearbyPlace { get; set; } = null!;
 }
 
-public class Booking
-{
-    public int      Id          { get; set; }
-    public int      ApartmentId { get; set; }
-    public int      ClientId    { get; set; }
-    public int Kids { get; set; } = 0;
-    public int Guests { get; set; } = 0;
-    public DateTime StartDate   { get; set; }
-    public DateTime EndDate     { get; set; }
-
-    [Precision(18, 2)]
-    public decimal  TotalPrice  { get; set; }
-
-    public string   Status    { get; set; } = "";
-    public DateTime CreatedAt { get; set; }
-
-    public Apartment Apartment { get; set; } = null!;
-    public Client    Client    { get; set; } = null!;
-    public string    Source    { get; set; } = null!;
-
-    public string? PaymentId { get; set; }
-    public DateTime? PaidAt { get; set; }
-}
 
 public class Amenity
 {
@@ -212,4 +212,25 @@ public class DeviceToken
     public int UserId { get; set; }
     public string Token { get; set; } = "";
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+}
+
+public class SiteSettings
+{
+    public int Id { get; set; } = 1;
+    public string HeaderDescription { get; set; } = "";
+    public int MinBookingDaysAhead { get; set; } = 0;
+    public int MaxBookingRangeDays { get; set; } = 365;
+    public decimal DefaultHourOverpayment { get; set; } = 0;
+}
+
+public class PriceRule
+{
+    public int Id { get; set; }
+    public int? ApartmentId { get; set; } // null = на все квартиры
+    public string Label { get; set; } = "";
+    public DateOnly StartDate { get; set; }
+    public DateOnly? EndDate { get; set; } // null = одна дата
+    public bool IsRecurringYearly { get; set; }
+    public decimal? Multiplier { get; set; } // 2.0 = цена x2
+    public decimal? FixedMarkup { get; set; } // добавка к цене за ночь
 }

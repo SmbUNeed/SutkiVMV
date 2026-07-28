@@ -5,6 +5,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Resend;
 using SutkiVMV.Data;
+using SutkiVMV.Models;
 using SutkiVMV.Services;
 using SutkiVMVCS.Controllers;
 using SutkiVMVCS.Services;
@@ -14,25 +15,28 @@ using Telegram.Bot;
 var builder = WebApplication.CreateBuilder(args);
 
 // ═══════════════════════════════════════════════════════════════════════
-//  INFRASTRUCTURE
+//  DATABASE
 // ═══════════════════════════════════════════════════════════════════════
 
-// ── Database ──────────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// ── File uploads ──────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════
+//  FILE UPLOADS
+// ═══════════════════════════════════════════════════════════════════════
+
 var apartmentsUploadRelPath = builder.Configuration["Storage:ApartmentsUploadPath"]
     ?? "../../../../data/uploads";
 var apartmentsUploadAbsPath = Path.GetFullPath(
     Path.Combine(builder.Environment.ContentRootPath, apartmentsUploadRelPath));
 Directory.CreateDirectory(apartmentsUploadAbsPath);
+
 var wikiUploadRelPath = builder.Configuration["Storage:WikiUploadPath"]
     ?? "../../../../data/wiki_places";
 var wikiUploadAbsPath = Path.GetFullPath(
     Path.Combine(builder.Environment.ContentRootPath, wikiUploadRelPath));
 Directory.CreateDirectory(wikiUploadAbsPath);
+
 builder.Services.AddSingleton(new UploadSettings(apartmentsUploadAbsPath, wikiUploadAbsPath));
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -48,10 +52,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-            ValidateIssuer           = false,
-            ValidateAudience         = false,
-            ClockSkew                = TimeSpan.Zero
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ClockSkew = TimeSpan.Zero
         };
     });
 
@@ -64,7 +68,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddControllers()
     .AddJsonOptions(o =>
     {
-        o.JsonSerializerOptions.ReferenceHandler    =
+        o.JsonSerializerOptions.ReferenceHandler =
             System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
         o.JsonSerializerOptions.PropertyNamingPolicy =
             System.Text.Json.JsonNamingPolicy.CamelCase;
@@ -75,16 +79,16 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
     {
-        Title   = "SutkiVMV API",
+        Title = "SutkiVMV API",
         Version = "v1"
     });
     c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
-        Name        = "Authorization",
-        Type        = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-        Scheme      = "bearer",
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
         BearerFormat = "JWT",
-        In          = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
         Description = "Введите JWT-токен: Bearer {token}"
     });
     c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
@@ -102,30 +106,15 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
+// ═══════════════════════════════════════════════════════════════════════
+//  APP SERVICES
+// ═══════════════════════════════════════════════════════════════════════
+
 builder.Services.AddSingleton<FcmService>();
 
-// ═══════════════════════════════════════════════════════════════════════
-//  CORS
-// ═══════════════════════════════════════════════════════════════════════
-
-var allowedOrigins = (builder.Configuration["AllowedOrigin"] ?? "http://localhost")
-    .Split(',', StringSplitOptions.RemoveEmptyEntries);
-
-builder.Services.AddCors(options =>
-    options.AddPolicy("Frontend", policy =>
-        policy.WithOrigins(allowedOrigins)
-              .AllowAnyMethod()
-              .AllowAnyHeader()));
-
-// ═══════════════════════════════════════════════════════════════════════
-//  BOTS
-// ═══════════════════════════════════════════════════════════════════════
-
-
-
-// ═══════════════════════════════════════════════════════════════════════
-//  EMAIL
-// ═══════════════════════════════════════════════════════════════════════
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<SettingsService>();
 
 builder.Services.AddHttpClient<ResendClient>();
 builder.Services.AddHttpClient<PaymentsController>();
@@ -142,12 +131,24 @@ builder.Services.AddScoped<ICalService>();
 builder.Services.AddHostedService<ICalSyncService>();
 
 // ═══════════════════════════════════════════════════════════════════════
+//  CORS
+// ═══════════════════════════════════════════════════════════════════════
+
+var allowedOrigins = (builder.Configuration["AllowedOrigin"] ?? "http://localhost")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+builder.Services.AddCors(options =>
+    options.AddPolicy("Frontend", policy =>
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyMethod()
+              .AllowAnyHeader()));
+
+// ═══════════════════════════════════════════════════════════════════════
 //  HOST OPTIONS — не останавливать хост если BackgroundService упал
 // ═══════════════════════════════════════════════════════════════════════
 
 builder.Services.Configure<HostOptions>(options =>
-    options.BackgroundServiceExceptionBehavior =
-        BackgroundServiceExceptionBehavior.Ignore);
+    options.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.Ignore);
 
 // ═══════════════════════════════════════════════════════════════════════
 //  PIPELINE
@@ -156,17 +157,16 @@ builder.Services.Configure<HostOptions>(options =>
 var app = builder.Build();
 
 app.UseStaticFiles();
-
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider        = new PhysicalFileProvider(apartmentsUploadAbsPath),
-    RequestPath         = "/uploads",
+    FileProvider = new PhysicalFileProvider(apartmentsUploadAbsPath),
+    RequestPath = "/uploads",
     ContentTypeProvider = new FileExtensionContentTypeProvider()
 });
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider        = new PhysicalFileProvider(wikiUploadAbsPath),
-    RequestPath         = "/wiki_places",
+    FileProvider = new PhysicalFileProvider(wikiUploadAbsPath),
+    RequestPath = "/wiki_places",
     ContentTypeProvider = new FileExtensionContentTypeProvider()
 });
 
@@ -180,6 +180,15 @@ app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// ── Settings API ─────────────────────────────────────────────────────
+app.MapGet("/api/settings", async (SettingsService s) => await s.GetAsync());
+
+app.MapPut("/api/admin/settings", async (SiteSettings dto, SettingsService s) =>
+{
+    await s.UpdateAsync(dto);
+    return Results.Ok();
+}).RequireAuthorization(policy => policy.RequireRole("Admin"));
 
 app.Run();
 

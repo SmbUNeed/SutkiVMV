@@ -23,6 +23,8 @@ public class AppDbContext : DbContext
     public DbSet<ExternalCalendar>     ExternalCalendars    => Set<ExternalCalendar>();
     public DbSet<ExternalBooking>      ExternalBookings     => Set<ExternalBooking>();
     public DbSet<DeviceToken>          DeviceTokens         => Set<DeviceToken>();
+    public DbSet<SiteSettings>         SiteSettings         => Set<SiteSettings>();
+    public DbSet<PriceRule>            PriceRules           => Set<PriceRule>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
