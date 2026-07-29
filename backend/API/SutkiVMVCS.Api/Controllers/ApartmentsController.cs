@@ -85,7 +85,9 @@ public class ApartmentsController : ControllerBase
                 a.AdminTag,
                 a.ApartmentGallery.Where(g => g.IsMain).Select(g => g.ImagePath).FirstOrDefault()
                     ?? a.ApartmentGallery.Select(g => g.ImagePath).FirstOrDefault(),
-                a.PricePerNight
+                a.PricePerNight,
+                a.IsDeleted,
+                a.IsActive
             ))
             .AsNoTracking()
             .ToListAsync();

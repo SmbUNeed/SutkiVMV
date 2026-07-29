@@ -66,7 +66,9 @@ public record AdminApartmentSummaryDto(
     string Title,
     string AdminTag,
     string? MainImage,
-    decimal PricePerNight
+    decimal PricePerNight,
+    bool IsDeleted,
+    bool IsActive
 );
 
 public class ApartmentDetailDto()
