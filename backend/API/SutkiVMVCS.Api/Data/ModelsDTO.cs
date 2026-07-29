@@ -310,6 +310,17 @@ public class AddExternalCalendarDto
     public string ICalUrl { get; set; } = "";
 }
 
+public class CreatePriceRuleDto
+{
+    public int? ApartmentId { get; set; } // null = на все квартиры
+    public string Label { get; set; } = "";
+    public DateOnly StartDate { get; set; }
+    public DateOnly? EndDate { get; set; } // null = одна дата
+    public bool IsRecurringYearly { get; set; }
+    public decimal? Multiplier { get; set; } // 2.0 = цена x2
+    public decimal? FixedMarkup { get; set; } // добавка к цене за ночь
+}
+
 public record ResetPasswordDto(string Email, string Token, string NewPassword);
 public record BusyPeriodDto(string StartDate, string EndDate);
 public interface IDetailedBooking {
