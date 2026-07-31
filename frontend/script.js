@@ -75,6 +75,7 @@ async function apiBookAsUser(apartmentId, startDate, endDate) {
         body: JSON.stringify({ apartmentId, startDate, endDate })
     });
     console.log('sending:', { apartmentId, startDate, endDate });
+    console.log('sending:', { apartmentId, startDate, endDate });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Ошибка бронирования');
     return data;
