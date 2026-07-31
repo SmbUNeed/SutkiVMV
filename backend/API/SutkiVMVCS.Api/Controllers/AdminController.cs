@@ -74,5 +74,23 @@ namespace SutkiVMVCS.Controllers
 
             return Ok();
         }
+
+        [HttpGet("external-bookings")]
+        public async Task<ActionResult<List<ExternalBooking>>> GetExternalBookings() {
+            var bookings = await _ctx.ExternalBookings
+                .Include(b => b.Apartment)
+                .Select(b => new
+                {
+                    b.Id,
+                    b.ApartmentId,
+                    ApartmentTitle = b.Apartment.Title,
+                    b.Source,
+                    StartDate = b.StartDate.ToString("yyyy-MM-dd"),
+                    EndDate = b.EndDate.ToString("yyyy-MM-dd")
+                })
+                .ToListAsync();
+
+            return Ok(bookings);
+        }
     }
 }
