@@ -70,6 +70,7 @@ async function apiGetAmenities() {
 }
 
 async function apiBookAsUser(apartmentId, startDate, endDate) {
+    console.log('sending:', { apartmentId, startDate, endDate });
     const res = await authFetch('/auth/book', {
         method: 'POST',
         body: JSON.stringify({ apartmentId, startDate, endDate })
@@ -546,6 +547,10 @@ function renderCalendar() {
                 `<div class="cal-dow">${d}</div>`).join('')}
             ${"<div class='cal-day empty'></div>".repeat(startDay)}`;
 
+    const firstBooked = selectedCheckIn && !selectedCheckOut
+                ? getFirstBookedAfter(selectedCheckIn)
+                : null;
+
     for (let i = 1; i <= lastDay; i++) {
         const ds       = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
         const isPast   = ds < minDateStr || ds > maxDateStr;
@@ -553,13 +558,11 @@ function renderCalendar() {
         const isStart  = ds === selectedCheckIn;
         const isEnd    = ds === selectedCheckOut;
         const inRange  = selectedCheckIn && selectedCheckOut && ds > selectedCheckIn && ds < selectedCheckOut;
-        const firstBooked = selectedCheckIn && !selectedCheckOut
-            ? getFirstBookedAfter(selectedCheckIn)
-            : null;
+
 
         let cls = 'cal-day';
         if (isPast)           cls += ' past';
-        const isCheckoutOnly = ds === firstBooked; // только эта дата открыта
+        const isCheckoutOnly = !isPast && ds === firstBooked;
 		if (isBooked && !isCheckoutOnly) cls += ' booked';
         if (isCheckoutOnly) cls += ' checkout-only';
         if (isStart)          cls += ' check-in';
