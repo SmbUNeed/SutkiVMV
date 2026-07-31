@@ -16,6 +16,9 @@ let selectedAmenities = new Set();
 
 let siteSettings = { minBookingDaysAhead: 0, maxBookingRangeDays: 365 };
 
+let checkInHour = 14;
+let checkOutHour = 12;
+
 async function loadSiteSettings() {
     const res = await fetch('/api/settings');
     siteSettings = await res.json();
@@ -471,7 +474,8 @@ function renderBookingWidget() {
 }
 
 // ── Бронирование ─────────────────────────────────────────
-async function handleBook() {
+// Залогинен, бесплатно — переименовал handleBook -> handleBookFree, логика без изменений
+async function handleBookFree() {
     if (!selectedCheckIn || !selectedCheckOut) {
         alert('Пожалуйста, выберите даты заезда и выезда.');
         return;
@@ -481,7 +485,10 @@ async function handleBook() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Оформляем...';
 
     try {
-        await apiBookAsUser(currentApartment.id, selectedCheckIn, selectedCheckOut);
+        const startDateTime = toDateTimeString(selectedCheckIn, checkInHour);
+        const endDateTime   = toDateTimeString(selectedCheckOut, checkOutHour);
+
+        await apiBookAsUser(currentApartment.id, startDateTime, endDateTime);
         alert('Бронирование успешно оформлено! Ожидайте подтверждения.');
         closeModal();
         apartments = await apiGetApartments();
@@ -546,17 +553,20 @@ function renderCalendar() {
         const isStart  = ds === selectedCheckIn;
         const isEnd    = ds === selectedCheckOut;
         const inRange  = selectedCheckIn && selectedCheckOut && ds > selectedCheckIn && ds < selectedCheckOut;
+        const firstBooked = selectedCheckIn && !selectedCheckOut
+            ? getFirstBookedAfter(selectedCheckIn)
+            : null;
 
         let cls = 'cal-day';
         if (isPast)           cls += ' past';
-        const isCheckoutOnly = isBooked && selectedCheckIn && !selectedCheckOut;
+        const isCheckoutOnly = ds === firstBooked; // только эта дата открыта
 		if (isBooked && !isCheckoutOnly) cls += ' booked';
-		if (isCheckoutOnly)   cls += ' checkout-only';
+        if (isCheckoutOnly) cls += ' checkout-only';
         if (isStart)          cls += ' check-in';
         else if (isEnd)       cls += ' check-out';
         else if (inRange)     cls += ' in-range';
 
-        const canClick = !isPast && (!isBooked || (selectedCheckIn && !selectedCheckOut));
+        const canClick = !isPast && (!isBooked || isCheckoutOnly);
 		const click = canClick ? `onclick="selectDate('${ds}')"` : '';
         html += `<div class="${cls}" ${click}>${i}</div>`;
     }
@@ -599,8 +609,12 @@ function selectDate(ds) {
     renderTimeSliders();
 }
 
-let checkInHour = 14;
-let checkOutHour = 12;
+function getFirstBookedAfter(fromDs) {
+    // сортируем занятые даты и берём первую после fromDs
+    return currentAptBookedDates
+        .filter(d => d > fromDs)
+        .sort()[0] || null;
+}
 
 function checkInLabelText(hour) {
     if (hour <= 7) return 'Очень ранний заезд';
@@ -795,6 +809,10 @@ function renderLightbox() {
     document.getElementById('lightboxImg').src = lightboxImages[lightboxIndex];
     document.getElementById('lightboxCounter').textContent =
         lightboxImages.length > 1 ? `${lightboxIndex + 1} / ${lightboxImages.length}` : '';
+}
+
+function toDateTimeString(dateStr, hour) {
+    return `${dateStr}T${String(hour).padStart(2,'0')}:00:00`;
 }
 
 document.addEventListener('keydown', e => {
