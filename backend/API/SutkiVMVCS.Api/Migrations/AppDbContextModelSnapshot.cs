@@ -683,7 +683,7 @@ namespace SutkiVMVCS.Migrations
             modelBuilder.Entity("SutkiVMV.Models.ExternalBooking", b =>
                 {
                     b.HasOne("SutkiVMV.Models.Apartment", "Apartment")
-                        .WithMany()
+                        .WithMany("ExternalBookings")
                         .HasForeignKey("ApartmentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -729,6 +729,8 @@ namespace SutkiVMVCS.Migrations
                     b.Navigation("ApartmentGallery");
 
                     b.Navigation("Bookings");
+
+                    b.Navigation("ExternalBookings");
 
                     b.Navigation("Nearby");
 

@@ -31,20 +31,21 @@ public class ApartmentsController : ControllerBase
 
         if (apt == null) return NotFound();
 
-        var busyPeriods = await _context.Bookings
+        var bookings = await _context.Bookings
             .Where(b => b.ApartmentId == id && b.Status != "Cancelled")
             .Select(b => new BusyPeriodDto(
                 b.StartDate.ToString("yyyy-MM-dd"),
                 b.EndDate.ToString("yyyy-MM-dd")))
-            .Concat(
-                _context.ExternalBookings.Where(eb => eb.ApartmentId == id)
-                .Select(eb => new BusyPeriodDto(
-                    eb.StartDate.ToString("yyyy-MM-dd"),
-                    eb.EndDate.ToString("yyyy-MM-dd")
-                    ))
-            
-            )
-                .ToListAsync();
+            .ToListAsync();
+
+        var external = await _context.ExternalBookings
+            .Where(eb => eb.ApartmentId == id)
+            .Select(eb => new BusyPeriodDto(
+                eb.StartDate.ToString("yyyy-MM-dd"),
+                eb.EndDate.ToString("yyyy-MM-dd")))
+            .ToListAsync();
+
+        var busyPeriods = bookings.Concat(external).ToList();
 
         return Ok(ToDetailDto(apt, busyPeriods));
     }
@@ -59,6 +60,7 @@ public class ApartmentsController : ControllerBase
             .Include(a => a.Rules).ThenInclude(ar => ar.Rule)
             .Include(a => a.Nearby).ThenInclude(an => an.NearbyPlace)
             .Include(a => a.Bookings)
+            .Include(a => a.ExternalBookings)
             .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == id);
 

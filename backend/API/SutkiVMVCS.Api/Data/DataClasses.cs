@@ -22,6 +22,7 @@ public class Apartment
     public bool    IsDeleted     { get; set; }
 
     public ICollection<Booking>           Bookings           { get; set; } = [];
+    public ICollection<ExternalBooking> ExternalBookings     { get; set; } = [];
     public ICollection<ApartmentAmenity> ApartmentAmenities { get; set; } = [];
     public ICollection<ApartmentGallery>  ApartmentGallery   { get; set; } = [];
     public ICollection<ApartmentRule> Rules { get; set; } = new List<ApartmentRule>();
