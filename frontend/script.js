@@ -74,8 +74,6 @@ async function apiBookAsUser(apartmentId, startDate, endDate) {
         method: 'POST',
         body: JSON.stringify({ apartmentId, startDate, endDate })
     });
-    //ggffgsgdsfg
-    console.log('sending:', { apartmentId, startDate, endDate });
     console.log('sending:', { apartmentId, startDate, endDate });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Ошибка бронирования');
@@ -457,7 +455,7 @@ function renderBookingWidget() {
     const el = document.getElementById('bookingWidget');
     if (isLoggedIn()) {
         el.innerHTML = `
-            <button class="btn-book" id="btnBook" onclick="handleBook()">
+            <button class="btn-book" id="btnBook" onclick="handleBookFree()">
                 <i class="fa-solid fa-calendar-check"></i> Забронировать
             </button>`;
     } else {
