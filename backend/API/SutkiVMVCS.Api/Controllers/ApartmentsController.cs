@@ -36,7 +36,15 @@ public class ApartmentsController : ControllerBase
             .Select(b => new BusyPeriodDto(
                 b.StartDate.ToString("yyyy-MM-dd"),
                 b.EndDate.ToString("yyyy-MM-dd")))
-            .ToListAsync();
+            .Concat(
+                _context.ExternalBookings.Where(eb => eb.ApartmentId == id)
+                .Select(eb => new BusyPeriodDto(
+                    eb.StartDate.ToString("yyyy-MM-dd"),
+                    eb.EndDate.ToString("yyyy-MM-dd")
+                    ))
+            
+            )
+                .ToListAsync();
 
         return Ok(ToDetailDto(apt, busyPeriods));
     }
