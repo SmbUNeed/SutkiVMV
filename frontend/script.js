@@ -74,6 +74,7 @@ async function apiBookAsUser(apartmentId, startDate, endDate) {
         method: 'POST',
         body: JSON.stringify({ apartmentId, startDate, endDate })
     });
+    //ggffgsgdsfg
     console.log('sending:', { apartmentId, startDate, endDate });
     console.log('sending:', { apartmentId, startDate, endDate });
     const data = await res.json();
