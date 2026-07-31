@@ -502,6 +502,86 @@ async function handleBookFree() {
     }
 }
 
+async function handlePayNow() {
+    if (!selectedCheckIn || !selectedCheckOut) {
+        alert('Пожалуйста, выберите даты заезда и выезда.');
+        return;
+    }
+    const btn = document.getElementById('btnPayNow');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Оформляем...';
+
+    try {
+        const startDateTime = toDateTimeString(selectedCheckIn, checkInHour);
+        const endDateTime   = toDateTimeString(selectedCheckOut, checkOutHour);
+
+        const booking = await apiBookAsUser(currentApartment.id, startDateTime, endDateTime);
+        const payment = await apiPayForBooking(booking.id);
+        window.location.href = payment.url;
+    } catch (err) {
+        alert(`Ошибка: ${err.message}`);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Оплатить сразу';
+    }
+}
+
+// Гость
+async function handleGuestPay() {
+    if (!selectedCheckIn || !selectedCheckOut) {
+        alert('Пожалуйста, выберите даты заезда и выезда.');
+        return;
+    }
+
+    const fullName = document.getElementById('guestName').value.trim();
+    const phoneNumber = document.getElementById('guestPhone').value.trim();
+
+    if (!fullName || !phoneNumber) {
+        alert('Укажите имя и телефон.');
+        return;
+    }
+
+    const btn = document.getElementById('btnGuestPay');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Оформляем...';
+
+    try {
+        const startDateTime = toDateTimeString(selectedCheckIn, checkInHour);
+        const endDateTime   = toDateTimeString(selectedCheckOut, checkOutHour);
+
+        const payment = await apiBookGuestAndPay(
+            currentApartment.id, startDateTime, endDateTime, fullName, phoneNumber
+        );
+        window.location.href = payment.url;
+    } catch (err) {
+        alert(`Ошибка: ${err.message}`);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Оплатить и забронировать';
+    }
+}
+
+async function apiPayForBooking(bookingId) {
+    const res = await authFetch('/payments/create', {
+        method: 'POST',
+        body: JSON.stringify({ bookingId })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Ошибка оплаты');
+    return data;
+}
+
+async function apiBookGuestAndPay(apartmentId, startDate, endDate, fullName, phoneNumber) {
+    // Гостевой эндпоинт анонимный ([AllowAnonymous]) — authFetch тут не обязателен,
+    // но можно использовать обычный fetch напрямую, раз токена всё равно нет
+    const res = await fetch(`${API_URL}/payments/book-guest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apartmentId, startDate, endDate, fullName, phoneNumber })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Ошибка бронирования');
+    return data;
+}
+
 // ── Календарь ────────────────────────────────────────────
 const MONTH_NAMES = [
     'Январь','Февраль','Март','Апрель','Май','Июнь',
@@ -563,7 +643,7 @@ function renderCalendar() {
         let cls = 'cal-day';
         if (isPast)           cls += ' past';
         const isCheckoutOnly = !isPast && ds === firstBooked;
-		if (isBooked && !isCheckoutOnly) cls += ' booked';
+        if (isBooked && !isCheckoutOnly) cls += ' booked';
         if (isCheckoutOnly) cls += ' checkout-only';
         if (isStart)          cls += ' check-in';
         else if (isEnd)       cls += ' check-out';

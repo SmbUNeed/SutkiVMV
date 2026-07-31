@@ -1,34 +1,28 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SutkiVMV.Data;
-using System.Globalization;
-using System.Net.Http.Headers;
-using System.Text;
+using SutkiVMV.Models;
+using SutkiVMV.ModelsDTO;
+using SutkiVMVCS.Services;
+using SutkiVMVCS.Services.YooKassa;
 using System.Text.Json;
+using Telegram.Bot.Requests.Abstractions;
 
 [ApiController]
 [Route("api/payments")]
 public class PaymentsController : ControllerBase
 {
     private readonly AppDbContext _context;
-    private readonly IConfiguration _config;
     private readonly IMaxService _max;
-    private readonly HttpClient _http;
+    private readonly IYooKassaService _yooKassa;
 
-    public PaymentsController(AppDbContext context, IConfiguration config, IMaxService max, HttpClient http)
+    public PaymentsController(AppDbContext context, IMaxService max, IYooKassaService yooKassa)
     {
         _context = context;
-        _config = config;
         _max = max;
-        _http = http;
+        _yooKassa = yooKassa;
     }
-
-    // ═══════════════════════════════════════════════════════════════════
-    //  POST /api/payments/create
-    //  Создаёт платёж в ЮKassa и возвращает ссылку для редиректа
-    // ═══════════════════════════════════════════════════════════════════
 
     [HttpPost("create")]
     [Authorize]
@@ -41,69 +35,105 @@ public class PaymentsController : ControllerBase
         if (booking == null)
             return NotFound(new { message = "Бронь не найдена" });
 
-        if (booking.Status != "Pending")
+        if (booking.Status != "Pending" && booking.Status != "AwaitingPayment")
             return BadRequest(new { message = "Бронь уже оплачена или отменена" });
 
-        var shopId = _config["YooKassa:ShopId"]!;
-        var secretKey = _config["YooKassa:SecretKey"]!;
-        var returnUrl = _config["AllowedOrigin"]!.Split(',')[0];
+        var result = await _yooKassa.CreatePaymentAsync(
+            booking, $"Бронь #{booking.Id} — {booking.Apartment.Title}", ct);
 
-        var payload = new
-        {
-            amount = new
-            {
-                value = booking.TotalPrice.ToString("F2", CultureInfo.InvariantCulture),
-                currency = "RUB"
-            },
-            confirmation = new
-            {
-                type = "redirect",
-                return_url = $"{returnUrl}/cabinet.html?booking={booking.Id}"
-            },
-            capture = true,
-            description = $"Бронь #{booking.Id} — {booking.Apartment.Title}",
-            metadata = new { booking_id = booking.Id }
-        };
+        if (!result.Success)
+            return BadRequest(new { message = result.Error });
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "https://api.yookassa.ru/v3/payments");
-        request.Headers.Add("Idempotence-Key", Guid.NewGuid().ToString());
-        request.Headers.Authorization = new AuthenticationHeaderValue(
-            "Basic",
-            Convert.ToBase64String(Encoding.UTF8.GetBytes($"{shopId}:{secretKey}")));
-        request.Content = new StringContent(
-            JsonSerializer.Serialize(payload),
-            Encoding.UTF8,
-            "application/json");
-
-        var response = await _http.SendAsync(request, ct);
-        var body = await response.Content.ReadAsStringAsync(ct);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            Console.WriteLine($"[YooKassa] Error: {body}");
-            return BadRequest(new { message = "Ошибка создания платежа" });
-        }
-
-        var json = JsonDocument.Parse(body).RootElement;
-
-        var confirmationUrl = json
-            .GetProperty("confirmation")
-            .GetProperty("confirmation_url")
-            .GetString();
-
-        var paymentId = json.GetProperty("id").GetString();
-
-        // Сохраняем paymentId в бронь
-        booking.PaymentId = paymentId;
+        booking.PaymentId = result.PaymentId;
         await _context.SaveChangesAsync(ct);
 
-        return Ok(new { url = confirmationUrl, paymentId });
+        return Ok(new { url = result.ConfirmationUrl, paymentId = result.PaymentId });
     }
 
-    // ═══════════════════════════════════════════════════════════════════
-    //  POST /api/payments/webhook
-    //  ЮKassa вызывает этот метод когда платёж прошёл
-    // ═══════════════════════════════════════════════════════════════════
+    [HttpPost("book-guest")]
+    [AllowAnonymous]
+    public async Task<IActionResult> BookGuest([FromBody] GuestBookingDto dto, CancellationToken ct)
+    {
+        if (dto.StartDate >= dto.EndDate)
+            return BadRequest(new { message = "Дата заезда должна быть раньше даты выезда" });
+
+        if (string.IsNullOrWhiteSpace(dto.PhoneNumber) || string.IsNullOrWhiteSpace(dto.FullName))
+            return BadRequest(new { message = "Укажите имя и телефон" });
+
+        var apartment = await _context.Apartments.FindAsync(new object[] { dto.ApartmentId }, ct);
+        if (apartment == null || !apartment.IsActive || apartment.IsDeleted)
+            return NotFound(new { message = "Квартира не найдена или недоступна" });
+
+        var start = dto.StartDate.ToUniversalTime();
+        var end = dto.EndDate.ToUniversalTime();
+
+        bool overlap = await _context.Bookings.AnyAsync(b =>
+            b.ApartmentId == dto.ApartmentId &&
+            b.Status != "Cancelled" &&
+            b.StartDate < end &&
+            b.EndDate > start, ct);
+
+        bool externalOverlap = await _context.ExternalBookings.AnyAsync(e =>
+            e.ApartmentId == dto.ApartmentId &&
+            e.StartDate < end &&
+            e.EndDate > start, ct);
+
+        if (overlap || externalOverlap)
+            return Conflict(new { message = "Квартира занята в выбранные даты" });
+
+        // Ищем существующего гостевого клиента по телефону, иначе создаём нового.
+        // ВАЖНО: сверяем только с UserId == null, чтобы случайно не привязать
+        // бронь к чужому зарегистрированному аккаунту по совпавшему номеру.
+        var client = await _context.Clients
+            .FirstOrDefaultAsync(c => c.PhoneNumber == dto.PhoneNumber && c.UserId == null, ct);
+
+        if (client != null && client.InBlackList)
+            return BadRequest(new { message = "Бронирование недоступно. Обратитесь в поддержку." });
+
+        if (client == null)
+        {
+            client = new Client
+            {
+                FullName = dto.FullName,
+                PhoneNumber = dto.PhoneNumber,
+                UserId = null,
+                InBlackList = false
+            };
+            _context.Clients.Add(client);
+            await _context.SaveChangesAsync(ct); // чтобы получить client.Id
+        }
+
+        var rules = await _context.PriceRules.ToListAsync(ct);
+        decimal total = PricingService.CalculateTotal(
+            new UserCreateBookingDto
+            {
+                ApartmentId = dto.ApartmentId, 
+                StartDate = dto.StartDate, 
+                EndDate = dto.EndDate 
+            }, apartment, rules);
+
+        var booking = new Booking {
+            ApartmentId = dto.ApartmentId,
+            ClientId = client.Id,
+            StartDate = start,
+            EndDate = end,
+            TotalPrice = total,
+            Status = "AwaitingPayment", // отличается от "Pending" — админу нечего подтверждать, пока не оплачено
+            Source = "SiteGuest",
+            CreatedAt = DateTime.UtcNow
+        };
+        _context.Bookings.Add(booking);
+        await _context.SaveChangesAsync(ct);
+
+        var result = await _yooKassa.CreatePaymentAsync(booking, $"Бронь #{booking.Id} — {apartment.Title}", ct);
+        if (!result.Success)
+            return BadRequest(new { message = result.Error });
+
+        booking.PaymentId = result.PaymentId;
+        await _context.SaveChangesAsync(ct);
+
+        return Ok(new { url = result.ConfirmationUrl, paymentId = result.PaymentId, bookingId = booking.Id });
+    }
 
     [HttpPost("webhook")]
     [AllowAnonymous]
@@ -115,72 +145,50 @@ public class PaymentsController : ControllerBase
         try { json = JsonDocument.Parse(body).RootElement; }
         catch { return Ok(); }
 
-        var eventType = json.GetProperty("event").GetString();
+        var paymentId = json.GetProperty("object").GetProperty("id").GetString();
+        if (string.IsNullOrEmpty(paymentId)) return Ok();
 
-        switch (eventType)
+        // Не доверяем содержимому вебхука — перепроверяем статус напрямую в ЮKassa
+        var status = await _yooKassa.GetPaymentStatusAsync(paymentId, ct);
+        if (!status.Success || status.BookingId == null) return Ok();
+
+        var booking = await _context.Bookings
+            .Include(b => b.Apartment)
+            .Include(b => b.Client)
+            .FirstOrDefaultAsync(b => b.Id == status.BookingId, ct);
+
+        if (booking == null) return Ok();
+        if (booking.PaymentId != paymentId) return Ok();
+
+        switch (status.Status)
         {
-            case "payment.succeeded":
-                await HandlePaymentSucceeded(json, ct);
+            case "succeeded" when booking.Status != "Confirmed":
+                booking.Status = "Confirmed";
+                booking.PaidAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync(ct);
+                await NotifyPaid(booking);
                 break;
 
-            case "payment.canceled":
-                await HandlePaymentCanceled(json, ct);
+            case "canceled" when booking.Status != "Cancelled":
+                booking.Status = "Cancelled";
+                await _context.SaveChangesAsync(ct);
                 break;
         }
 
         return Ok();
     }
 
-    // ── Платёж прошёл ─────────────────────────────────────────────────
-
-    async Task HandlePaymentSucceeded(JsonElement json, CancellationToken ct)
+    private async Task NotifyPaid(Booking booking)
     {
-        var bookingId = json
-            .GetProperty("object")
-            .GetProperty("metadata")
-            .GetProperty("booking_id")
-            .GetInt32();
-
-        var booking = await _context.Bookings
-            .Include(b => b.Apartment)
-            .Include(b => b.Client)
-            .FirstOrDefaultAsync(b => b.Id == bookingId, ct);
-
-        if (booking == null) return;
-
-        booking.Status = "Confirmed";
-        booking.PaidAt = DateTime.UtcNow;
-        await _context.SaveChangesAsync(ct);
-
         try
         {
             await _max.SendBookingNotificationAsync(
-                $"💳 Оплачено!\n" +
-                $"🏠 {booking.Apartment?.Title}\n" +
+                $"💳 Оплачено!\n🏠 {booking.Apartment?.Title}\n" +
                 $"👤 {booking.Client?.FullName}  {booking.Client?.PhoneNumber}\n" +
                 $"📅 {booking.StartDate:dd.MM.yyyy} — {booking.EndDate:dd.MM.yyyy}\n" +
                 $"💰 {booking.TotalPrice:N0} ₽",
-                bookingId);
+                booking.Id);
         }
         catch (Exception ex) { Console.WriteLine($"[Payments] MAX error: {ex.Message}"); }
     }
-
-    // ── Платёж отменён ────────────────────────────────────────────────
-
-    async Task HandlePaymentCanceled(JsonElement json, CancellationToken ct)
-    {
-        var bookingId = json
-            .GetProperty("object")
-            .GetProperty("metadata")
-            .GetProperty("booking_id")
-            .GetInt32();
-
-        var booking = await _context.Bookings.FindAsync(bookingId);
-        if (booking == null) return;
-
-        booking.Status = "Cancelled";
-        await _context.SaveChangesAsync(ct);
-    }
 }
-
-public record CreatePaymentDto(int BookingId);

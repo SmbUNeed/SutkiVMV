@@ -9,6 +9,7 @@ using SutkiVMV.Models;
 using SutkiVMV.Services;
 using SutkiVMVCS.Controllers;
 using SutkiVMVCS.Services;
+using SutkiVMVCS.Services.YooKassa;
 using System.Text;
 using Telegram.Bot;
 
@@ -129,6 +130,8 @@ builder.Services.AddHostedService(sp => sp.GetRequiredService<MaxBotWorker>());
 
 builder.Services.AddScoped<ICalService>();
 builder.Services.AddHostedService<ICalSyncService>();
+
+builder.Services.AddHttpClient<IYooKassaService, YooKassaService>();
 
 // ═══════════════════════════════════════════════════════════════════════
 //  CORS
