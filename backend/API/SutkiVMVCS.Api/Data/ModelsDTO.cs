@@ -26,7 +26,6 @@ public class ApartmentDto
     public List<GalleryItemDto> Gallery { get; set; } = [];
     public List<AmenityDto> Amenities { get; set; } = [];
     public List<BookingDto> Bookings { get; set; } = [];
-    public List<ExternalBooking> ExternalBookings { get; set; } = [];
     public List<RuleDto> Rules { get; set; } = [];
     public List<NearbyPlaceDto> Nearby { get; set; } = [];
 }
@@ -247,12 +246,6 @@ public class UserCreateBookingDto : IDetailedBooking
     public int Adults { get; set; } = 0;
     public int Kids { get; set; } = 0;
 }
-public record GuestBookingDto(
-    int ApartmentId,
-    DateTime StartDate,
-    DateTime EndDate,
-    string FullName,
-    string PhoneNumber);
 // ── Client ─────────────────────────────────────────────────────────────
 public class ClientDto
 {
@@ -332,8 +325,6 @@ public class CreatePriceRuleDto
 
 public record ResetPasswordDto(string Email, string Token, string NewPassword);
 public record BusyPeriodDto(string StartDate, string EndDate);
-public record CreatePaymentDto(int BookingId);
-
 public interface IDetailedBooking {
     public int ApartmentId { get; set; }
     public DateTime StartDate { get; set; }
