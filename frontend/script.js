@@ -70,6 +70,7 @@ async function apiGetAmenities() {
 }
 
 async function apiBookAsUser(apartmentId, startDate, endDate) {
+    console.log('sending:', { apartmentId, startDate, endDate });
     const res = await authFetch('/auth/book', {
         method: 'POST',
         body: JSON.stringify({ apartmentId, startDate, endDate })
