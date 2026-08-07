@@ -3,21 +3,18 @@
    ══════════════════════════════════════════════════════════ */
 // API_BASE и утилиты авторизации приходят из auth.js
 
-let apartments         = [];
+let apartments = [];
 let filteredApartments = [];
-let currentApartment   = null;
-let currentDate        = new Date();
+let currentApartment = null;
+let currentDate = new Date();
 let currentAptBookedDates = [];
-let selectedCheckIn    = null;
-let selectedCheckOut   = null;
+let selectedCheckIn = null;
+let selectedCheckOut = null;
 
 // Выбранные удобства (Set имён)
 let selectedAmenities = new Set();
 
 let siteSettings = { minBookingDaysAhead: 0, maxBookingRangeDays: 365 };
-
-let checkInHour = 14;
-let checkOutHour = 12;
 
 async function loadSiteSettings() {
     const res = await fetch('/api/settings');
@@ -112,7 +109,7 @@ function renderGrid(data) {
         return;
     }
     data.forEach(apt => {
-        const imgSrc  = imgUrl(apt.mainImage);
+        const imgSrc = imgUrl(apt.mainImage);
         const amenNames = apt.amenities || [];
         const amenText = amenNames.length
             ? amenNames.slice(0, 3).join(', ') + (amenNames.length > 3 ? '...' : '')
@@ -122,8 +119,8 @@ function renderGrid(data) {
             <div class="apartment-card" onclick="openModal(${apt.id})">
                 <div class="card-image">
                     ${imgSrc
-                        ? `<img src="${imgSrc}" alt="${apt.title}" loading="lazy">`
-                        : `<div class="no-photo-placeholder"><i class="fa-regular fa-image fa-2x"></i><span>Нет фото</span></div>`}
+                ? `<img src="${imgSrc}" alt="${apt.title}" loading="lazy">`
+                : `<div class="no-photo-placeholder"><i class="fa-regular fa-image fa-2x"></i><span>Нет фото</span></div>`}
                     <div class="price-badge">от ${apt.pricePerNight.toLocaleString('ru-RU')} ₽</div>
                 </div>
                 <div class="card-content">
@@ -144,15 +141,15 @@ function renderGrid(data) {
 
 // ── Фильтрация ───────────────────────────────────────────
 function applyFilters() {
-    const guests   = parseInt(document.getElementById('guests').value)   || 0;
+    const guests = parseInt(document.getElementById('guests').value) || 0;
     const priceMin = parseInt(document.getElementById('priceMin').value) || 0;
     const priceMax = parseInt(document.getElementById('priceMax').value) || Infinity;
-    const sortVal  = document.getElementById('sortSelect').value;
+    const sortVal = document.getElementById('sortSelect').value;
 
     filteredApartments = apartments.filter(apt => {
-        if (apt.guests < guests)             return false;
-        if (apt.pricePerNight < priceMin)    return false;
-        if (apt.pricePerNight > priceMax)    return false;
+        if (apt.guests < guests) return false;
+        if (apt.pricePerNight < priceMin) return false;
+        if (apt.pricePerNight > priceMax) return false;
         // Мультивыбор удобств: квартира должна иметь ВСЕ выбранные удобства
         if (selectedAmenities.size > 0) {
             const aptAmenityNames = apt.amenities || [];
@@ -163,27 +160,27 @@ function applyFilters() {
         return true;
     });
 
-    if (sortVal === 'price_asc')  filteredApartments.sort((a, b) => a.pricePerNight - b.pricePerNight);
+    if (sortVal === 'price_asc') filteredApartments.sort((a, b) => a.pricePerNight - b.pricePerNight);
     if (sortVal === 'price_desc') filteredApartments.sort((a, b) => b.pricePerNight - a.pricePerNight);
-    if (sortVal === 'area_desc')  filteredApartments.sort((a, b) => b.area - a.area);
+    if (sortVal === 'area_desc') filteredApartments.sort((a, b) => b.area - a.area);
 
     renderGrid(filteredApartments);
     updateFilterBadge();
 }
 
 function updateFilterBadge() {
-    const guests   = parseInt(document.getElementById('guests').value)   || 0;
+    const guests = parseInt(document.getElementById('guests').value) || 0;
     const priceMin = parseInt(document.getElementById('priceMin').value) || 0;
     const priceMax = parseInt(document.getElementById('priceMax').value) || 0;
 
     let count = 0;
-    if (guests > 0)   count++;
+    if (guests > 0) count++;
     if (priceMin > 0) count++;
     if (priceMax > 0) count++;
     count += selectedAmenities.size;
 
     const badge = document.getElementById('filterBadge');
-    const btn   = document.getElementById('btnFilterOpen');
+    const btn = document.getElementById('btnFilterOpen');
     if (count > 0) {
         badge.textContent = count;
         badge.classList.add('visible');
@@ -206,7 +203,7 @@ function updateFilterBadge() {
 }
 
 function resetFilters() {
-    document.getElementById('guests').value   = '';
+    document.getElementById('guests').value = '';
     document.getElementById('priceMin').value = '';
     document.getElementById('priceMax').value = '';
     selectedAmenities.clear();
@@ -272,7 +269,7 @@ function toggleAmenity(e, el) {
 function guardNumberInputs() {
     document.querySelectorAll('input[type="number"]').forEach(input => {
         const minVal = parseFloat(input.min);
-        const floor  = isNaN(minVal) ? 0 : minVal;
+        const floor = isNaN(minVal) ? 0 : minVal;
         input.addEventListener('input', () => {
             const val = parseFloat(input.value);
             if (!isNaN(val) && val < floor) {
@@ -334,7 +331,7 @@ async function openModal(apartmentId, clearParams = false) {
 
     // Галерея
     const mainImg = document.getElementById('modalMainImg');
-    const thumbs  = document.getElementById('modalThumbs');
+    const thumbs = document.getElementById('modalThumbs');
     const firstSrc = imgUrl(apt.mainImage) || 'https://placehold.co/600x340?text=Нет+фото';
     mainImg.src = firstSrc;
     mainImg.style.display = 'block';
@@ -351,8 +348,8 @@ async function openModal(apartmentId, clearParams = false) {
 
     if (apt.gallery && apt.gallery.length > 1) {
         apt.gallery.forEach(g => {
-            const img   = document.createElement('img');
-            img.src     = imgUrl(g.imagePath);
+            const img = document.createElement('img');
+            img.src = imgUrl(g.imagePath);
             img.loading = 'lazy';
             if (g.isMain) img.classList.add('active');
             img.onclick = () => {
@@ -377,7 +374,6 @@ async function openModal(apartmentId, clearParams = false) {
     currentDate = new Date();
     updateBookingSummary();
     renderCalendar();
-    renderTimeSliders();
     renderBookingWidget();
 
     // Правила
@@ -411,13 +407,13 @@ async function openModal(apartmentId, clearParams = false) {
 function shareApartment() {
     if (!currentApartment) return;
 
-    const url   = `${location.origin}/?apt=${currentApartment.id}`;
+    const url = `${location.origin}/?apt=${currentApartment.id}`;
     const title = currentApartment.title;
-    const text  = `${currentApartment.title} — ${currentApartment.pricePerNight.toLocaleString('ru-RU')} ₽/ночь`;
+    const text = `${currentApartment.title} — ${currentApartment.pricePerNight.toLocaleString('ru-RU')} ₽/ночь`;
 
     if (navigator.share) {
         // Мобилка — нативный шаринг
-        navigator.share({ title, text, url }).catch(() => {});
+        navigator.share({ title, text, url }).catch(() => { });
     } else {
         // Десктоп — копируем ссылку
         navigator.clipboard.writeText(url).then(() => {
@@ -486,10 +482,7 @@ async function handleBookFree() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Оформляем...';
 
     try {
-        const startDateTime = toDateTimeString(selectedCheckIn, checkInHour);
-        const endDateTime   = toDateTimeString(selectedCheckOut, checkOutHour);
-
-        await apiBookAsUser(currentApartment.id, startDateTime, endDateTime);
+        await apiBookAsUser(currentApartment.id, selectedCheckIn, selectedCheckOut);
         alert('Бронирование успешно оформлено! Ожидайте подтверждения.');
         closeModal();
         apartments = await apiGetApartments();
@@ -512,10 +505,7 @@ async function handlePayNow() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Оформляем...';
 
     try {
-        const startDateTime = toDateTimeString(selectedCheckIn, checkInHour);
-        const endDateTime   = toDateTimeString(selectedCheckOut, checkOutHour);
-
-        const booking = await apiBookAsUser(currentApartment.id, startDateTime, endDateTime);
+        const booking = await apiBookAsUser(currentApartment.id, selectedCheckIn, selectedCheckOut);
         const payment = await apiPayForBooking(booking.id);
         window.location.href = payment.url;
     } catch (err) {
@@ -545,11 +535,8 @@ async function handleGuestPay() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Оформляем...';
 
     try {
-        const startDateTime = toDateTimeString(selectedCheckIn, checkInHour);
-        const endDateTime   = toDateTimeString(selectedCheckOut, checkOutHour);
-
         const payment = await apiBookGuestAndPay(
-            currentApartment.id, startDateTime, endDateTime, fullName, phoneNumber
+            currentApartment.id, selectedCheckIn, selectedCheckOut, fullName, phoneNumber
         );
         window.location.href = payment.url;
     } catch (err) {
@@ -584,15 +571,15 @@ async function apiBookGuestAndPay(apartmentId, startDate, endDate, fullName, pho
 
 // ── Календарь ────────────────────────────────────────────
 const MONTH_NAMES = [
-    'Январь','Февраль','Март','Апрель','Май','Июнь',
-    'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'
+    'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
 ];
 
 function getBookedDates(busyPeriods) {
     const dates = [];
     for (const p of busyPeriods) {
         const start = new Date(p.startDate);
-        const end   = new Date(p.endDate);
+        const end = new Date(p.endDate);
         for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1))
             dates.push(d.toISOString().slice(0, 10));
     }
@@ -602,10 +589,10 @@ function getBookedDates(busyPeriods) {
 function toDateStr(d) { return d.toISOString().slice(0, 10); }
 
 function renderCalendar() {
-    const year     = currentDate.getFullYear();
-    const month    = currentDate.getMonth();
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
     const firstDay = new Date(year, month, 1).getDay();
-    const lastDay  = new Date(year, month + 1, 0).getDate();
+    const lastDay = new Date(year, month + 1, 0).getDate();
     const startDay = firstDay === 0 ? 6 : firstDay - 1;
 
     const minDate = new Date();
@@ -623,34 +610,34 @@ function renderCalendar() {
             <button class="cal-nav" onclick="changeMonth(1)"><i class="fa-solid fa-chevron-right"></i></button>
         </div>
         <div class="cal-grid">
-            ${['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(d =>
-                `<div class="cal-dow">${d}</div>`).join('')}
+            ${['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map(d =>
+        `<div class="cal-dow">${d}</div>`).join('')}
             ${"<div class='cal-day empty'></div>".repeat(startDay)}`;
 
     const firstBooked = selectedCheckIn && !selectedCheckOut
-                ? getFirstBookedAfter(selectedCheckIn)
-                : null;
+        ? getFirstBookedAfter(selectedCheckIn)
+        : null;
 
     for (let i = 1; i <= lastDay; i++) {
-        const ds       = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-        const isPast   = ds < minDateStr || ds > maxDateStr;
+        const ds = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+        const isPast = ds < minDateStr || ds > maxDateStr;
         const isBooked = currentAptBookedDates.includes(ds);
-        const isStart  = ds === selectedCheckIn;
-        const isEnd    = ds === selectedCheckOut;
-        const inRange  = selectedCheckIn && selectedCheckOut && ds > selectedCheckIn && ds < selectedCheckOut;
+        const isStart = ds === selectedCheckIn;
+        const isEnd = ds === selectedCheckOut;
+        const inRange = selectedCheckIn && selectedCheckOut && ds > selectedCheckIn && ds < selectedCheckOut;
 
 
         let cls = 'cal-day';
-        if (isPast)           cls += ' past';
+        if (isPast) cls += ' past';
         const isCheckoutOnly = !isPast && ds === firstBooked;
         if (isBooked && !isCheckoutOnly) cls += ' booked';
         if (isCheckoutOnly) cls += ' checkout-only';
-        if (isStart)          cls += ' check-in';
-        else if (isEnd)       cls += ' check-out';
-        else if (inRange)     cls += ' in-range';
+        if (isStart) cls += ' check-in';
+        else if (isEnd) cls += ' check-out';
+        else if (inRange) cls += ' in-range';
 
         const canClick = !isPast && (!isBooked || isCheckoutOnly);
-		const click = canClick ? `onclick="selectDate('${ds}')"` : '';
+        const click = canClick ? `onclick="selectDate('${ds}')"` : '';
         html += `<div class="${cls}" ${click}>${i}</div>`;
     }
     html += '</div>';
@@ -664,32 +651,25 @@ function changeMonth(step) {
 
 function selectDate(ds) {
     if (!selectedCheckIn || (selectedCheckIn && selectedCheckOut)) {
-        selectedCheckIn  = ds;
+        selectedCheckIn = ds;
         selectedCheckOut = null;
-        checkInHour = 14;
-        checkOutHour = 12;
     } else if (ds <= selectedCheckIn) {
-        selectedCheckIn  = ds;
-        checkInHour = 14;
+        selectedCheckIn = ds;
     } else {
         let conflict = false;
-        for (let d = new Date(selectedCheckIn); d < new Date(ds); d.setDate(d.getDate()+1)) {
+        for (let d = new Date(selectedCheckIn); d < new Date(ds); d.setDate(d.getDate() + 1)) {
             if (currentAptBookedDates.includes(toDateStr(d))) { conflict = true; break; }
         }
         if (conflict) {
             alert('В выбранном диапазоне есть занятые даты. Выберите другой период.');
-            selectedCheckIn  = ds;
+            selectedCheckIn = ds;
             selectedCheckOut = null;
-            checkInHour = 14;
-            checkOutHour = 12;
         } else {
             selectedCheckOut = ds;
-            checkOutHour = 12;
         }
     }
     renderCalendar();
     updateBookingSummary();
-    renderTimeSliders();
 }
 
 function getFirstBookedAfter(fromDs) {
@@ -699,123 +679,16 @@ function getFirstBookedAfter(fromDs) {
         .sort()[0] || null;
 }
 
-function checkInLabelText(hour) {
-    if (hour <= 7) return 'Очень ранний заезд';
-    if (hour <= 11) return 'Ранний заезд';
-    return 'Стандарт';
-}
-function checkOutOverpay(hour) {
-    return hour > 12 ? (hour - 12) * currentApartment.hourOverpayment : 0;
-}
-
-function getCheckInBlockedHours(date) {
-    const b = currentAptBookedDates && currentAptBookedDates[date];
-    if (!b || b.checkOut == null) return [];
-    const until = Math.min(23, b.checkOut + 1);
-    return Array.from({length: until}, (_, h) => h);
-}
-function getCheckOutBlockedHours(date) {
-    const b = currentAptBookedDates && currentAptBookedDates[date];
-    if (!b || b.checkIn == null) return [];
-    const max = b.checkIn - 1;
-    return Array.from({length: 24}, (_, h) => h).filter(h => h >= max);
-}
-
-function renderHourTrack(id, blocked, active) {
-    document.getElementById(id).innerHTML = Array.from({length: 24}, (_, h) => {
-        let cls = 'hour-tick';
-        if (blocked.includes(h)) cls += ' blocked';
-        if (h === active) cls += ' active';
-        return `<span class="${cls}"></span>`;
-    }).join('');
-}
-
-function renderTimeSliders() {
-    const el = document.getElementById('timeSliders');
-    if (!selectedCheckIn || !selectedCheckOut) { el.style.display = 'none'; return; }
-    el.style.display = 'block';
-
-    const inBlocked = getCheckInBlockedHours(selectedCheckIn);
-    const outBlocked = getCheckOutBlockedHours(selectedCheckOut);
-    const free = list => Array.from({length: 24}, (_, h) => h).filter(h => !list.includes(h));
-
-    if (inBlocked.includes(checkInHour))  checkInHour  = free(inBlocked)[0] ?? checkInHour;
-    if (outBlocked.includes(checkOutHour)) checkOutHour = free(outBlocked).slice(-1)[0] ?? checkOutHour;
-
-    el.innerHTML = `
-        <div class="time-slider-block">
-            <div class="time-slider-title">Время заезда</div>
-            <div class="time-slider-wrap">
-                <div class="time-slider-hours" id="checkInTrack"></div>
-                <input type="range" min="0" max="23" step="1" value="${checkInHour}" id="checkInSlider" oninput="onCheckInChange(this.value)">
-            </div>
-            <div class="time-slider-value" id="checkInLabel"></div>
-        </div>
-        <div class="time-slider-block">
-            <div class="time-slider-title">Время выезда</div>
-            <div class="time-slider-wrap">
-                <div class="time-slider-hours" id="checkOutTrack"></div>
-                <input type="range" min="0" max="23" step="1" value="${checkOutHour}" id="checkOutSlider" oninput="onCheckOutChange(this.value)">
-            </div>
-            <div class="time-slider-value" id="checkOutLabel"></div>
-        </div>`;
-
-    renderHourTrack('checkInTrack', inBlocked, checkInHour);
-    renderHourTrack('checkOutTrack', outBlocked, checkOutHour);
-    updateCheckInLabel();
-    updateCheckOutLabel();
-}
-
-function onCheckInChange(v) {
-    const hour = parseInt(v);
-    const blocked = getCheckInBlockedHours(selectedCheckIn);
-    if (blocked.includes(hour)) { document.getElementById('checkInSlider').value = checkInHour; return; }
-    checkInHour = hour;
-    renderHourTrack('checkInTrack', blocked, checkInHour);
-    updateCheckInLabel();
-    updateBookingSummary();
-}
-function onCheckOutChange(v) {
-    const hour = parseInt(v);
-    const blocked = getCheckOutBlockedHours(selectedCheckOut);
-    if (blocked.includes(hour)) { document.getElementById('checkOutSlider').value = checkOutHour; return; }
-    checkOutHour = hour;
-    renderHourTrack('checkOutTrack', blocked, checkOutHour);
-    updateCheckOutLabel();
-    updateBookingSummary();
-}
-
-function updateCheckInLabel() {
-    let note = '';
-    if (checkInHour <= 7) note = ' (+1 ночь)';
-    else if (checkInHour <= 11) note = ' (+50% за ночь)';
-    document.getElementById('checkInLabel').textContent =
-        `${String(checkInHour).padStart(2,'0')}:00 — ${checkInLabelText(checkInHour)}${note}`;
-}
-
-function updateCheckOutLabel() {
-    const extra = checkOutOverpay(checkOutHour);
-    document.getElementById('checkOutLabel').textContent =
-        `${String(checkOutHour).padStart(2,'0')}:00` + (extra ? ` — +${extra}₽` : '');
-}
-
 function updateBookingSummary() {
     const el = document.getElementById('bookingSummary');
     if (!el) return;
     if (selectedCheckIn && selectedCheckOut && currentApartment) {
-        let nights = (new Date(selectedCheckOut) - new Date(selectedCheckIn)) / 86_400_000;
-        let additional = 0;
-
-        if (checkInHour <= 7) nights += 1;
-        else if (checkInHour <= 11) additional += currentApartment.pricePerNight / 2;
-        if (checkOutHour > 12) additional += (checkOutHour - 12) * currentApartment.hourOverpayment;
-
-        const total = nights * currentApartment.pricePerNight + additional;
+        const nights = (new Date(selectedCheckOut) - new Date(selectedCheckIn)) / 86_400_000;
+        const total = nights * currentApartment.pricePerNight;
         const label = pluralNights(nights);
 
         el.innerHTML = `
             <div class="row"><span>${nights} ${label}</span><span>${currentApartment.pricePerNight.toLocaleString('ru-RU')} ₽/ночь</span></div>
-            ${additional ? `<div class="row"><span>Доплата за время</span><span>${additional.toLocaleString('ru-RU')} ₽</span></div>` : ''}
             <div class="row total"><span>Итого</span><strong>${total.toLocaleString('ru-RU')} ₽</strong></div>`;
         el.style.display = 'block';
     } else {
@@ -864,11 +737,11 @@ init();
 
 // ── LIGHTBOX ──────────────────────────────────────────────
 let lightboxImages = [];
-let lightboxIndex  = 0;
+let lightboxIndex = 0;
 
 function openLightbox(images, startIndex) {
     lightboxImages = images;
-    lightboxIndex  = startIndex;
+    lightboxIndex = startIndex;
     renderLightbox();
     document.getElementById('lightbox').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -894,16 +767,12 @@ function renderLightbox() {
         lightboxImages.length > 1 ? `${lightboxIndex + 1} / ${lightboxImages.length}` : '';
 }
 
-function toDateTimeString(dateStr, hour) {
-    return `${dateStr}T${String(hour).padStart(2,'0')}:00:00`;
-}
-
 document.addEventListener('keydown', e => {
     const lb = document.getElementById('lightbox');
     if (lb.classList.contains('open')) {
         if (e.key === 'ArrowRight') lightboxStep(1);
-        if (e.key === 'ArrowLeft')  lightboxStep(-1);
-        if (e.key === 'Escape')     closeLightbox();
+        if (e.key === 'ArrowLeft') lightboxStep(-1);
+        if (e.key === 'Escape') closeLightbox();
         return;
     }
     if (e.key === 'Escape' && document.getElementById('headerActions').classList.contains('open')) {
