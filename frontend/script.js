@@ -416,8 +416,6 @@ async function openModal(apartmentId, clearParams = false) {
 }
 
 function changeGuests(delta) {
-    const max = currentApartment?.guests ?? 10;
-    guests = Math.max(1, Math.min(max, guests + delta));
     const el = document.getElementById('guestCount');
     if (el) el.textContent = guests;
     updateBookingSummary();
@@ -717,7 +715,7 @@ function updateBookingSummary() {
         const nights    = (new Date(selectedCheckOut) - new Date(selectedCheckIn)) / 86_400_000;
         let   total     = nights * currentApartment.pricePerNight;
         const extraGuests = Math.max(0, guests - currentApartment.guests);
-        const guestExtra  = extraGuests * (currentApartment.guestOverpayment ?? 0) * nights;
+        const guestExtra  = extraGuests * (currentApartment.guestOverpayment ?? 700) * nights;
         total += guestExtra;
 
         const label = pluralNights(nights);
