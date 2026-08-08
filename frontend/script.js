@@ -716,7 +716,10 @@ function updateBookingSummary() {
         const nights    = (new Date(selectedCheckOut) - new Date(selectedCheckIn)) / 86_400_000;
         let   total     = nights * currentApartment.pricePerNight;
         const extraGuests = Math.max(0, guests - currentApartment.guests);
-        const guestExtra  = extraGuests * (700) * nights;
+        let overp = 0;
+        if (currentApartment.guestOverpayment === 0) overp = 700;
+        else overp = currentApartment.guestOverpayment;
+        const guestExtra  = extraGuests * overp * nights;
         total += guestExtra;
 
         const label = pluralNights(nights);
