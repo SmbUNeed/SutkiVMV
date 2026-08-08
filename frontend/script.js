@@ -476,10 +476,10 @@ function renderBookingWidget() {
                     <i class="fa-solid fa-user-group"></i> Гости
                     <span class="guest-hint">(до 5 лет бесплатно)</span>
                 </span>
-                <div class="guest-controls">
-                    <button type="button" class="guest-btn" onclick="changeGuests(-1)">−</button>
-                    <span id="guestCount">1</span>
-                    <button type="button" class="guest-btn" onclick="changeGuests(1)">+</button>
+                <div class="num-input" style="width:auto;">
+                    <button type="button" onclick="changeGuests(-1)">−</button>
+                    <span id="guestCount" style="padding:0 16px;font-weight:700;">1</span>
+                    <button type="button" onclick="changeGuests(1)">+</button>
                 </div>
             </div>
             <button class="btn-book" id="btnBook" onclick="handleBookFree()">
