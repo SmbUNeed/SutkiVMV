@@ -222,8 +222,6 @@ public class ApartmentsController : ControllerBase
         apt.RoomsCount = updated.RoomsCount;
         apt.Guests = updated.Guests;
         apt.GuestOverpayment = updated.GuestOverpayment;
-        apt.Kids = updated.Kids;
-        apt.KidOverpayment = updated.KidOverpayment;
         apt.Area = updated.Area;
         apt.IsActive = updated.IsActive;
 
@@ -448,8 +446,6 @@ public class ApartmentsController : ControllerBase
         Description = a.Description,
         Guests = a.Guests,
         GuestOverpayment = a.GuestOverpayment,
-        Kids = a.Kids,
-        KidOverpayment = a.KidOverpayment,
         PricePerNight = a.PricePerNight,
         HourOverpayment = a.HourOverpayment,
         RoomsCount = a.RoomsCount,
@@ -490,8 +486,6 @@ public class ApartmentsController : ControllerBase
         Description = a.Description,
         Guests = a.Guests,
         GuestOverpayment = a.GuestOverpayment,
-        Kids = a.Kids,
-        KidOverpayment = a.KidOverpayment,
         PricePerNight = a.PricePerNight,
         HourOverpayment = a.HourOverpayment,
         RoomsCount = a.RoomsCount,

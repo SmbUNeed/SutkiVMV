@@ -81,12 +81,6 @@ namespace SutkiVMVCS.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<decimal>("KidOverpayment")
-                        .HasColumnType("numeric");
-
-                    b.Property<int>("Kids")
-                        .HasColumnType("integer");
-
                     b.Property<decimal>("PricePerNight")
                         .HasColumnType("numeric");
 
@@ -199,9 +193,6 @@ namespace SutkiVMVCS.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Guests")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Kids")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("PaidAt")

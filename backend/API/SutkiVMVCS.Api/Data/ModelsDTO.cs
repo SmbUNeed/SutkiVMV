@@ -13,8 +13,6 @@ public class ApartmentDto
     public string Description { get; set; } = "";
     public int Guests { get; set; }
     public decimal GuestOverpayment { get; set; }
-    public int Kids { get; set; }
-    public decimal KidOverpayment { get; set; }
     public decimal PricePerNight { get; set; }
     public decimal HourOverpayment { get; set; }
     public int RoomsCount { get; set; }
@@ -81,8 +79,6 @@ public class ApartmentDetailDto()
     public string Description { get; set; } = "";
     public int Guests { get; set; }
     public decimal GuestOverpayment { get; set; }
-    public int Kids { get; set; }
-    public decimal KidOverpayment { get; set; }
     public decimal HourOverpayment { get; set; }
     public decimal PricePerNight { get; set; }
     public int RoomsCount { get; set; }
@@ -198,8 +194,7 @@ public class CreateBookingDto : IDetailedBooking
     public int      ClientId    { get; set; }
     public DateTime StartDate   { get; set; }
     public DateTime EndDate     { get; set; }
-    public int      Adults      { get; set; } = 0;
-    public int      Kids        { get; set; } = 0;
+    public int      Guests      { get; set; } = 0;
 }
 public class ChangeStatusDto
 {
@@ -217,8 +212,7 @@ public class BookingDetailDto : IDetailedBooking
     public string   Status         { get; set; } = "";
     public DateTime CreatedAt      { get; set; }
     public int      Nights         => (EndDate - StartDate).Days;
-    public int Adults { get; set; }
-    public int Kids { get; set; }
+    public int Guests { get; set; }
 }
 public class AdminBookingDto : IDetailedBooking
 {
@@ -236,16 +230,14 @@ public class AdminBookingDto : IDetailedBooking
     public DateTime CreatedAt      { get; set; }
     public int      Nights         => (EndDate - StartDate).Days;
     public string   Source         { get; set; } = "Вручную";
-    public int Adults { get; set; }
-    public int Kids { get; set; }
+    public int Guests { get; set; }
 }
 public class UserCreateBookingDto : IDetailedBooking
 {
     public int      ApartmentId { get; set; }
     public DateTime StartDate   { get; set; }
     public DateTime EndDate     { get; set; }
-    public int Adults { get; set; } = 0;
-    public int Kids { get; set; } = 0;
+    public int Guests { get; set; } = 0;
 }
 public record GuestBookingDto(
     int ApartmentId,
@@ -338,6 +330,5 @@ public interface IDetailedBooking {
     public int ApartmentId { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
-    public int Adults { get; set; }
-    public int Kids { get; set; }
+    public int Guests { get; set; }
 }
