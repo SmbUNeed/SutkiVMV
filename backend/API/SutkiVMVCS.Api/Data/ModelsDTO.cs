@@ -186,6 +186,7 @@ public class BookingDto
     public int      Id { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime EndDate   { get; set; }
+    public int      Guests { get; set; }
     public string   Status    { get; set; } = "";
 }
 public class CreateBookingDto : IDetailedBooking
@@ -243,6 +244,7 @@ public record GuestBookingDto(
     int ApartmentId,
     DateTime StartDate,
     DateTime EndDate,
+    int Guests,
     string FullName,
     string PhoneNumber);
 // ── Client ─────────────────────────────────────────────────────────────

@@ -109,12 +109,14 @@ public class PaymentsController : ControllerBase
             {
                 ApartmentId = dto.ApartmentId, 
                 StartDate = dto.StartDate, 
-                EndDate = dto.EndDate 
+                EndDate = dto.EndDate,
+                Guests = dto.Guests,
             }, apartment, rules);
 
         var booking = new Booking {
             ApartmentId = dto.ApartmentId,
             ClientId = client.Id,
+            Guests = dto.Guests,
             StartDate = start,
             EndDate = end,
             TotalPrice = total,

@@ -139,17 +139,31 @@
         <!-- Гости -->
         <div>
             <label class="filter-group-label">Количество гостей</label>
-            <input type="number" id="guests" min="1" max="20" placeholder="Например, 2">
+            <div class="num-input">
+                <button type="button" onclick="stepNum('guests',-1)">−</button>
+                <input type="number" id="guests" min="1" max="20" placeholder="Любое">
+                <button type="button" onclick="stepNum('guests',1)">+</button>
+            </div>
         </div>
+
         <!-- Цена -->
         <div>
             <label class="filter-group-label">Цена за ночь (₽)</label>
             <div class="price-row">
-                <input type="number" id="priceMin" placeholder="От" min="0">
+                <div class="num-input">
+                    <button type="button" onclick="stepNum('priceMin',-500)">−</button>
+                    <input type="number" id="priceMin" placeholder="От" min="0">
+                    <button type="button" onclick="stepNum('priceMin',500)">+</button>
+                </div>
                 <span style="color:var(--ink-3);font-size:0.8rem;font-weight:700;flex-shrink:0;">—</span>
-                <input type="number" id="priceMax" placeholder="До" min="0">
+                <div class="num-input">
+                    <button type="button" onclick="stepNum('priceMax',-500)">−</button>
+                    <input type="number" id="priceMax" placeholder="До" min="0">
+                    <button type="button" onclick="stepNum('priceMax',500)">+</button>
+                </div>
             </div>
         </div>
+
         <!-- Удобства -->
         <div>
             <label class="filter-group-label">Удобства <span id="amenitySelectedCount" style="color:var(--primary);display:none;"></span></label>

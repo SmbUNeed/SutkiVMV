@@ -424,6 +424,50 @@ textarea { resize: vertical; min-height: 90px; }
 }
 .pw-toggle:hover { color: var(--primary); }
 
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+
+.num-input {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-dk);
+    border-radius: var(--r-xs);
+    overflow: hidden;
+    background: var(--paper-2);
+}
+.num-input input {
+    border: none;
+    background: transparent;
+    text-align: center;
+    flex: 1;
+    min-width: 0;
+    padding: 8px 4px;
+}
+.num-input input:focus {
+    outline: none;
+    box-shadow: none;
+    border: none;
+}
+.num-input button {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    color: var(--ink-2);
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all var(--transition);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.num-input button:hover {
+    background: var(--primary-bg);
+    color: var(--primary);
+}
+
 /* ── APARTMENT GRID ──────────────────────────────────────── */
 .apartments-grid {
     display: grid;

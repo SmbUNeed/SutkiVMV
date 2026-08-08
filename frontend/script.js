@@ -10,6 +10,7 @@ let currentDate = new Date();
 let currentAptBookedDates = [];
 let selectedCheckIn = null;
 let selectedCheckOut = null;
+let guests = 1;
 
 // Выбранные удобства (Set имён)
 let selectedAmenities = new Set();
@@ -66,12 +67,11 @@ async function apiGetAmenities() {
     } catch { return []; }
 }
 
-async function apiBookAsUser(apartmentId, startDate, endDate) {
+async function apiBookAsUser(apartmentId, startDate, endDate, guests) {
     const res = await authFetch('/auth/book', {
         method: 'POST',
-        body: JSON.stringify({ apartmentId, startDate, endDate })
+        body: JSON.stringify({ apartmentId, startDate, endDate, guests })
     });
-    console.log('sending:', { apartmentId, startDate, endDate });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Ошибка бронирования');
     return data;
@@ -285,6 +285,15 @@ function guardNumberInputs() {
     });
 }
 
+function stepNum(id, delta) {
+    const el  = document.getElementById(id);
+    const val = parseInt(el.value) || 0;
+    const min = parseInt(el.min) || 0;
+    const max = parseInt(el.max) || Infinity;
+    el.value  = Math.max(min, Math.min(max, val + delta)) || '';
+    if (typeof applyFilters === 'function') applyFilters();
+}
+
 // ── Modal ────────────────────────────────────────────────
 function showModalSkeleton() {
     document.getElementById('modalTitle').innerHTML = '<span class="skeleton skeleton-box skeleton-line" style="width:70%;height:24px;"></span>';
@@ -299,6 +308,8 @@ function hideModalSkeleton() {
     document.getElementById('modalMainImg').style.display = 'block';
 }
 async function openModal(apartmentId, clearParams = false) {
+    guests = 1;
+
     if (clearParams) history.replaceState(null, '', window.location.pathname);
 
     document.getElementById('apartmentModal').classList.add('open');
@@ -404,6 +415,14 @@ async function openModal(apartmentId, clearParams = false) {
     document.querySelector('.modal-tab').classList.add('active');
 }
 
+function changeGuests(delta) {
+    const max = currentApartment?.guests ?? 10;
+    guests = Math.max(1, Math.min(max, guests + delta));
+    const el = document.getElementById('guestCount');
+    if (el) el.textContent = guests;
+    updateBookingSummary();
+}
+
 function shareApartment() {
     if (!currentApartment) return;
 
@@ -450,7 +469,19 @@ document.getElementById('apartmentModal').addEventListener('click', e => {
 function renderBookingWidget() {
     const el = document.getElementById('bookingWidget');
     if (isLoggedIn()) {
+        const maxGuests = currentApartment.guests;
         el.innerHTML = `
+            <div class="guest-counter">
+                <span class="guest-label">
+                    <i class="fa-solid fa-user-group"></i> Гости
+                    <span class="guest-hint">(до 5 лет бесплатно)</span>
+                </span>
+                <div class="guest-controls">
+                    <button type="button" class="guest-btn" onclick="changeGuests(-1)">−</button>
+                    <span id="guestCount">1</span>
+                    <button type="button" class="guest-btn" onclick="changeGuests(1)">+</button>
+                </div>
+            </div>
             <button class="btn-book" id="btnBook" onclick="handleBookFree()">
                 <i class="fa-solid fa-calendar-check"></i> Забронировать
             </button>`;
@@ -482,7 +513,7 @@ async function handleBookFree() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Оформляем...';
 
     try {
-        await apiBookAsUser(currentApartment.id, selectedCheckIn, selectedCheckOut);
+        await apiBookAsUser(currentApartment.id, selectedCheckIn, selectedCheckOut, guests);
         alert('Бронирование успешно оформлено! Ожидайте подтверждения.');
         closeModal();
         apartments = await apiGetApartments();
@@ -505,7 +536,7 @@ async function handlePayNow() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Оформляем...';
 
     try {
-        const booking = await apiBookAsUser(currentApartment.id, selectedCheckIn, selectedCheckOut);
+        const booking = await apiBookAsUser(currentApartment.id, selectedCheckIn, selectedCheckOut, guests);
         const payment = await apiPayForBooking(booking.id);
         window.location.href = payment.url;
     } catch (err) {
@@ -556,13 +587,13 @@ async function apiPayForBooking(bookingId) {
     return data;
 }
 
-async function apiBookGuestAndPay(apartmentId, startDate, endDate, fullName, phoneNumber) {
+async function apiBookGuestAndPay(apartmentId, startDate, endDate, guests, fullName, phoneNumber) {
     // Гостевой эндпоинт анонимный ([AllowAnonymous]) — authFetch тут не обязателен,
     // но можно использовать обычный fetch напрямую, раз токена всё равно нет
     const res = await fetch(`${API_URL}/payments/book-guest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apartmentId, startDate, endDate, fullName, phoneNumber })
+        body: JSON.stringify({ apartmentId, startDate, endDate, guests, fullName, phoneNumber })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Ошибка бронирования');
@@ -683,13 +714,28 @@ function updateBookingSummary() {
     const el = document.getElementById('bookingSummary');
     if (!el) return;
     if (selectedCheckIn && selectedCheckOut && currentApartment) {
-        const nights = (new Date(selectedCheckOut) - new Date(selectedCheckIn)) / 86_400_000;
-        const total = nights * currentApartment.pricePerNight;
+        const nights    = (new Date(selectedCheckOut) - new Date(selectedCheckIn)) / 86_400_000;
+        let   total     = nights * currentApartment.pricePerNight;
+        const extraGuests = Math.max(0, guests - currentApartment.guests);
+        const guestExtra  = extraGuests * (currentApartment.guestOverpayment ?? 0) * nights;
+        total += guestExtra;
+
         const label = pluralNights(nights);
 
         el.innerHTML = `
-            <div class="row"><span>${nights} ${label}</span><span>${currentApartment.pricePerNight.toLocaleString('ru-RU')} ₽/ночь</span></div>
-            <div class="row total"><span>Итого</span><strong>${total.toLocaleString('ru-RU')} ₽</strong></div>`;
+            <div class="row">
+                <span>${nights} ${label}</span>
+                <span>${currentApartment.pricePerNight.toLocaleString('ru-RU')} ₽/ночь</span>
+            </div>
+            ${guestExtra > 0 ? `
+            <div class="row">
+                <span>Доп. гости (${extraGuests} чел.)</span>
+                <span>+${guestExtra.toLocaleString('ru-RU')} ₽</span>
+            </div>` : ''}
+            <div class="row total">
+                <span>Итого</span>
+                <strong>${total.toLocaleString('ru-RU')} ₽</strong>
+            </div>`;
         el.style.display = 'block';
     } else {
         el.style.display = 'none';
@@ -731,6 +777,24 @@ async function init() {
     const params = new URLSearchParams(window.location.search);
     const aptId = params.get('apt');
     if (aptId) openModal(parseInt(aptId), true);
+
+    const prices = apartments.map(a => a.pricePerNight);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+
+    const priceMin = document.getElementById('priceMin');
+    const priceMax = document.getElementById('priceMax');
+
+    if (priceMin) {
+        priceMin.min = minPrice;
+        priceMin.max = maxPrice;
+        priceMin.placeholder = `От ${minPrice.toLocaleString('ru-RU')}`;
+    }
+    if (priceMax) {
+        priceMax.min = minPrice;
+        priceMax.max = maxPrice;
+        priceMax.placeholder = `До ${maxPrice.toLocaleString('ru-RU')}`;
+    }
 }
 
 init();
