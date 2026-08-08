@@ -221,6 +221,7 @@ public class BookingsController : ControllerBase
         TotalPrice = b.TotalPrice,
         Status = b.Status,
         Source = b.Source,
-        CreatedAt = b.CreatedAt
+        CreatedAt = b.CreatedAt,
+        Guests = b.Guests
     };
 }
