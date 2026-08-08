@@ -195,7 +195,7 @@ public class CreateBookingDto : IDetailedBooking
     public int      ClientId    { get; set; }
     public DateTime StartDate   { get; set; }
     public DateTime EndDate     { get; set; }
-    public int      Guests      { get; set; } = 0;
+    public int      Guests      { get; set; }
 }
 public class ChangeStatusDto
 {
