@@ -100,6 +100,7 @@ public class BookingsController : ControllerBase
         {
             ApartmentId = dto.ApartmentId,
             ClientId = dto.ClientId,
+            Guests = dto.Guests,
             StartDate = dto.StartDate.ToUniversalTime(),
             EndDate = dto.EndDate.ToUniversalTime(),
             TotalPrice = total,
@@ -125,7 +126,8 @@ public class BookingsController : ControllerBase
             TotalPrice = booking.TotalPrice,
             Status = booking.Status,
             Source = booking.Source,
-            CreatedAt = booking.CreatedAt
+            CreatedAt = booking.CreatedAt,
+            Guests = booking.Guests
         });
     }
 
@@ -186,6 +188,7 @@ public class BookingsController : ControllerBase
         booking.ClientId = dto.ClientId;
         booking.StartDate = dto.StartDate;
         booking.EndDate = dto.EndDate;
+        booking.Guests = dto.Guests;
 
         await _context.SaveChangesAsync(ct);
         return NoContent();
