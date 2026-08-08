@@ -417,7 +417,7 @@ async function openModal(apartmentId, clearParams = false) {
 
 function changeGuests(delta) {
     const el = document.getElementById('guestCount');
-    if (el) el.textContent = guests;
+    if (el) el.textContent = guests + delta;
     updateBookingSummary();
 }
 
