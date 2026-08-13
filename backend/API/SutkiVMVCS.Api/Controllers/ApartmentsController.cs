@@ -109,27 +109,33 @@ public class ApartmentsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<IEnumerable<ApartmentShortDto>>> GetShort()
     {
-        var apts = await _context.Apartments
-            .Select(a => new ApartmentShortDto
-            {
-                Id = a.Id,
-                Title = a.Title,
-                AdminTag = a.AdminTag,
-                BusyDates = a.Bookings
-                    .Where(b => b.Status != "Cancelled")
-                    .Select(b => new BusyPeriodDto(
-                        b.StartDate.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'"),
-                        b.EndDate.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'")
-                    ))
-                    .Concat(a.ExternalBookings
-                        .Select(e => new BusyPeriodDto(
-                            e.StartDate.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'"),
-                            e.EndDate.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'")
-                        )))
-                    .ToList()
-            })
+        var apartments = await _context.Apartments
+            .Select(a => new { a.Id, a.Title, a.AdminTag })
             .ToListAsync();
-        return Ok(apts);
+
+        var internalBusy = await _context.Bookings
+            .Where(b => b.Status != "Cancelled")
+            .Select(b => new { b.ApartmentId, b.StartDate, b.EndDate })
+            .ToListAsync();
+
+        var externalBusy = await _context.ExternalBookings
+            .Select(e => new { e.ApartmentId, e.StartDate, e.EndDate })
+            .ToListAsync();
+
+        var result = apartments.Select(a => new ApartmentShortDto
+        {
+            Id = a.Id,
+            Title = a.Title,
+            AdminTag = a.AdminTag,
+            BusyDates = internalBusy.Where(b => b.ApartmentId == a.Id)
+                .Concat(externalBusy.Where(e => e.ApartmentId == a.Id))
+                .Select(b => new BusyPeriodDto(
+                    b.StartDate.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'"),
+                    b.EndDate.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'")))
+                .ToList()
+        }).ToList();
+
+        return Ok(result);
     }
 
     [HttpGet("detailed")]
