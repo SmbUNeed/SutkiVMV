@@ -197,11 +197,13 @@ public class ExternalBooking
     public int Id { get; set; }
     public int ApartmentId { get; set; }
     public string ExternalId { get; set; } = "";
+    public int? ClientId { get; set; }
     public string Source { get; set; } = "";
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
 
     public Apartment Apartment { get; set; } = null!;
+    public Client Client { get; set; } = null!;
 }
 
 public class DeviceToken

@@ -298,6 +298,9 @@ namespace SutkiVMVCS.Migrations
                     b.Property<int>("ApartmentId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("ClientId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -315,6 +318,8 @@ namespace SutkiVMVCS.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ApartmentId");
+
+                    b.HasIndex("ClientId");
 
                     b.ToTable("ExternalBookings");
                 });
@@ -679,7 +684,13 @@ namespace SutkiVMVCS.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("SutkiVMV.Models.Client", "Client")
+                        .WithMany()
+                        .HasForeignKey("ClientId");
+
                     b.Navigation("Apartment");
+
+                    b.Navigation("Client");
                 });
 
             modelBuilder.Entity("SutkiVMV.Models.ExternalCalendar", b =>
