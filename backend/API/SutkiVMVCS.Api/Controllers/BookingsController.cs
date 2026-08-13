@@ -30,7 +30,7 @@ public class BookingsController : ControllerBase
             .AsNoTracking()
             .ToListAsync();
 
-        return Ok(bookings.Select(ToAdminDto).OrderBy(b => b.StartDate));
+        return Ok(bookings.Select(ToAdminDto));
     }
 
     // GET /api/bookings/apartment/{apartmentId}
