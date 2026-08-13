@@ -33,7 +33,6 @@ public class ICalService
 
         var calendar = new Calendar();
 
-        // Свои брони
         foreach (var b in apt.Bookings.Where(b => b.Status != "Cancelled"))
         {
             calendar.Events.Add(new CalendarEvent
@@ -42,23 +41,6 @@ public class ICalService
                 Summary = "Занято",
                 Start = new CalDateTime(b.StartDate, "UTC"),
                 End = new CalDateTime(b.EndDate, "UTC"),
-            });
-        }
-
-        // Внешние брони
-        var external = await _context.ExternalBookings
-            .Where(e => e.ApartmentId == apartmentId)
-            .AsNoTracking()
-            .ToListAsync();
-
-        foreach (var e in external)
-        {
-            calendar.Events.Add(new CalendarEvent
-            {
-                Uid = e.ExternalId,
-                Summary = $"Занято ({e.Source})",
-                Start = new CalDateTime(e.StartDate, "UTC"),
-                End = new CalDateTime(e.EndDate, "UTC"),
             });
         }
 
