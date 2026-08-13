@@ -90,7 +90,17 @@ namespace SutkiVMVCS.Controllers
                 })
                 .ToListAsync();
 
-            return Ok(bookings);
+            return Ok(bookings.OrderByDescending(b => b.StartDate));
+        }
+
+        [HttpPut("external-bookings{id:int}/client")]
+        [Authorize (Roles = "Admin")]
+        public async Task<ActionResult> PinClientToExternalBooking(int id, int? clientId) {
+            var booking = await _ctx.ExternalBookings.FindAsync(id);
+            if (booking == null) return NotFound();
+            booking.ClientId = clientId;
+            await _ctx.SaveChangesAsync();
+            return Ok();
         }
     }
 }
