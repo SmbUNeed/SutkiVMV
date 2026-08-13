@@ -90,7 +90,7 @@ namespace SutkiVMVCS.Controllers
                 })
                 .ToListAsync();
 
-            return Ok(bookings.OrderByDescending(b => b.StartDate));
+            return Ok(bookings.OrderBy(b => b.StartDate));
         }
 
         [HttpPut("external-bookings{id:int}/client")]
