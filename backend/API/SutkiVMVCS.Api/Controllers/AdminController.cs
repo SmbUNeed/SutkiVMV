@@ -84,6 +84,8 @@ namespace SutkiVMVCS.Controllers
                     b.Id,
                     b.ApartmentId,
                     ApartmentTitle = b.Apartment.Title,
+                    b.ClientId,
+                    b.ClientName,
                     b.Source,
                     StartDate = b.StartDate.ToString("yyyy-MM-dd"),
                     EndDate = b.EndDate.ToString("yyyy-MM-dd")
