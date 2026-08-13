@@ -301,6 +301,9 @@ namespace SutkiVMVCS.Migrations
                     b.Property<int?>("ClientId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("ClientName")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("timestamp with time zone");
 

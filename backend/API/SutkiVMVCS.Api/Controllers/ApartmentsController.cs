@@ -110,17 +110,23 @@ public class ApartmentsController : ControllerBase
     public async Task<ActionResult<IEnumerable<ApartmentShortDto>>> GetShort()
     {
         var apts = await _context.Apartments
-            .Select(a => new ApartmentShortDto { 
-                Id = a.Id, 
-                Title = a.Title, 
+            .Select(a => new ApartmentShortDto
+            {
+                Id = a.Id,
+                Title = a.Title,
                 AdminTag = a.AdminTag,
                 BusyDates = a.Bookings
-                .Where(b => b.Status != "Cancelled")
-                .Select(b => new BusyPeriodDto(
-                    b.StartDate.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'"), 
-                    b.EndDate.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'")
+                    .Where(b => b.Status != "Cancelled")
+                    .Select(b => new BusyPeriodDto(
+                        b.StartDate.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'"),
+                        b.EndDate.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'")
                     ))
-                .ToList() 
+                    .Concat(a.ExternalBookings
+                        .Select(e => new BusyPeriodDto(
+                            e.StartDate.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'"),
+                            e.EndDate.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'")
+                        )))
+                    .ToList()
             })
             .ToListAsync();
         return Ok(apts);
