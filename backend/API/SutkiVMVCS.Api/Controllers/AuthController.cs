@@ -235,6 +235,7 @@ public class AuthController : ControllerBase
         {
             ApartmentId = dto.ApartmentId,
             ClientId    = client.Id,
+            Guests      = dto.Guests,
             StartDate   = dto.StartDate.ToUniversalTime(),
             EndDate     = dto.EndDate.ToUniversalTime(),
             TotalPrice  = total,
