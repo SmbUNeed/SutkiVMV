@@ -291,7 +291,12 @@ function stepNum(id, delta) {
     const min = parseInt(el.min) || 0;
     const max = parseInt(el.max) || Infinity;
     el.value  = Math.max(min, Math.min(max, val + delta)) || '';
-    if (typeof applyFilters === 'function') applyFilters();
+
+    if (id === 'bookGuests') {
+        updateBookingSummary();
+    } else if (typeof applyFilters === 'function') {
+        applyFilters();
+    }
 }
 
 // ── Modal ────────────────────────────────────────────────
@@ -482,7 +487,7 @@ function renderBookingWidget() {
                     <input type="number" id="bookGuests" min="1" max="20" value="1" oninput="updateBookingSummary()">
                     <button type="button" onclick="stepNum('bookGuests',1)">+</button>
                 </div>
-                <span style="color:var(--ink-3);font-size:0.85rem;">гостей</span>
+                <span style="color:var(--ink-3);font-size:0.85rem;">    Гостей</span>
             </div>
             <button class="btn-book" id="btnBook" onclick="handleBookFree()">
                 <i class="fa-solid fa-calendar-check"></i> Забронировать
