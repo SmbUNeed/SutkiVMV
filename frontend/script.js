@@ -67,7 +67,7 @@ async function apiGetAmenities() {
     } catch { return []; }
 }
 
-async function apiBookAsUser(apartmentId, startDate, endDate, guests) {
+async function apiBookAsUser(apartmentId, startDate, endDate, guests=0) {
     const res = await authFetch('/auth/book', {
         method: 'POST',
         body: JSON.stringify({ apartmentId, startDate, endDate, guests })
