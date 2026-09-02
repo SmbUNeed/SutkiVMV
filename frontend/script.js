@@ -464,6 +464,13 @@ document.getElementById('apartmentModal').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeModal();
 });
 
+function changeGuests(delta) {
+    guests = Math.max(guests + delta, 1); // было 0
+    const el = document.getElementById('guestCount');
+    if (el) el.textContent = guests;
+    updateBookingSummary();
+}
+
 // ── Виджет бронирования ──────────────────────────────────
 function renderBookingWidget() {
     const el = document.getElementById('bookingWidget');
@@ -472,7 +479,7 @@ function renderBookingWidget() {
             <div class="guests-row">
                 <div class="num-input">
                     <button type="button" onclick="stepNum('bookGuests',-1)">−</button>
-                    <input type="number" id="bookGuests" min="1" max="${currentApartment.guests}" value="1">
+                    <input type="number" id="bookGuests" min="1" max="10" value="1">
                     <button type="button" onclick="stepNum('bookGuests',1)">+</button>
                 </div>
                 <span style="color:var(--ink-3);font-size:0.85rem;">гостей (макс. ${currentApartment.guests})</span>
@@ -529,12 +536,13 @@ async function handlePayNow() {
         alert('Пожалуйста, выберите даты заезда и выезда.');
         return;
     }
+    const safeGuests = Math.max(guests, 1);
     const btn = document.getElementById('btnPayNow');
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Оформляем...';
 
     try {
-        const booking = await apiBookAsUser(currentApartment.id, selectedCheckIn, selectedCheckOut, guests);
+        const booking = await apiBookAsUser(currentApartment.id, selectedCheckIn, selectedCheckOut, safeGuests);
         const payment = await apiPayForBooking(booking.id);
         window.location.href = payment.url;
     } catch (err) {
