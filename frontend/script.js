@@ -479,10 +479,10 @@ function renderBookingWidget() {
             <div class="guests-row">
                 <div class="num-input">
                     <button type="button" onclick="stepNum('bookGuests',-1)">−</button>
-                    <input type="number" id="bookGuests" min="1" max="10" value="1">
+                    <input type="number" id="bookGuests" min="1" max="20" value="1" oninput="updateBookingSummary()">
                     <button type="button" onclick="stepNum('bookGuests',1)">+</button>
                 </div>
-                <span style="color:var(--ink-3);font-size:0.85rem;">гостей (макс. ${currentApartment.guests})</span>
+                <span style="color:var(--ink-3);font-size:0.85rem;">гостей</span>
             </div>
             <button class="btn-book" id="btnBook" onclick="handleBookFree()">
                 <i class="fa-solid fa-calendar-check"></i> Забронировать
@@ -720,13 +720,14 @@ function updateBookingSummary() {
     const el = document.getElementById('bookingSummary');
     if (!el) return;
     if (selectedCheckIn && selectedCheckOut && currentApartment) {
-        const nights    = (new Date(selectedCheckOut) - new Date(selectedCheckIn)) / 86_400_000;
-        let   total     = nights * currentApartment.pricePerNight;
-        const extraGuests = Math.max(0, guests - currentApartment.guests);
-        let overp = 0;
-        if (currentApartment.guestOverpayment === 0) overp = 700;
-        else overp = currentApartment.guestOverpayment;
-        const guestExtra  = extraGuests * overp * nights;
+        const nights = (new Date(selectedCheckOut) - new Date(selectedCheckIn)) / 86_400_000;
+        let total = nights * currentApartment.pricePerNight;
+
+        const guestsInput = document.getElementById('bookGuests');
+        const currentGuests = Math.max(1, parseInt(guestsInput?.value, 10) || 1);
+        const extraGuests = Math.max(0, currentGuests - currentApartment.guests);
+        const overp = currentApartment.guestOverpayment > 0 ? currentApartment.guestOverpayment : 700;
+        const guestExtra = extraGuests * overp * nights;
         total += guestExtra;
 
         const label = pluralNights(nights);
@@ -738,7 +739,7 @@ function updateBookingSummary() {
             </div>
             ${guestExtra > 0 ? `
             <div class="row">
-                <span>Доп. гости (${extraGuests} чел.)</span>
+                <span>Доп. гости (${extraGuests} чел. × 700 ₽ × ${nights} ${label})</span>
                 <span>+${guestExtra.toLocaleString('ru-RU')} ₽</span>
             </div>` : ''}
             <div class="row total">
