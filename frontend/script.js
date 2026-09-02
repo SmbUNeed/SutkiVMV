@@ -509,7 +509,7 @@ async function handleBookFree() {
 
     try {
         const adults = parseInt(document.getElementById('bookGuests')?.value) || 1;
-        await apiBookAsUser(currentApartment.id, startDate, endDate, adults);
+        await apiBookAsUser(currentApartment.id, selectedCheckIn, selectedCheckOut, adults);
         alert('Бронирование успешно оформлено! Ожидайте подтверждения.');
         closeModal();
         apartments = await apiGetApartments();
