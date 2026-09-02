@@ -67,7 +67,7 @@ async function apiGetAmenities() {
     } catch { return []; }
 }
 
-async function apiBookAsUser(apartmentId, startDate, endDate, guests=0) {
+async function apiBookAsUser(apartmentId, startDate, endDate, guests) {
     const res = await authFetch('/auth/book', {
         method: 'POST',
         body: JSON.stringify({ apartmentId, startDate, endDate, guests })
@@ -503,12 +503,14 @@ async function handleBookFree() {
         alert('Пожалуйста, выберите даты заезда и выезда.');
         return;
     }
+    const guestsInput = document.getElementById('bookGuests');
+    const adults = Math.max(1, parseInt(guestsInput?.value, 10) || 1);
+
     const btn = document.getElementById('btnBook');
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Оформляем...';
 
     try {
-        const adults = parseInt(document.getElementById('bookGuests')?.value) || 1;
         await apiBookAsUser(currentApartment.id, selectedCheckIn, selectedCheckOut, adults);
         alert('Бронирование успешно оформлено! Ожидайте подтверждения.');
         closeModal();
