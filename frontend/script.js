@@ -67,10 +67,10 @@ async function apiGetAmenities() {
     } catch { return []; }
 }
 
-async function apiBookAsUser(apartmentId, startDate, endDate, guests=0) {
+async function apiBookAsUser(apartmentId, startDate, endDate, adults = 1) {
     const res = await authFetch('/auth/book', {
         method: 'POST',
-        body: JSON.stringify({ apartmentId, startDate, endDate, guests })
+        body: JSON.stringify({ apartmentId, startDate, endDate, adults })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Ошибка бронирования');
@@ -468,18 +468,14 @@ document.getElementById('apartmentModal').addEventListener('click', e => {
 function renderBookingWidget() {
     const el = document.getElementById('bookingWidget');
     if (isLoggedIn()) {
-        const maxGuests = currentApartment.guests;
         el.innerHTML = `
-            <div class="guest-counter">
-                <span class="guest-label">
-                    <i class="fa-solid fa-user-group"></i> Гости
-                    <span class="guest-hint">(до 5 лет бесплатно)</span>
-                </span>
-                <div class="num-input" style="width:auto;">
-                    <button type="button" onclick="changeGuests(-1)">−</button>
-                    <span id="guestCount" style="padding:0 16px;font-weight:700;">1</span>
-                    <button type="button" onclick="changeGuests(1)">+</button>
+            <div class="guests-row">
+                <div class="num-input">
+                    <button type="button" onclick="stepNum('bookGuests',-1)">−</button>
+                    <input type="number" id="bookGuests" min="1" max="${currentApartment.guests}" value="1">
+                    <button type="button" onclick="stepNum('bookGuests',1)">+</button>
                 </div>
+                <span style="color:var(--ink-3);font-size:0.85rem;">гостей (макс. ${currentApartment.guests})</span>
             </div>
             <button class="btn-book" id="btnBook" onclick="handleBookFree()">
                 <i class="fa-solid fa-calendar-check"></i> Забронировать
@@ -512,7 +508,8 @@ async function handleBookFree() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Оформляем...';
 
     try {
-        await apiBookAsUser(currentApartment.id, selectedCheckIn, selectedCheckOut, guests);
+        const adults = parseInt(document.getElementById('bookGuests')?.value) || 1;
+        await apiBookAsUser(currentApartment.id, startDateTime, endDateTime, adults);
         alert('Бронирование успешно оформлено! Ожидайте подтверждения.');
         closeModal();
         apartments = await apiGetApartments();
