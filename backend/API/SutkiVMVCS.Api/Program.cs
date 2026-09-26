@@ -176,7 +176,7 @@ builder.Services.Configure<HostOptions>(options =>
 
 var app = builder.Build();
 
-if (Environment.GetEnvironmentVariable("RUN_ENCRYPTION_MIGRATION") == "true")
+if (Environment.GetEnvironmentVariable("RUN_DECRYPT_ONCE") == "true")
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -185,17 +185,17 @@ if (Environment.GetEnvironmentVariable("RUN_ENCRYPTION_MIGRATION") == "true")
     var clients = await db.Clients.ToListAsync();
     foreach (var c in clients)
     {
-        c.FullName = encryptor.Encrypt(c.FullName);
-        c.PhoneNumber = encryptor.Encrypt(c.PhoneNumber);
-        c.Email = encryptor.Encrypt(c.Email);
+        c.FullName = encryptor.Decrypt(c.FullName);
+        c.PhoneNumber = encryptor.Decrypt(c.PhoneNumber);
+        c.Email = encryptor.Decrypt(c.Email);
     }
 
     var users = await db.Users.ToListAsync();
     foreach (var u in users)
-        u.Email = encryptor.Encrypt(u.Email);
+        u.Email = encryptor.Decrypt(u.Email);
 
     await db.SaveChangesAsync();
-    Console.WriteLine($"Migration done: {clients.Count} clients, {users.Count} users");
+    Console.WriteLine($"Decrypt-once done: {clients.Count} clients, {users.Count} users");
 }
 
 app.UseStaticFiles();
