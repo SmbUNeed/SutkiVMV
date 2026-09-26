@@ -43,13 +43,16 @@ public class AuthController : ControllerBase
         dto.Email = dto.Email.Trim().ToLowerInvariant();
         dto.PhoneNumber = PhoneHelper.Normalize(dto.PhoneNumber)!;
 
-        if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
+        if (
+            (await _context.Users.AsNoTracking().ToListAsync())
+            .Any(u => u.Email == dto.Email)
+        )
             return Conflict(new { message = "Пользователь с таким email уже существует" });
 
-        if (await _context.PendingRegistrations.AnyAsync(p => p.Email == dto.Email))
+        if ((await _context.PendingRegistrations.AsNoTracking().ToListAsync()).Any(p => p.Email == dto.Email))
         {
             // Удаляем старую заявку и создаём новую
-            var old = await _context.PendingRegistrations.FirstAsync(p => p.Email == dto.Email);
+            var old = (await _context.PendingRegistrations.AsNoTracking().ToListAsync()).First(p => p.Email == dto.Email);
             _context.PendingRegistrations.Remove(old);
         }
 
@@ -91,9 +94,8 @@ public class AuthController : ControllerBase
     {
         dto.Email = dto.Email.Trim().ToLowerInvariant();
 
-        var user = await _context.Users
-            .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Email == dto.Email);
+        var user = (await _context.Users.AsNoTracking().ToListAsync())
+            .FirstOrDefault(u => u.Email == dto.Email);
 
         if (user == null || !VerifyPassword(dto.Password, user.PasswordHash))
             return Unauthorized(new { message = "Неверный email или пароль" });
@@ -327,7 +329,7 @@ public class AuthController : ControllerBase
         if (string.IsNullOrEmpty(email))
             return BadRequest(new { message = "Email не заполнен" });
 
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        var user = (await _context.Users.AsNoTracking().ToListAsync()).FirstOrDefault(u => u.Email == email);
         if (user == null)
             return BadRequest(new { message = "Данный email не зарегистрирован" });
 
@@ -353,7 +355,7 @@ public class AuthController : ControllerBase
     [HttpPost("reset-password")]
     public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u =>
+        var user = (await _context.Users.AsNoTracking().ToListAsync()).FirstOrDefault(u =>
             u.Email == dto.Email &&
             u.PasswordResetToken == dto.Token &&
             u.PasswordResetExpiry > DateTime.UtcNow);

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -7,9 +8,11 @@ using Resend;
 using SutkiVMV.Data;
 using SutkiVMV.Models;
 using SutkiVMV.Services;
+using SutkiVMVCS.Api.Services.Security;
 using SutkiVMVCS.Controllers;
 using SutkiVMVCS.Services;
 using SutkiVMVCS.Services.YooKassa;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Telegram.Bot;
 
@@ -39,6 +42,20 @@ var wikiUploadAbsPath = Path.GetFullPath(
 Directory.CreateDirectory(wikiUploadAbsPath);
 
 builder.Services.AddSingleton(new UploadSettings(apartmentsUploadAbsPath, wikiUploadAbsPath));
+
+// ═══════════════════════════════════════════════════════════════════════
+//  SECURITY
+// ═══════════════════════════════════════════════════════════════════════
+
+var certPath = Environment.GetEnvironmentVariable("DP_CERT_PATH")!;
+var certPassword = Environment.GetEnvironmentVariable("DP_CERT_PASSWORD")!;
+var cert = X509CertificateLoader.LoadPkcs12FromFile(certPath, certPassword);
+
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo("/etc/sutkivmv/keys"))
+    .ProtectKeysWithCertificate(cert);
+
+builder.Services.AddSingleton<FieldEncryptor>();
 
 // ═══════════════════════════════════════════════════════════════════════
 //  AUTHENTICATION & AUTHORISATION

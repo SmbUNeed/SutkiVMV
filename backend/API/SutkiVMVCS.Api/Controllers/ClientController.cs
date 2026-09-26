@@ -29,18 +29,18 @@ public class ClientsController : ControllerBase
     public async Task<ActionResult<IEnumerable<ClientDto>>> Search([FromQuery] string q)
     {
         if (string.IsNullOrWhiteSpace(q)) return Ok(Array.Empty<ClientDto>());
-
         q = q.Trim().ToLower();
-        var clients = await _context.Clients
+
+        var allClients = await _context.Clients.AsNoTracking().ToListAsync();
+        // на этом этапе EF уже расшифровал поля через HasConversion — сравнение идёт в памяти C#
+
+        var matched = allClients
             .Where(c => c.FullName.Contains(q, StringComparison.CurrentCultureIgnoreCase)
                      || c.PhoneNumber.Contains(q)
-#pragma warning disable
                      || c.Email.Contains(q, StringComparison.CurrentCultureIgnoreCase))
-            .Take(20)
-            .AsNoTracking()
-            .ToListAsync();
+            .Take(20);
 
-        return Ok(clients.Select(ToDto));
+        return Ok(matched.Select(ToDto));
     }
 
     // GET /api/clients/{id}

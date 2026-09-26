@@ -1,11 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using SutkiVMV.Models;
+using SutkiVMVCS.Api.Services.Security;
 
 namespace SutkiVMV.Data;
 
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+    private readonly FieldEncryptor _encryptor;
+    public AppDbContext(DbContextOptions<AppDbContext> options, FieldEncryptor encryptor) : base(options) {
+        _encryptor = encryptor;
+    }
 
     public DbSet<Apartment>            Apartments           => Set<Apartment>();
     public DbSet<Booking>              Bookings             => Set<Booking>();
@@ -37,6 +41,10 @@ public class AppDbContext : DbContext
             .HasIndex(u => u.Email)
             .IsUnique();
 
+        //modelBuilder.Entity<User>()
+        //    .Property(u => u.Email)
+        //    .HasConversion(v => _encryptor.Encrypt(v), v => _encryptor.Decrypt(v));
+
         // ── Client → User (один-к-одному, необязательный) ────────────
         // UserId = null означает гостевое бронирование без регистрации
         modelBuilder.Entity<Client>()
@@ -45,6 +53,18 @@ public class AppDbContext : DbContext
             .HasForeignKey<Client>(c => c.UserId)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.SetNull);
+
+        //modelBuilder.Entity<Client>(entity =>
+        //{
+        //    entity.Property(c => c.FullName)
+        //        .HasConversion(v => _encryptor.Encrypt(v), v => _encryptor.Decrypt(v));
+
+        //    entity.Property(c => c.PhoneNumber)
+        //        .HasConversion(v => _encryptor.Encrypt(v), v => _encryptor.Decrypt(v));
+
+        //    entity.Property(c => c.Email)
+        //        .HasConversion(v => _encryptor.Encrypt(v), v => _encryptor.Decrypt(v));
+        //});
 
         // ── Индексы для частых запросов ───────────────────────────────
         modelBuilder.Entity<Apartment>()
