@@ -1,6 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.DataProtection;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using SutkiVMV.Data;
+using SutkiVMVCS.Api.Services.Security;
 
 namespace SutkiVMVCS.Services
 {
@@ -17,7 +19,10 @@ namespace SutkiVMVCS.Services
                 .UseNpgsql(config.GetConnectionString("DefaultConnection"))
                 .Options;
 
-            return new AppDbContext(options);
+            var dpProvider = DataProtectionProvider.Create("DesignTime");
+            var encryptor = new FieldEncryptor(dpProvider);
+
+            return new AppDbContext(options, encryptor);
         }
     }
 }

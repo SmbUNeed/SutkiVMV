@@ -176,6 +176,28 @@ builder.Services.Configure<HostOptions>(options =>
 
 var app = builder.Build();
 
+if (Environment.GetEnvironmentVariable("RUN_ENCRYPTION_MIGRATION") == "true")
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var encryptor = scope.ServiceProvider.GetRequiredService<FieldEncryptor>();
+
+    var clients = await db.Clients.ToListAsync();
+    foreach (var c in clients)
+    {
+        c.FullName = encryptor.Encrypt(c.FullName);
+        c.PhoneNumber = encryptor.Encrypt(c.PhoneNumber);
+        c.Email = encryptor.Encrypt(c.Email);
+    }
+
+    var users = await db.Users.ToListAsync();
+    foreach (var u in users)
+        u.Email = encryptor.Encrypt(u.Email);
+
+    await db.SaveChangesAsync();
+    Console.WriteLine($"Migration done: {clients.Count} clients, {users.Count} users");
+}
+
 app.UseStaticFiles();
 app.UseStaticFiles(new StaticFileOptions
 {
