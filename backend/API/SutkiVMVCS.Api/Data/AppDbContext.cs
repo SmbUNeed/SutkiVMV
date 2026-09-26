@@ -41,9 +41,9 @@ public class AppDbContext : DbContext
             .HasIndex(u => u.Email)
             .IsUnique();
 
-        modelBuilder.Entity<User>()
-            .Property(u => u.Email)
-            .HasConversion(v => _encryptor.Encrypt(v), v => _encryptor.Decrypt(v));
+        //modelBuilder.Entity<User>()
+        //    .Property(u => u.Email)
+        //    .HasConversion(v => _encryptor.Encrypt(v), v => _encryptor.Decrypt(v));
 
          //── Client → User(один - к - одному, необязательный) ────────────
          //UserId = null означает гостевое бронирование без регистрации
@@ -54,17 +54,17 @@ public class AppDbContext : DbContext
             .IsRequired(false)
             .OnDelete(DeleteBehavior.SetNull);
 
-        modelBuilder.Entity<Client>(entity =>
-        {
-            entity.Property(c => c.FullName)
-                .HasConversion(v => _encryptor.Encrypt(v), v => _encryptor.Decrypt(v));
+        //modelBuilder.Entity<Client>(entity =>
+        //{
+        //    entity.Property(c => c.FullName)
+        //        .HasConversion(v => _encryptor.Encrypt(v), v => _encryptor.Decrypt(v));
 
-            entity.Property(c => c.PhoneNumber)
-                .HasConversion(v => _encryptor.Encrypt(v), v => _encryptor.Decrypt(v));
+        //    entity.Property(c => c.PhoneNumber)
+        //        .HasConversion(v => _encryptor.Encrypt(v), v => _encryptor.Decrypt(v));
 
-            entity.Property(c => c.Email)
-                .HasConversion(v => _encryptor.Encrypt(v), v => _encryptor.Decrypt(v));
-        });
+        //    entity.Property(c => c.Email)
+        //        .HasConversion(v => _encryptor.Encrypt(v), v => _encryptor.Decrypt(v));
+        //});
 
         // ── Индексы для частых запросов ───────────────────────────────
         modelBuilder.Entity<Apartment>()
