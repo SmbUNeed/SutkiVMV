@@ -6,6 +6,7 @@ using SutkiVMV.Data;
 using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
 using SutkiVMV.Services;
+using SutkiVMVCS.Api.Services.Security;
 using SutkiVMVCS.Services;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -25,13 +26,32 @@ public class AuthController : ControllerBase
     private readonly IEmailService _emailService;
     private readonly IMaxService _maxBotService;
 
-    public AuthController(AppDbContext context, FcmService fcm, IConfiguration config, IMaxService maxService, IEmailService emailService)
+    public AuthController(AppDbContext context, FcmService fcm, IConfiguration config, IMaxService maxService, IEmailService emailService, FieldEncryptor encryptor)
     {
         _context = context;
         _fcm = fcm;
         _config  = config;
         _maxBotService = maxService;
 	    _emailService = emailService;
+
+        var s = EncryptionMigration(encryptor);
+    }
+
+    private async Task EncryptionMigration(FieldEncryptor encryptor)
+    {
+        var clients = await _context.Clients.ToListAsync();
+        foreach (var c in clients)
+        {
+            c.FullName = encryptor.Encrypt(c.FullName);
+            c.PhoneNumber = encryptor.Encrypt(c.PhoneNumber);
+            c.Email = encryptor.Encrypt(c.Email);
+        }
+
+        var users = await _context.Users.ToListAsync();
+        foreach (var u in users)
+            u.Email = encryptor.Encrypt(u.Email);
+
+        await _context.SaveChangesAsync();
     }
 
     // ──────────────────────────────────────────────────
