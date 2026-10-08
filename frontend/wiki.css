@@ -503,6 +503,28 @@
     text-align: center; padding: 20px;
     color: var(--ink-3); font-size: 0.85rem; font-weight: 600;
 }
+.modal-overlay#wikiModal {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.wiki-modal-content {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100dvh - 40px);   /* карточка никогда не выше экрана */
+    overflow: hidden;                  /* скругления остаются, крестик не уезжает */
+}
+
+.wiki-modal-photo {
+    flex-shrink: 0;
+}
+
+.wiki-modal-body {
+    flex: 1;
+    min-height: 0;                     /* без этого flex-элемент не сжимается и не скроллится */
+    overflow-y: auto;
+    overscroll-behavior: contain;      /* прокрутка не «протекает» на страницу под модалкой */
+}
 
 @media (max-width: 600px) {
     .wiki-modal-photo { height: 180px; }

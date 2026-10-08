@@ -154,6 +154,24 @@ function closeWikiModal() {
     document.body.style.overflow = '';
 }
 
+// закрытие по клику на затемнённую область
+const wikiModalEl = document.getElementById('wikiModal');
+let downOnOverlay = false;
+
+wikiModalEl.addEventListener('mousedown', e => {
+    downOnOverlay = e.target === wikiModalEl;
+});
+wikiModalEl.addEventListener('click', e => {
+    // закрываем, только если и нажатие, и отпускание были на фоне:
+    // иначе выделение текста с выходом за карточку закроет окно
+    if (e.target === wikiModalEl && downOnOverlay) closeWikiModal();
+});
+
+// закрытие по Esc
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && wikiModalEl.classList.contains('open')) closeWikiModal();
+});
+
 function filterWiki(cat) {
     document.querySelectorAll('.wiki-cat-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.cat === cat);
