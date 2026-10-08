@@ -414,13 +414,17 @@ async function openModal(apartmentId, clearParams = false) {
     // Рядом
     const nearbyEl = document.getElementById('modalNearby');
     nearbyEl.innerHTML = (apt.nearby && apt.nearby.length)
-        ? apt.nearby.map(n => `
-            <div class="modal-nearby ${n.wikiPlaceId ? 'linked' : ''}"
-                 ${n.wikiPlaceId ? `onclick="window.location.href='wiki.html?place=${n.wikiPlaceId}'" style="cursor:pointer;"` : ''}>
+        ? apt.nearby.map(n => {
+            const inner = `
                 <i class="fa-solid ${n.icon}"></i>
                 <span>${n.name}</span>
                 <span class="modal-nearby-dist">${n.distance}</span>
-            </div>`).join('')
+                ${n.wikiPlaceId ? '<i class="fa-solid fa-arrow-up-right-from-square modal-nearby-arrow"></i>' : ''}`;
+
+            return n.wikiPlaceId
+                ? `<a class="modal-nearby linked" href="wiki.html?place=${n.wikiPlaceId}">${inner}</a>`
+                : `<div class="modal-nearby">${inner}</div>`;
+        }).join('')
         : '<p style="color:var(--ink-3);">Не указано</p>';
 
     // Сброс вкладки на Описание
