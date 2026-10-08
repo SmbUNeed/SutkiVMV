@@ -923,41 +923,47 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .modal-nearby {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 8px;          /* одинаковый для всех строк */
-    border-radius: 8px;
-    text-decoration: none;
-    color: inherit;
+    gap: 10px;
+    padding: 8px 10px;              /* одинаково для всех строк */
+    border-bottom: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    font-size: .875rem;
+    color: inherit;                 /* для <a> */
+    text-decoration: none;          /* для <a> */
 }
+.modal-nearby:last-child { border-bottom: none; }
+.modal-nearby i { color: var(--primary); width: 16px; text-align: center; flex-shrink: 0; }
+.modal-nearby span:nth-child(2) { flex: 1; }
+.modal-nearby-dist { color: var(--ink-3); font-size: .8rem; }
 
+/* ссылка на вики */
 .modal-nearby.linked {
     cursor: pointer;
-    transition: background .15s, color .15s;
+    transition: background 0.2s ease, border-color 0.2s ease;
 }
-
-.modal-nearby.linked span:not(.modal-nearby-dist) {
-    text-decoration: underline;
-    text-decoration-style: dotted;
+.modal-nearby.linked span:nth-child(2) {
+    text-decoration: underline dotted;
+    text-decoration-color: var(--primary);
     text-underline-offset: 3px;
 }
-
 .modal-nearby.linked:hover {
-    background: rgba(0, 0, 0, .05);   /* или ваш акцентный цвет с прозрачностью */
-    color: var(--accent, #2563eb);
+    background: var(--primary-bg);
+    border-color: var(--primary-glow);
+}
+.modal-nearby.linked:hover span:nth-child(2) {
+    text-decoration-style: solid;
 }
 
-.modal-nearby-dist {
-    margin-left: auto;
+/* стрелка (специфичность выше, чем у .modal-nearby i) */
+.modal-nearby .modal-nearby-arrow {
+    width: auto;
+    font-size: .7rem;
     color: var(--ink-3);
+    opacity: .6;
+    transition: opacity 0.2s ease, transform 0.2s ease, color 0.2s ease;
 }
-
-.modal-nearby-arrow {
-    font-size: .7em;
-    opacity: .5;
-    transition: opacity .15s, transform .15s;
-}
-
 .modal-nearby.linked:hover .modal-nearby-arrow {
+    color: var(--primary);
     opacity: 1;
     transform: translate(2px, -2px);
 }
