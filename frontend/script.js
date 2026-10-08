@@ -235,8 +235,13 @@ function closeFilterPanel() {
 
 // ── Заполнение фильтра удобствами ────────────────────────
 async function loadAmenityFilter() {
-    const amenities = await apiGetAmenities();
+    const allAmenities = await apiGetAmenities();
     const list = document.getElementById('amenityCheckList');
+
+    // Имена удобств, которые есть хотя бы у одной квартиры
+    const usedNames = new Set(apartments.flatMap(a => a.amenities || []));
+    const amenities = allAmenities.filter(a => usedNames.has(a.name));
+
     if (!amenities.length) {
         list.innerHTML = '<div style="color:var(--ink-3);font-size:0.85rem;padding:8px 0;">Удобства не найдены</div>';
         return;
@@ -777,8 +782,8 @@ function switchTab(tab, btn) {
 async function init() {
     showSkeletons();
     await loadSiteSettings();
-    await loadAmenityFilter();
     apartments = await apiGetApartments();
+	await loadAmenityFilter();
     filteredApartments = [...apartments];
     renderGrid(filteredApartments);
     guardNumberInputs();
