@@ -370,28 +370,23 @@ public class AuthController : ControllerBase
     [HttpPost("change-password-email")]
     public async Task<ActionResult> ChangeUserPassword([FromBody] string email)
     {
-        if (string.IsNullOrEmpty(email))
+        if (string.IsNullOrWhiteSpace(email))
             return BadRequest(new { message = "Email не заполнен" });
 
-        var user = (await _context.Users.AsNoTracking().ToListAsync()).FirstOrDefault(u => u.Email == email);
+        email = email.Trim().ToLowerInvariant();
+
+        var user = (await _context.Users.ToListAsync()) 
+            .FirstOrDefault(u => u.Email == email);
         if (user == null)
             return BadRequest(new { message = "Данный email не зарегистрирован" });
 
-        // Сохраняем токен в БД
-        var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
-        user.PasswordResetToken = token;
-        user.PasswordResetExpiry = DateTime.UtcNow.AddHours(1); // токен живёт 1 час
+        user.PasswordResetToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        user.PasswordResetExpiry = DateTime.UtcNow.AddHours(1);
         await _context.SaveChangesAsync();
 
-        var confirmUrl = $"https://sutkivmv.ru/change-password.html?token={token}&email={Uri.EscapeDataString(email)}";
-        try
-        {
-            await _emailService.SendChangePasswordAsync(email, confirmUrl);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[EMAIL ERROR] {ex.Message}");
-        }
+        var confirmUrl = $"https://sutkivmv.ru/change-password.html?token={user.PasswordResetToken}&email={Uri.EscapeDataString(email)}";
+        try { await _emailService.SendChangePasswordAsync(email, confirmUrl); }
+        catch (Exception ex) { Console.WriteLine($"[EMAIL ERROR] {ex.Message}"); }
 
         return Ok(new { message = "Проверьте почту — мы отправили письмо для изменения пароля." });
     }
@@ -399,8 +394,14 @@ public class AuthController : ControllerBase
     [HttpPost("reset-password")]
     public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
     {
-        var user = (await _context.Users.AsNoTracking().ToListAsync()).FirstOrDefault(u =>
-            u.Email == dto.Email &&
+        if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Token) ||
+            string.IsNullOrWhiteSpace(dto.NewPassword))
+            return BadRequest(new { message = "Неверные данные" });
+
+        var email = dto.Email.Trim().ToLowerInvariant();
+
+        var user = (await _context.Users.ToListAsync()).FirstOrDefault(u =>
+            u.Email == email &&
             u.PasswordResetToken == dto.Token &&
             u.PasswordResetExpiry > DateTime.UtcNow);
 
