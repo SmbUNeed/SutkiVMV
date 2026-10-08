@@ -41,20 +41,22 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<ActionResult> Register(RegisterDto dto, CancellationToken ct)
     {
+        if (string.IsNullOrWhiteSpace(dto.Email))
+            return BadRequest(new { message = "Email не заполнен" });
+
         dto.Email = dto.Email.Trim().ToLowerInvariant();
         dto.PhoneNumber = PhoneHelper.Normalize(dto.PhoneNumber)!;
 
-        if (
-            (await _context.Users.AsNoTracking().ToListAsync())
-            .Any(u => u.Email == dto.Email)
-        )
+        if ((await _context.Users.AsNoTracking().ToListAsync()).Any(u => u.Email == dto.Email))
             return Conflict(new { message = "Пользователь с таким email уже существует" });
 
-        if ((await _context.PendingRegistrations.AsNoTracking().ToListAsync()).Any(p => p.Email == dto.Email))
+        if (await _context.PendingRegistrations.AsNoTracking().AnyAsync(p => p.Email == dto.Email, ct))
         {
-            // Удаляем старую заявку и создаём новую
-            var old = (await _context.PendingRegistrations.AsNoTracking().ToListAsync()).First(p => p.Email == dto.Email);
-            _context.PendingRegistrations.Remove(old);
+            var old = await _context.PendingRegistrations
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Email == dto.Email, ct);
+            if (old != null)
+                _context.PendingRegistrations.Remove(old);
         }
 
         if (string.IsNullOrWhiteSpace(dto.Password) || dto.Password.Length < 6)
@@ -93,7 +95,12 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponseDto>> Login(LoginDto dto)
     {
+        if (string.IsNullOrWhiteSpace(dto.Email))
+            return BadRequest(new { message = "Email не заполнен" });
         dto.Email = dto.Email.Trim().ToLowerInvariant();
+
+        if (string.IsNullOrWhiteSpace(dto.Password))
+            return BadRequest(new { message = "Пароль не заполнен" });
 
         var user = (await _context.Users.AsNoTracking().ToListAsync())
             .FirstOrDefault(u => u.Email == dto.Email);
@@ -102,9 +109,10 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Неверный email или пароль" });
 
         // Ищем связанного клиента
-        var client = await _context.Clients
+        var client = (await _context.Clients
             .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.UserId == user.Id);
+            .ToListAsync())
+            .FirstOrDefault(c => c.UserId == user.Id);
 
         if (client == null) return Unauthorized(new { message = "Клиент не найден" });
 
@@ -137,7 +145,7 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<UserDto>> UpdateProfile(UpdateProfileDto dto, CancellationToken ct)
     {
         var userId = GetUserId();
-        var user   = await _context.Users.FindAsync(userId);
+        var user = await _context.Users.FindAsync(userId);
         if (user == null) return NotFound();
 
         // Обновляем пароль если передан
@@ -150,7 +158,7 @@ public class AuthController : ControllerBase
 
         // Обновляем данные в связанном Client
         var client = await _context.Clients
-            .FirstOrDefaultAsync(c => c.UserId == userId);
+            .FirstOrDefaultAsync(c => c.UserId == userId, ct);
 
         if (client != null)
         {
@@ -212,28 +220,28 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = "Дата заезда должна быть раньше даты выезда" });
 
         var userId = GetUserId();
-        var client = await _context.Clients.FirstOrDefaultAsync(c => c.UserId == userId);
+        var client = await _context.Clients.FirstOrDefaultAsync(c => c.UserId == userId, ct);
         if (client == null || client.InBlackList)
             return BadRequest(new { message = "Профиль клиента не найден. Обратитесь в поддержку." });
 
-        var apartment = await _context.Apartments.FindAsync(dto.ApartmentId);
+        var apartment = await _context.Apartments.FindAsync(new object?[] { dto.ApartmentId }, ct);
         if (apartment == null || !apartment.IsActive || apartment.IsDeleted)
             return NotFound(new { message = "Квартира не найдена или недоступна" });
 
         bool overlap = await _context.Bookings.AnyAsync(b =>
             b.ApartmentId == dto.ApartmentId &&
-            b.Status      != "Cancelled"     &&
-            b.StartDate.ToUniversalTime()   <  dto.EndDate.ToUniversalTime() &&
-            b.EndDate.ToUniversalTime() >  dto.StartDate.ToUniversalTime());
+            b.Status      != "Cancelled" &&
+            b.StartDate.ToUniversalTime() < dto.EndDate.ToUniversalTime() &&
+            b.EndDate.ToUniversalTime() > dto.StartDate.ToUniversalTime(), ct);
 
         bool externalOverlap = await _context.ExternalBookings.AnyAsync(e =>
             e.ApartmentId == dto.ApartmentId &&
             e.StartDate < dto.EndDate.ToUniversalTime() &&
-            e.EndDate > dto.StartDate.ToUniversalTime());
+            e.EndDate > dto.StartDate.ToUniversalTime(), ct);
 
         if (overlap || externalOverlap) return Conflict(new { message = "Квартира занята в выбранные даты" });
 
-        var rules = await _context.PriceRules.ToListAsync();
+        var rules = await _context.PriceRules.ToListAsync(ct);
         decimal total = PricingService.CalculateTotal(dto, apartment, rules);
 
         var booking = new Booking
@@ -269,7 +277,7 @@ public class AuthController : ControllerBase
             { "bookingId", booking.Id.ToString() }
         };
 
-        var tokens = await _context.DeviceTokens.Select(t => t.Token).ToListAsync();
+        var tokens = await _context.DeviceTokens.Select(t => t.Token).ToListAsync(ct);
 
         foreach (var token in tokens)
         {
@@ -282,9 +290,13 @@ public class AuthController : ControllerBase
     [HttpPost("confirm-email")]
     public async Task<ActionResult> ConfirmEmail(ConfirmEmailDto dto, CancellationToken ct)
     {
+        if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Token))
+            return BadRequest(new { message = "Неверные данные" });
+
+        var email = dto.Email.Trim().ToLowerInvariant();
+
         var pending = await _context.PendingRegistrations
-            .FirstOrDefaultAsync(p => p.Email == dto.Email.Trim().ToLowerInvariant()
-                                   && p.Token == dto.Token);
+            .FirstOrDefaultAsync(p => p.Email == email && p.Token == dto.Token, ct);
 
         if (pending == null || pending.ExpiresAt < DateTime.UtcNow)
             return BadRequest(new { message = "Ссылка недействительна или истекла" });
@@ -301,9 +313,8 @@ public class AuthController : ControllerBase
         _context.Users.Add(user);
         await _context.SaveChangesAsync(ct);
 
-        Client client;
-
-        client = await _context.Clients.FirstAsync(c => c.PhoneNumber == pending.PhoneNumber);
+        Client client = (await _context.Clients.ToListAsync())
+            .FirstOrDefault(c => c.PhoneNumber == pending.PhoneNumber);
 
         if (client == null)
         {
