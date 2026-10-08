@@ -380,11 +380,13 @@ public class AuthController : ControllerBase
         if (user == null)
             return BadRequest(new { message = "Данный email не зарегистрирован" });
 
-        user.PasswordResetToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+
+        string token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        user.PasswordResetToken = token;
         user.PasswordResetExpiry = DateTime.UtcNow.AddHours(1);
         await _context.SaveChangesAsync();
 
-        var confirmUrl = $"https://sutkivmv.ru/change-password.html?token={user.PasswordResetToken}&email={Uri.EscapeDataString(email)}";
+        var confirmUrl = $"https://sutkivmv.ru/change-password.html?token={token}&email={Uri.EscapeDataString(email)}";
         try { await _emailService.SendChangePasswordAsync(email, confirmUrl); }
         catch (Exception ex) { Console.WriteLine($"[EMAIL ERROR] {ex.Message}"); }
 
