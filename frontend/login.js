@@ -13,7 +13,8 @@ function showError(msg) {
     errorEl.classList.add('show');
 }
 
-async function doLogin() {
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
     const email    = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
     const errorEl  = document.getElementById('loginError');

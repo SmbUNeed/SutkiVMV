@@ -2,6 +2,11 @@ if (typeof isLoggedIn === 'function' && isLoggedIn()) {
         location.href = 'index.html';
     }
 
+    document.getElementById('registerForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        doRegister();
+    });
+
     const phoneInput = document.getElementById('regPhone');
     if (phoneInput) {
         IMask(phoneInput, {
