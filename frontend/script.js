@@ -308,9 +308,11 @@ function toggleAmenity(e, el) {
     if (checked) {
         selectedAmenities.add(name);
         mark.innerHTML = '<i class="fa-solid fa-check" style="font-size:0.6rem;"></i>';
+        getFiltered();
     } else {
         selectedAmenities.delete(name);
         mark.innerHTML = '';
+        getFiltered();
     }
     updateFilterBadge();
 }
@@ -345,7 +347,7 @@ function stepNum(id, delta) {
     if (id === 'bookGuests') {
         updateBookingSummary();
     } else if (typeof applyFilters === 'function') {
-        applyFilters();
+        updateFilterPreview();
     }
 }
 
