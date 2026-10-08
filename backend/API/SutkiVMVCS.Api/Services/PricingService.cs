@@ -15,11 +15,11 @@ namespace SutkiVMVCS.Services
             int nights = (ed.Date - sd.Date).Days;
             if (sd.Hour <= 7) nights += 1;
             else if (sd.Hour <= 11) additional += apartment.PricePerNight / 2;
-            if (ed.Hour > 12) additional += (ed.Hour - 12) * apartment.HourOverpayment;
+            if (ed.Hour > 12) additional += (ed.Hour - 12) * (apartment.HourOverpayment == 0 ? 400 : apartment.HourOverpayment);
 
             int overguest = dto.Guests - apartment.Guests;
 
-            if (overguest > 0) additional += overguest * apartment.GuestOverpayment;
+            if (overguest > 0) additional += overguest * (apartment.GuestOverpayment > 0 ? apartment.GuestOverpayment : 700);
 
             DateOnly rangeStart = sd.Hour <= 7
                 ? DateOnly.FromDateTime(sd.Date).AddDays(-1)

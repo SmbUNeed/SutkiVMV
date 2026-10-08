@@ -131,7 +131,9 @@ async function loadBookings() {
             const start  = new Date(b.startDate).toLocaleDateString('ru-RU');
             const end    = new Date(b.endDate).toLocaleDateString('ru-RU');
             const nights = b.nights;
-            const label  = nights === 1 ? 'ночь' : nights < 5 ? 'ночи' : 'ночей';
+            const guests = b.guests;
+            const label  = (nights / 10 % 10 == 1 ? 'Ночей' : nights === 1 ? 'ночь' : nights < 5 ? 'ночи' : 'ночей') + '\t'
+            + (guests === 1 ? 'гость' : guests < 5 ? 'гостя' : 'гостей');
 
             const statusMap = {
                 'Pending':   ['status-pending',   'Ожидание'],
