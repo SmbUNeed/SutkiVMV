@@ -313,7 +313,7 @@ public class AuthController : ControllerBase
         _context.Users.Add(user);
         await _context.SaveChangesAsync(ct);
 
-        Client client = (await _context.Clients.ToListAsync())
+        Client? client = (await _context.Clients.ToListAsync())
             .FirstOrDefault(c => c.PhoneNumber == pending.PhoneNumber);
 
         if (client == null)
