@@ -321,13 +321,14 @@ public class AuthController : ControllerBase
 
         var email = dto.Email.Trim().ToLowerInvariant();
 
-        var pending = (await _context.PendingRegistrations.ToListAsync())
-            .FirstOrDefault(p => p.Email == email && p.Token == dto.Token);
+        var pending = await _context.PendingRegistrations
+            .FirstOrDefaultAsync(p => p.Email == email && p.Token == dto.Token, ct);
 
         if (pending == null || pending.ExpiresAt < DateTime.UtcNow)
             return BadRequest(new { message = "Ссылка недействительна или истекла" });
 
-        // Создаём пользователя
+        await using var tx = await _context.Database.BeginTransactionAsync(ct);
+
         var user = new User
         {
             Email = pending.Email,
@@ -337,20 +338,20 @@ public class AuthController : ControllerBase
             EmailConfirmed = true
         };
         _context.Users.Add(user);
+        await _context.SaveChangesAsync(ct);   // теперь user.Id настоящий
 
-        Client? client = (await _context.Clients.ToListAsync())
-            .FirstOrDefault(c => c.PhoneNumber == pending.PhoneNumber);
+        var client = await _context.Clients
+            .FirstOrDefaultAsync(c => c.PhoneNumber == pending.PhoneNumber, ct);
 
         if (client == null)
         {
-            client = new Client
+            _context.Clients.Add(new Client
             {
                 FullName = pending.FullName,
                 PhoneNumber = pending.PhoneNumber,
                 Email = pending.Email,
                 UserId = user.Id
-            };
-            _context.Clients.Add(client);
+            });
         }
         else
         {
@@ -358,8 +359,11 @@ public class AuthController : ControllerBase
             client.FullName = pending.FullName;
             client.Email = pending.Email;
         }
+
         _context.PendingRegistrations.Remove(pending);
         await _context.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+
         return Ok(new { message = "Email подтверждён! Теперь вы можете войти." });
     }
 
