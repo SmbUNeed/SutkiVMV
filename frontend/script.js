@@ -77,6 +77,8 @@ async function apiBookAsUser(apartmentId, startDate, endDate, guests) {
     return data;
 }
 
+const amenName = a => (typeof a === 'string' ? a : a?.name);
+
 // ── Grid ─────────────────────────────────────────────────
 const grid = document.getElementById('apartmentsGrid');
 
@@ -152,7 +154,7 @@ function applyFilters() {
         if (apt.pricePerNight > priceMax) return false;
         // Мультивыбор удобств: квартира должна иметь ВСЕ выбранные удобства
         if (selectedAmenities.size > 0) {
-            const aptAmenityNames = apt.amenities || [];
+            const aptAmenityNames = (apt.amenities || []).map(amenName);
             for (const name of selectedAmenities) {
                 if (!aptAmenityNames.includes(name)) return false;
             }
@@ -239,7 +241,9 @@ async function loadAmenityFilter() {
     const list = document.getElementById('amenityCheckList');
 
     // Имена удобств, которые есть хотя бы у одной квартиры
-    const usedNames = new Set(apartments.flatMap(a => a.amenities || []));
+    const usedNames = new Set(
+        apartments.flatMap(a => (a.amenities || []).map(amenName))
+    );
     const amenities = allAmenities.filter(a => usedNames.has(a.name));
 
     if (!amenities.length) {
