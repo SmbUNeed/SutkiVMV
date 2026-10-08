@@ -495,15 +495,31 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 }
 .price-badge {
     position: absolute; bottom: 12px; left: 12px;
-    background: rgba(30,26,22,0.78); backdrop-filter: blur(8px);
-    color: #fff; font-size: 0.83rem; font-weight: 800;
-    padding: 5px 12px; border-radius: var(--r-full);
-    font-family: var(--font-head);
+    display: flex; align-items: baseline; gap: 5px;
+    background: rgba(30,26,22,0.82); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 6px 14px; border-radius: var(--r-full);
+    font-family: var(--font-head); color: #fff;
+}
+.price-badge strong {
+    font-size: 1.05rem; font-weight: 800;
+    color: var(--primary);
+}
+.price-badge small {
+    font-size: 0.7rem; font-weight: 600;
+    color: rgba(255,255,255,0.65);
 }
 .card-content { padding: 15px 17px 17px; }
 .card-content h3 {
     font-family: var(--font-head); font-size: 1.05rem; font-weight: 800;
     color: var(--ink); margin-bottom: 6px; line-height: 1.3;
+    /* ровно две строки: короткие названия резервируют место, длинные обрезаются */
+    min-height: calc(1.05rem * 1.3 * 2);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 .specs {
     font-size: 0.78rem; color: var(--ink-3); margin-bottom: 8px;

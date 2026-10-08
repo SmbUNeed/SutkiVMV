@@ -98,7 +98,12 @@ function renderGrid(data) {
     const countEl = document.getElementById('resultsCount');
     if (countEl) {
         const n = data.length;
-        const label = n === 1 ? 'квартира' : n < 5 ? 'квартиры' : 'квартир';
+        const label = n === 1 ? 'квартира'
+            : n < 5 ? 'квартиры'
+            : n <= 20 ? 'квартир'
+            : n%10 === 1 ? 'квартира'
+            : n%10 < 5 ? "квартиры"
+            : "квартир";
         countEl.innerHTML = `<strong>${n}</strong> ${label}`;
     }
 
@@ -110,6 +115,11 @@ function renderGrid(data) {
             </div>`;
         return;
     }
+    const guestsText = n => {
+        const m10 = n % 10, m100 = n % 100;
+        return `до ${n} ${m10 === 1 && m100 !== 11 ? 'гостя' : 'гостей'}`;
+    };
+
     data.forEach(apt => {
         const imgSrc = imgUrl(apt.mainImage);
         const amenNames = apt.amenities || [];
@@ -123,13 +133,17 @@ function renderGrid(data) {
                     ${imgSrc
                 ? `<img src="${imgSrc}" alt="${apt.title}" loading="lazy">`
                 : `<div class="no-photo-placeholder"><i class="fa-regular fa-image fa-2x"></i><span>Нет фото</span></div>`}
-                    <div class="price-badge">от ${apt.pricePerNight.toLocaleString('ru-RU')} ₽</div>
+                    <div class="price-badge">
+                        <small>от</small>
+                        <strong>${apt.pricePerNight.toLocaleString('ru-RU')} ₽</strong>
+                        <small>/ ночь</small>
+                    </div>
                 </div>
                 <div class="card-content">
-                    <h3>${apt.title}</h3>
+                    <h3 title="${apt.title}">${apt.title}</h3>
                     <p class="specs">
-                        <i class="fa-solid fa-user-group"></i> до ${apt.guests} гостей &nbsp;•&nbsp;
-                        <i class="fa-solid fa-ruler-combined"></i> ${apt.area} м²
+                        <i class="fa-solid fa-user-group"></i> ${guestsText(apt.guests)} &nbsp;•&nbsp;
+                        <i class="fa-solid fa-ruler-combined"></i> ${apt.area} м2
                     </p>
                     <p class="amenities-preview">${amenText}</p>
                     <div class="card-footer">
