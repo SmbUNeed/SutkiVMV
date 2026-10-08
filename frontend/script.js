@@ -156,17 +156,16 @@ function renderGrid(data) {
 }
 
 // ── Фильтрация ───────────────────────────────────────────
-function applyFilters() {
-    const guests = parseInt(document.getElementById('guests').value) || 0;
+function getFiltered() {
+    const guests   = parseInt(document.getElementById('guests').value) || 0;
     const priceMin = parseInt(document.getElementById('priceMin').value) || 0;
     const priceMax = parseInt(document.getElementById('priceMax').value) || Infinity;
-    const sortVal = document.getElementById('sortSelect').value;
+    const sortVal  = document.getElementById('sortSelect').value;
 
-    filteredApartments = apartments.filter(apt => {
+    const result = apartments.filter(apt => {
         if (apt.guests < guests) return false;
         if (apt.pricePerNight < priceMin) return false;
         if (apt.pricePerNight > priceMax) return false;
-        // Мультивыбор удобств: квартира должна иметь ВСЕ выбранные удобства
         if (selectedAmenities.size > 0) {
             const aptAmenityNames = (apt.amenities || []).map(amenName);
             for (const name of selectedAmenities) {
@@ -176,13 +175,41 @@ function applyFilters() {
         return true;
     });
 
-    if (sortVal === 'price_asc') filteredApartments.sort((a, b) => a.pricePerNight - b.pricePerNight);
-    if (sortVal === 'price_desc') filteredApartments.sort((a, b) => b.pricePerNight - a.pricePerNight);
-    if (sortVal === 'area_desc') filteredApartments.sort((a, b) => b.area - a.area);
+    if (sortVal === 'price_asc')  result.sort((a, b) => a.pricePerNight - b.pricePerNight);
+    if (sortVal === 'price_desc') result.sort((a, b) => b.pricePerNight - a.pricePerNight);
+    if (sortVal === 'area_desc')  result.sort((a, b) => b.area - a.area);
 
+    return result;
+}
+
+function applyFilters() {
+    filteredApartments = getFiltered();
     renderGrid(filteredApartments);
     updateFilterBadge();
 }
+
+// склонение: 1 квартира, 2-4 квартиры, 5+ квартир
+const aptWord = n => {
+    const m10 = n % 10, m100 = n % 100;
+    if (m10 === 1 && m100 !== 11) return 'квартира';
+    if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'квартиры';
+    return 'квартир';
+};
+
+// живой счётчик на кнопке
+function updateFilterPreview() {
+    const n = getFiltered().length;
+    const btn = document.getElementById('applyFiltersBtn');
+    btn.disabled = n === 0;
+    btn.textContent = n === 0
+        ? 'Ничего не найдено'
+        : `Показать ${n} ${aptWord(n)}`;
+}
+
+// слушаем изменения полей
+['guests', 'priceMin', 'priceMax'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateFilterPreview);
+});
 
 function updateFilterBadge() {
     const guests = parseInt(document.getElementById('guests').value) || 0;

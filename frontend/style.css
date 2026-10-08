@@ -394,6 +394,10 @@ button { cursor: pointer; font-family: inherit; }
     transition: all var(--transition);
 }
 .btn-reset-filters:hover { border-color: var(--red); color: var(--red); }
+.btn-apply-filters:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
 
 /* ── INPUTS ──────────────────────────────────────────────── */
 input[type="text"], input[type="number"], input[type="tel"],
