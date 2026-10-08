@@ -140,7 +140,7 @@ public class AuthController : ControllerBase
             .ToListAsync())
             .FirstOrDefault(c => c.UserId == user.Id);
 
-        if (client == null) return Unauthorized(new { message = "Иди нахуй Саня" });
+        if (client == null) return Unauthorized(new { message = "Клиент не найден" });
 
         return Ok(BuildAuthResponse(user, client));
     }
