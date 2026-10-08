@@ -106,6 +106,8 @@ public class AuthController : ControllerBase
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == user.Id);
 
+        if (client == null) return Unauthorized(new { message = "Клиент не найден" });
+
         return Ok(BuildAuthResponse(user, client));
     }
 
@@ -318,6 +320,7 @@ public class AuthController : ControllerBase
         {
             client.UserId = user.Id;
             client.FullName = pending.FullName;
+            client.Email = pending.Email;
         }
         _context.PendingRegistrations.Remove(pending);
         await _context.SaveChangesAsync(ct);
