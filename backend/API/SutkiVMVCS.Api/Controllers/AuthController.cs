@@ -89,6 +89,32 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Проверьте почту — мы отправили письмо для подтверждения." });
     }
 
+    [HttpGet("users-list")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UsersList()
+    {
+        var users = await _context.Users.AsNoTracking().OrderBy(u => u.Id)
+            .Select(u => new { u.Id, u.Email, u.Role, u.CreatedAt, u.EmailConfirmed })
+            .ToListAsync();
+
+        var clients = await _context.Clients.AsNoTracking()
+            .Where(c => c.UserId != null)
+            .Select(c => new { c.UserId, c.FullName, c.PhoneNumber })
+            .ToListAsync();
+
+        var result = users.Select(u => new
+        {
+            u.Id,
+            u.Email,
+            u.Role,
+            u.CreatedAt,
+            u.EmailConfirmed,
+            Client = clients.FirstOrDefault(c => c.UserId == u.Id)
+        });
+
+        return Ok(result);
+    }
+
     // ──────────────────────────────────────────────────
     // POST api/auth/login
     // ──────────────────────────────────────────────────
@@ -295,8 +321,8 @@ public class AuthController : ControllerBase
 
         var email = dto.Email.Trim().ToLowerInvariant();
 
-        var pending = await _context.PendingRegistrations
-            .FirstOrDefaultAsync(p => p.Email == email && p.Token == dto.Token, ct);
+        var pending = (await _context.PendingRegistrations.ToListAsync())
+            .FirstOrDefault(p => p.Email == email && p.Token == dto.Token);
 
         if (pending == null || pending.ExpiresAt < DateTime.UtcNow)
             return BadRequest(new { message = "Ссылка недействительна или истекла" });
@@ -311,7 +337,6 @@ public class AuthController : ControllerBase
             EmailConfirmed = true
         };
         _context.Users.Add(user);
-        await _context.SaveChangesAsync(ct);
 
         Client? client = (await _context.Clients.ToListAsync())
             .FirstOrDefault(c => c.PhoneNumber == pending.PhoneNumber);
