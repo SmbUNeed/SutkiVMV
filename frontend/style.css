@@ -1144,6 +1144,17 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     /* Фильтр панель */
     .filter-panel-body { padding: 14px; }
     .filter-panel-footer { padding: 12px 14px; }
+	
+	.auth-page .header-right {
+        flex-direction: row;
+        align-items: center;
+        width: auto;
+        gap: 8px;
+    }
+    .auth-page .header-right #headerUser > div {
+        flex-direction: row;
+        width: auto;
+    }
 }
 /* ── LIGHTBOX ─────────────────────────────────────────────── */
 .lightbox { display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,.92); align-items:center; justify-content:center; backdrop-filter:blur(4px); }
