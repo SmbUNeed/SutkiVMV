@@ -44,6 +44,6 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         btn.disabled = false;
         btn.textContent = 'Войти';
     }
-}
+});
 
 document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
