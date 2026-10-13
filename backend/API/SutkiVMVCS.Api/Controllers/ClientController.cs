@@ -37,7 +37,7 @@ public class ClientsController : ControllerBase
         var matched = allClients
             .Where(c => c.FullName.Contains(q, StringComparison.CurrentCultureIgnoreCase)
                      || c.PhoneNumber.Contains(q)
-                     || c.Email.Contains(q, StringComparison.CurrentCultureIgnoreCase))
+                     || c.Email == null ? false : c.Email.Contains(q, StringComparison.CurrentCultureIgnoreCase))
             .Take(20);
 
         return Ok(matched.Select(ToDto));
@@ -81,7 +81,9 @@ public class ClientsController : ControllerBase
         client.AdminTag = updated.AdminTag;
         client.AdminNote = updated.AdminNote;
         client.InBlackList = updated.InBlackList;
-        client.User.Email = updated.Email;
+        if (client.UserId !=  null) {
+            var user = (await _context.Users.ToListAsync()).Find(u => u.Id == client.UserId);
+        }
         await _context.SaveChangesAsync(ct);
         return NoContent();
     }
