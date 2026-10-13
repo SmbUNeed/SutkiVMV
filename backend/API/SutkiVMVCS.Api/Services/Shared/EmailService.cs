@@ -1,6 +1,6 @@
 using Resend;
 
-namespace SutkiVMV.Services;
+namespace SutkiVMVCS.Services.Shared;
 
 public interface IEmailService
 {

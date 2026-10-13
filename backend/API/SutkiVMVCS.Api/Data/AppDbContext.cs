@@ -61,7 +61,7 @@ public class AppDbContext : DbContext
 
             entity.Property(c => c.PhoneNumber)
                 .HasConversion(v => _encryptor.Encrypt(v), v => _encryptor.Decrypt(v));
-
+#pragma warning disable
             entity.Property(c => c.Email)
                 .HasConversion(v => _encryptor.Encrypt(v), v => _encryptor.Decrypt(v));
         });

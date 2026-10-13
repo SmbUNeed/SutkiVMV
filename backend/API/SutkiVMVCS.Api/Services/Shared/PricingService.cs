@@ -1,23 +1,23 @@
 ﻿using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
 
-namespace SutkiVMVCS.Services
+namespace SutkiVMVCS.Services.Shared
 {
     public static class PricingService
     {
         public static decimal CalculateTotal(
-            IDetailedBooking dto, Apartment apartment, List<PriceRule> rules)
+            DateTime startDate, DateTime endDate, int guests, Apartment apartment, List<PriceRule> rules)
         {
             decimal additional = 0;
-            DateTime sd = dto.StartDate;
-            DateTime ed = dto.EndDate;
+            DateTime sd = startDate;
+            DateTime ed = endDate;
 
             int nights = (ed.Date - sd.Date).Days;
             if (sd.Hour <= 7) nights += 1;
             else if (sd.Hour <= 11) additional += apartment.PricePerNight / 2;
             if (ed.Hour > 12) additional += (ed.Hour - 12) * (apartment.HourOverpayment == 0 ? 400 : apartment.HourOverpayment);
 
-            int overguest = dto.Guests - apartment.Guests;
+            int overguest = guests - apartment.Guests;
 
             if (overguest > 0) additional += overguest * (apartment.GuestOverpayment > 0 ? apartment.GuestOverpayment : 700);
 

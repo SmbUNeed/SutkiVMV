@@ -1,6 +1,6 @@
 ﻿using SkiaSharp;
 
-namespace SutkiVMVCS.Services
+namespace SutkiVMVCS.Services.Shared
 {
     public static class ImageHelper
     {

@@ -5,9 +5,8 @@ using Microsoft.IdentityModel.Tokens;
 using SutkiVMV.Data;
 using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
-using SutkiVMV.Services;
 using SutkiVMVCS.Api.Services.Security;
-using SutkiVMVCS.Services;
+using SutkiVMVCS.Services.Shared;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -240,7 +239,7 @@ public class AuthController : ControllerBase
     // ──────────────────────────────────────────────────
     [HttpPost("book")]
     [Authorize]
-    public async Task<ActionResult> Book(UserCreateBookingDto dto, CancellationToken ct)
+    public async Task<ActionResult> Book(UserCreateBookingDto dto, BookingService bookingService, CancellationToken ct)
     {
         if (dto.StartDate >= dto.EndDate)
             return BadRequest(new { message = "Дата заезда должна быть раньше даты выезда" });
@@ -254,36 +253,9 @@ public class AuthController : ControllerBase
         if (apartment == null || !apartment.IsActive || apartment.IsDeleted)
             return NotFound(new { message = "Квартира не найдена или недоступна" });
 
-        bool overlap = await _context.Bookings.AnyAsync(b =>
-            b.ApartmentId == dto.ApartmentId &&
-            b.Status      != "Cancelled" &&
-            b.StartDate.ToUniversalTime() < dto.EndDate.ToUniversalTime() &&
-            b.EndDate.ToUniversalTime() > dto.StartDate.ToUniversalTime(), ct);
-
-        bool externalOverlap = await _context.ExternalBookings.AnyAsync(e =>
-            e.ApartmentId == dto.ApartmentId &&
-            e.StartDate < dto.EndDate.ToUniversalTime() &&
-            e.EndDate > dto.StartDate.ToUniversalTime(), ct);
-
-        if (overlap || externalOverlap) return Conflict(new { message = "Квартира занята в выбранные даты" });
-
-        var rules = await _context.PriceRules.ToListAsync(ct);
-        decimal total = PricingService.CalculateTotal(dto, apartment, rules);
-
-        var booking = new Booking
-        {
-            ApartmentId = dto.ApartmentId,
-            ClientId    = client.Id,
-            Guests      = dto.Guests,
-            StartDate   = dto.StartDate.ToUniversalTime(),
-            EndDate     = dto.EndDate.ToUniversalTime(),
-            TotalPrice  = total,
-            Status      = "Pending",
-            Source      = "Site",
-            CreatedAt   = DateTime.UtcNow.ToUniversalTime()
-        };
-        _context.Bookings.Add(booking);
-        await _context.SaveChangesAsync(ct);
+        var (booking, error) = await bookingService.CreateAsync(
+            apartment, client.Id, dto.Guests, dto.StartDate, dto.EndDate, "Site", ct);
+        if (booking == null) return Conflict(new { message = error });
 
         try
         {

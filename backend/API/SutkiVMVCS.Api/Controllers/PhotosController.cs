@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SutkiVMV.Data;
 using SutkiVMV.Models;
-using SutkiVMVCS.Services;
+using SutkiVMVCS.Services.Shared;
 
 namespace SutkiVMV.Controllers;
 

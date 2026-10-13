@@ -3,7 +3,7 @@ using Microsoft.Extensions.Caching.Memory;
 using SutkiVMV.Data;
 using SutkiVMV.Models;
 
-namespace SutkiVMVCS.Services
+namespace SutkiVMVCS.Services.Shared
 {
     public class SettingsService
     {

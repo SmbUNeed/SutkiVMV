@@ -2,7 +2,7 @@
 using FirebaseAdmin.Messaging;
 using Google.Apis.Auth.OAuth2;
 
-namespace SutkiVMVCS.Services
+namespace SutkiVMVCS.Services.Shared
 {
     public class FcmService
     {

@@ -5,7 +5,7 @@ using Ical.Net.Serialization;
 using SutkiVMV.Data;
 using SutkiVMV.Models;
 using Microsoft.EntityFrameworkCore;
-using SutkiVMVCS.Services;
+using SutkiVMVCS.Services.Shared;
 
 namespace SutkiVMV.Services;
 

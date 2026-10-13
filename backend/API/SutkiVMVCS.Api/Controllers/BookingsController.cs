@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SutkiVMV.Data;
 using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
-using SutkiVMVCS.Services;
+using SutkiVMVCS.Services.Shared;
 
 namespace SutkiVMV.Controllers;
 
@@ -71,7 +71,7 @@ public class BookingsController : ControllerBase
     // POST /api/bookings — создание брони администратором
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<AdminBookingDto>> Create(CreateBookingDto dto, CancellationToken ct)
+    public async Task<ActionResult<AdminBookingDto>> Create(CreateBookingDto dto, BookingService bookingService, CancellationToken ct)
     {
         if (dto.StartDate >= dto.EndDate)
             return BadRequest(new { message = "Дата заезда должна быть раньше даты выезда" });
@@ -84,51 +84,11 @@ public class BookingsController : ControllerBase
         if (client == null)
             return NotFound(new { message = "Клиент не найден" });
 
-        bool overlap = await _context.Bookings.AnyAsync(b =>
-            b.ApartmentId == dto.ApartmentId &&
-            b.Status != "Cancelled" &&
-            b.StartDate < dto.EndDate.ToUniversalTime() &&
-            b.EndDate > dto.StartDate.ToUniversalTime(), ct);
+        var (booking, error) = await bookingService.CreateAsync(
+            apartment, dto.ClientId, dto.Guests, dto.StartDate, dto.EndDate, "Вручную", ct);
+        if (booking == null) return Conflict(new { message = error });
 
-        if (overlap)
-            return Conflict(new { message = "Квартира занята в выбранные даты" });
-
-        var rules = await _context.PriceRules.ToListAsync();
-        decimal total = PricingService.CalculateTotal(dto, apartment, rules);
-
-        var booking = new Booking
-        {
-            ApartmentId = dto.ApartmentId,
-            ClientId = dto.ClientId,
-            Guests = dto.Guests,
-            StartDate = dto.StartDate.ToUniversalTime(),
-            EndDate = dto.EndDate.ToUniversalTime(),
-            TotalPrice = total,
-            Status = "Pending",
-            Source = "Вручную",
-            CreatedAt = DateTime.UtcNow.ToUniversalTime()
-        };
-
-        _context.Bookings.Add(booking);
-        await _context.SaveChangesAsync(ct);
-
-        return Ok(new AdminBookingDto
-        {
-            Id = booking.Id,
-            ApartmentId = apartment.Id,
-            ApartmentTitle = string.IsNullOrEmpty(apartment.AdminTag) ? apartment.Title : apartment.AdminTag,
-            ClientId = client.Id,
-            ClientTag = client.AdminTag ?? "",
-            ClientName = client.FullName,
-            ClientPhone = client.PhoneNumber,
-            StartDate = booking.StartDate,
-            EndDate = booking.EndDate,
-            TotalPrice = booking.TotalPrice,
-            Status = booking.Status,
-            Source = booking.Source,
-            CreatedAt = booking.CreatedAt,
-            Guests = booking.Guests
-        });
+        return Ok();
     }
 
     // PATCH /api/bookings/{id}/status — изменить статус (confirm / cancel)

@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SutkiVMV.Data;
 using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
-using SutkiVMVCS.Services;
+using SutkiVMVCS.Services.Shared;
 
 namespace SutkiVMV.Controllers;
 

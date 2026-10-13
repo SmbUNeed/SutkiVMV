@@ -10,7 +10,7 @@ using SutkiVMV.Models;
 using SutkiVMV.Services;
 using SutkiVMVCS.Api.Services.Security;
 using SutkiVMVCS.Controllers;
-using SutkiVMVCS.Services;
+using SutkiVMVCS.Services.Shared;
 using SutkiVMVCS.Services.YooKassa;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -149,6 +149,12 @@ builder.Services.AddScoped<ICalService>();
 builder.Services.AddHostedService<ICalSyncService>();
 
 builder.Services.AddHttpClient<IYooKassaService, YooKassaService>();
+
+// ═══════════════════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════════════════
+
+builder.Services.AddSingleton<BookingService>();
 
 // ═══════════════════════════════════════════════════════════════════════
 //  CORS

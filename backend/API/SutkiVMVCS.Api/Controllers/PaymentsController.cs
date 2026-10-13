@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SutkiVMV.Data;
 using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
-using SutkiVMVCS.Services;
+using SutkiVMVCS.Services.Shared;
 using SutkiVMVCS.Services.YooKassa;
 using System.Text.Json;
 using Telegram.Bot.Requests.Abstractions;
@@ -104,14 +104,7 @@ public class PaymentsController : ControllerBase
         }
 
         var rules = await _context.PriceRules.ToListAsync(ct);
-        decimal total = PricingService.CalculateTotal(
-            new UserCreateBookingDto
-            {
-                ApartmentId = dto.ApartmentId, 
-                StartDate = dto.StartDate, 
-                EndDate = dto.EndDate,
-                Guests = dto.Guests,
-            }, apartment, rules);
+        decimal total = PricingService.CalculateTotal(dto.StartDate, dto.EndDate, dto.Guests, apartment, rules);
 
         var booking = new Booking {
             ApartmentId = dto.ApartmentId,

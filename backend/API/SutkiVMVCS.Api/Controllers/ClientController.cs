@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SutkiVMV.Data;
 using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
-using SutkiVMVCS.Services;
+using SutkiVMVCS.Services.Shared;
 
 namespace SutkiVMV.Controllers;
 
@@ -83,7 +83,8 @@ public class ClientsController : ControllerBase
         client.InBlackList = updated.InBlackList;
         if (client.UserId !=  null) {
             var user = (await _context.Users.ToListAsync()).Find(u => u.Id == client.UserId);
-            user!.Email = updated.Email;
+#pragma warning disable
+            user.Email = updated.Email;
         }
         await _context.SaveChangesAsync(ct);
         return NoContent();
@@ -95,6 +96,12 @@ public class ClientsController : ControllerBase
     {
         var client = await _context.Clients.FindAsync(id);
         if (client == null) return NotFound();
+
+        if (client.UserId != null) {
+            var user = (await _context.Users.ToListAsync()).Find(u => u.Id == client.UserId);
+            if (user != null) _context.Users.Remove(user);
+        }
+
         _context.Clients.Remove(client);
         await _context.SaveChangesAsync(ct);
         return NoContent();
