@@ -83,6 +83,7 @@ public class ClientsController : ControllerBase
         client.InBlackList = updated.InBlackList;
         if (client.UserId !=  null) {
             var user = (await _context.Users.ToListAsync()).Find(u => u.Id == client.UserId);
+            user!.Email = updated.Email;
         }
         await _context.SaveChangesAsync(ct);
         return NoContent();
