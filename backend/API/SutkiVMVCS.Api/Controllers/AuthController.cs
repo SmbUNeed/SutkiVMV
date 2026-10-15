@@ -82,7 +82,8 @@ public class AuthController : ControllerBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[EMAIL ERROR] {ex.Message}");
+            Console.WriteLine($"[EMAIL ERROR] {ex}");
+            return StatusCode(502, new { message = "Не удалось отправить письмо, попробуйте ещё раз." });
         }
 
         return Ok(new { message = "Проверьте почту — мы отправили письмо для подтверждения." });

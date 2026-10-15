@@ -76,7 +76,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
                 var last = json?["marker"]?.GetValue<long>();
                 if (last.HasValue) marker = last.Value;
             }
-            catch (TaskCanceledException) { break; }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested) { break; }
             catch (Exception ex) { Log($"Polling error: {ex.Message}"); await Task.Delay(5000, ct); }
         }
     }

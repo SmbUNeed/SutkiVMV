@@ -154,7 +154,7 @@ builder.Services.AddHttpClient<IYooKassaService, YooKassaService>();
 //  HELPERS
 // ═══════════════════════════════════════════════════════════════════════
 
-builder.Services.AddSingleton<BookingService>();
+builder.Services.AddScoped<BookingService>();
 
 // ═══════════════════════════════════════════════════════════════════════
 //  CORS
