@@ -12,9 +12,10 @@ namespace SutkiVMVCS.Services.Shared
         public BookingService(AppDbContext context) { 
             _context = context;
         }
-        
+
         public async Task<(Booking? Booking, string? Error)> CreateAsync(Apartment apartment, int clientId, int guests,
-                                                                        DateTime start, DateTime end, string source, CancellationToken ct, string status = "Pending") {
+    DateTime start, DateTime end, string source, CancellationToken ct, string status = "Pending")
+        {
             var s = start.ToUniversalTime();
             var e = end.ToUniversalTime();
 
@@ -29,6 +30,35 @@ namespace SutkiVMVCS.Services.Shared
 
             var rules = await _context.PriceRules.ToListAsync(ct);
 
+            // Соседние брони: одна заканчивается ровно в начале новой, другая начинается ровно в конце новой
+            var before = await _context.Bookings.FirstOrDefaultAsync(b =>
+                b.ApartmentId == apartment.Id && b.ClientId == clientId &&
+                b.Guests == guests && b.Status == status &&
+                b.EndDate == s, ct);
+
+            var after = await _context.Bookings.FirstOrDefaultAsync(b =>
+                b.ApartmentId == apartment.Id && b.ClientId == clientId &&
+                b.Guests == guests && b.Status == status &&
+                b.StartDate == e, ct);
+
+            if (before != null || after != null)
+            {
+                // Оставляем более раннюю бронь, вторую (если есть) удаляем
+                var target = before ?? after!;
+                var mergedStart = before?.StartDate ?? s;
+                var mergedEnd = after?.EndDate ?? e;
+
+                target.StartDate = mergedStart;
+                target.EndDate = mergedEnd;
+                target.TotalPrice = PricingService.CalculateTotal(mergedStart, mergedEnd, guests, apartment, rules);
+
+                if (before != null && after != null)
+                    _context.Bookings.Remove(after);
+
+                await _context.SaveChangesAsync(ct); // одна транзакция: update + delete
+                return (target, null);
+            }
+
             var booking = new Booking
             {
                 ApartmentId = apartment.Id,
@@ -37,7 +67,7 @@ namespace SutkiVMVCS.Services.Shared
                 StartDate = s,
                 EndDate = e,
                 TotalPrice = PricingService.CalculateTotal(s, e, guests, apartment, rules),
-                Status = "Pending",
+                Status = status,   // было "Pending", параметр status игнорировался
                 Source = source,
                 CreatedAt = DateTime.UtcNow
             };
