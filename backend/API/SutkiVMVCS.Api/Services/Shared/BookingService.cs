@@ -14,7 +14,7 @@ namespace SutkiVMVCS.Services.Shared
         }
         
         public async Task<(Booking? Booking, string? Error)> CreateAsync(Apartment apartment, int clientId, int guests,
-                                                                        DateTime start, DateTime end, string source, CancellationToken ct) {
+                                                                        DateTime start, DateTime end, string source, CancellationToken ct, string status = "Pending") {
             var s = start.ToUniversalTime();
             var e = end.ToUniversalTime();
 

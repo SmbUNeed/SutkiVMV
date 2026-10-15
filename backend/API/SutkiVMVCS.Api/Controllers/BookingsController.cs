@@ -85,7 +85,7 @@ public class BookingsController : ControllerBase
             return NotFound(new { message = "Клиент не найден" });
 
         var (booking, error) = await bookingService.CreateAsync(
-            apartment, dto.ClientId, dto.Guests, dto.StartDate, dto.EndDate, "Вручную", ct);
+            apartment, dto.ClientId, dto.Guests, dto.StartDate, dto.EndDate, "Вручную", ct, "Confirmed");
         if (booking == null) return Conflict(new { message = error });
 
         return Ok();
