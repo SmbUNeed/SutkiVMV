@@ -187,12 +187,17 @@ public class WikiPlacesController : ControllerBase
         if (!AllowedExtensions.Contains(ext))
             return BadRequest(new { message = "Недопустимый формат файла" });
 
-        // Удаляем старое фото если есть
         if (!string.IsNullOrEmpty(place.PhotoPath))
         {
-            var relPath = place.PhotoPath.TrimStart('/').Substring("wiki_places/".Length);
-            var diskPath = Path.Combine(_uploadRoot, relPath);
-            if (System.IO.File.Exists(diskPath)) System.IO.File.Delete(diskPath);
+            const string prefix = "/wiki_places/";
+            if (place.PhotoPath.StartsWith(prefix, StringComparison.Ordinal))
+            {
+                var relPath = place.PhotoPath.Substring(prefix.Length);
+                var root = Path.GetFullPath(_uploadRoot) + Path.DirectorySeparatorChar;
+                var diskPath = Path.GetFullPath(Path.Combine(_uploadRoot, relPath));
+                if (diskPath.StartsWith(root, StringComparison.Ordinal) && System.IO.File.Exists(diskPath))
+                    System.IO.File.Delete(diskPath);
+            }
         }
 
         // Сохраняем новое фото в /uploads/wiki/{id}/
