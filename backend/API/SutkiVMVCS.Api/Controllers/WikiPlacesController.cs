@@ -220,16 +220,23 @@ public class WikiPlacesController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult> DeletePhoto(int id, CancellationToken ct)
     {
-        var place = await _context.WikiPlaces.FindAsync(id, ct);
+        var place = await _context.WikiPlaces.FindAsync(new object[] { id }, ct);
         if (place == null) return NotFound();
         if (string.IsNullOrEmpty(place.PhotoPath)) return NoContent();
 
-        var relPath = place.PhotoPath.TrimStart('/').Substring("uploads/wiki/".Length);
-        var diskPath = Path.Combine(_uploadRoot, relPath);
-        if (System.IO.File.Exists(diskPath)) System.IO.File.Delete(diskPath);
-
+        var oldPath = place.PhotoPath;
         place.PhotoPath = "";
         await _context.SaveChangesAsync(ct);
+
+        const string prefix = "/wiki_places/";
+        if (oldPath.StartsWith(prefix, StringComparison.Ordinal))
+        {
+            var root = Path.GetFullPath(_uploadRoot) + Path.DirectorySeparatorChar;
+            var diskPath = Path.GetFullPath(Path.Combine(_uploadRoot, oldPath.Substring(prefix.Length)));
+            if (diskPath.StartsWith(root, StringComparison.Ordinal) && System.IO.File.Exists(diskPath))
+                System.IO.File.Delete(diskPath);
+        }
+
         return NoContent();
     }
 
