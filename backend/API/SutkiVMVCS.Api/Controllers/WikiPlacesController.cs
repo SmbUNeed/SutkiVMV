@@ -155,7 +155,14 @@ public class WikiPlacesController : ControllerBase
     public async Task<ActionResult> Delete(int id, CancellationToken ct)
     {
         var place = await _context.WikiPlaces.FindAsync(id, ct);
-        if (place == null) return NotFound();
+        if (place == null)
+        {
+            var oldPath = place.PhotoPath;
+            _context.WikiPlaces.Remove(place);
+            await _context.SaveChangesAsync(ct);
+            TryDeleteFile(oldPath);
+            return NoContent(); ;
+        }
 
         // Удаляем фото с диска если есть
         if (!string.IsNullOrEmpty(place.PhotoPath))
@@ -228,16 +235,18 @@ public class WikiPlacesController : ControllerBase
         place.PhotoPath = "";
         await _context.SaveChangesAsync(ct);
 
-        const string prefix = "/wiki_places/";
-        if (oldPath.StartsWith(prefix, StringComparison.Ordinal))
-        {
-            var root = Path.GetFullPath(_uploadRoot) + Path.DirectorySeparatorChar;
-            var diskPath = Path.GetFullPath(Path.Combine(_uploadRoot, oldPath.Substring(prefix.Length)));
-            if (diskPath.StartsWith(root, StringComparison.Ordinal) && System.IO.File.Exists(diskPath))
-                System.IO.File.Delete(diskPath);
-        }
-
+        TryDeleteFile(oldPath);
         return NoContent();
+    }
+
+    private void TryDeleteFile(string? photoPath)
+    {
+        const string prefix = "/wiki_places/";
+        if (string.IsNullOrEmpty(photoPath) || !photoPath.StartsWith(prefix, StringComparison.Ordinal)) return;
+        var root = Path.GetFullPath(_uploadRoot) + Path.DirectorySeparatorChar;
+        var diskPath = Path.GetFullPath(Path.Combine(_uploadRoot, photoPath.Substring(prefix.Length)));
+        if (diskPath.StartsWith(root, StringComparison.Ordinal) && System.IO.File.Exists(diskPath))
+            System.IO.File.Delete(diskPath);
     }
 
     // ═══════════════════════════════════════════════════════════════════
