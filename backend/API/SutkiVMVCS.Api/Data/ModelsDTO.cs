@@ -233,6 +233,10 @@ public class AdminBookingDto : IDetailedBooking
     public int      Nights         => (EndDate - StartDate).Days;
     public string   Source         { get; set; } = "Вручную";
     public int Guests { get; set; }
+    public decimal BasePrice { get; set; }
+    public decimal DiscountAmount { get; set; }
+    public decimal PrepaymentAmount { get; set; }
+    public decimal PaidAmount { get; set; }
 }
 public class UserCreateBookingDto : IDetailedBooking
 {
