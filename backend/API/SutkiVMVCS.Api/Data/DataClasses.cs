@@ -13,7 +13,6 @@ public class Apartment
     public int     Guests        { get; set; }
     public decimal GuestOverpayment { get; set; }
     public decimal PricePerNight { get; set; }
-    public decimal HourOverpayment { get; set; } = 100;
     public int     RoomsCount    { get; set; }
     public decimal Area          { get; set; }
     public bool    IsActive      { get; set; }
