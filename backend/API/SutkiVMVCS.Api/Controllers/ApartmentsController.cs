@@ -62,6 +62,7 @@ public class ApartmentsController : ControllerBase
             .Include(a => a.Bookings)
             .Include(a => a.ExternalBookings)
             .AsNoTracking()
+            .AsSplitQuery()
             .FirstOrDefaultAsync(a => a.Id == id);
 
         if (apt == null) return NotFound();
