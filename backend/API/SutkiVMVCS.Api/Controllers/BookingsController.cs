@@ -76,11 +76,11 @@ public class BookingsController : ControllerBase
         if (dto.StartDate >= dto.EndDate)
             return BadRequest(new { message = "Дата заезда должна быть раньше даты выезда" });
 
-        var apartment = await _context.Apartments.FindAsync(dto.ApartmentId, ct);
+        var apartment = await _context.Apartments.FindAsync(new object[] { dto.ApartmentId }, ct);
         if (apartment == null || apartment.IsDeleted)
             return NotFound(new { message = "Квартира не найдена" });
 
-        var client = await _context.Clients.FindAsync(dto.ClientId, ct);
+        var client = await _context.Clients.FindAsync(new object[] { dto.ClientId }, ct);
         if (client == null)
             return NotFound(new { message = "Клиент не найден" });
 
@@ -163,14 +163,42 @@ public class BookingsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult> Update(int id, [FromBody] CreateBookingDto dto, CancellationToken ct)
     {
-        var booking = await _context.Bookings.FindAsync(id, ct);
+        var booking = await _context.Bookings.FindAsync(new object[] { id }, ct);
         if (booking == null) return NotFound();
+
+        var apartment = await _context.Apartments.FindAsync(new object[] { dto.ApartmentId }, ct);
+        if (apartment == null) return BadRequest("Квартира не найдена");
+
+        var s = dto.StartDate.ToUniversalTime();
+        var e = dto.EndDate.ToUniversalTime();
+
+        if (dto.StartDate >= dto.EndDate) return BadRequest("Дата заезда должна быть раньше даты выезда");
+
+        bool busy =
+            await _context.Bookings.AnyAsync(b =>
+                b.Id != id && b.ApartmentId == dto.ApartmentId && b.Status != "Cancelled" &&
+                b.StartDate < e && b.EndDate > s, ct) ||
+            await _context.ExternalBookings.AnyAsync(x =>
+                x.ApartmentId == dto.ApartmentId && x.StartDate < e && x.EndDate > s, ct);
+        if (busy) return Conflict("Квартира занята в выбранные даты");
+
+        var rules = await _context.PriceRules.ToListAsync(ct);
+        var basePrice = PricingService.CalculateTotal(s, e, dto.Guests, apartment, rules);
+        var total = dto.AdminPrice ?? (booking.DiscountAmount > 0 ? Math.Max(basePrice - booking.DiscountAmount, 0) : basePrice);
+
+        if (total < 0 || total > basePrice) return BadRequest("Некорректная цена");
+        if (booking.PaidAmount > 0 && total != booking.TotalPrice) return BadRequest("Бронь уже оплачена");
 
         booking.ApartmentId = dto.ApartmentId;
         booking.ClientId = dto.ClientId;
-        booking.StartDate = dto.StartDate;
-        booking.EndDate = dto.EndDate;
+        booking.StartDate = s;
+        booking.EndDate = e;
         booking.Guests = dto.Guests;
+        booking.BasePrice = basePrice;
+        booking.TotalPrice = total;
+        booking.DiscountAmount = basePrice - total;
+        booking.PrepaymentAmount = PricingService.CalculatePrepayment(s, dto.Guests, apartment, rules, basePrice, total);
+        if (booking.DiscountAmount > 0 && booking.Status == "Pending") booking.Status = "AwaitingPayment";
 
         await _context.SaveChangesAsync(ct);
         return NoContent();

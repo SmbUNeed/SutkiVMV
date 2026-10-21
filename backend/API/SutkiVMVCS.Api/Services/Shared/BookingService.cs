@@ -66,6 +66,8 @@ namespace SutkiVMVCS.Services.Shared
             var total = price ?? basePrice;
             var discount = basePrice - total;
 
+            if (price < 0 || price > basePrice) return (null, "Некорректная цена");
+
             var booking = new Booking
             {
                 ApartmentId = apartment.Id,
