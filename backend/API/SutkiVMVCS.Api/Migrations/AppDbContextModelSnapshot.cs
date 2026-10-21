@@ -183,11 +183,26 @@ namespace SutkiVMVCS.Migrations
                     b.Property<int>("ApartmentId")
                         .HasColumnType("integer");
 
+                    b.Property<decimal>("BasePrice")
+                        .HasColumnType("numeric");
+
                     b.Property<int>("ClientId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("DiscountAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime?>("DiscountAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("DiscountByAdminId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DiscountReason")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("timestamp with time zone");
@@ -195,11 +210,17 @@ namespace SutkiVMVCS.Migrations
                     b.Property<int>("Guests")
                         .HasColumnType("integer");
 
+                    b.Property<decimal>("PaidAmount")
+                        .HasColumnType("numeric");
+
                     b.Property<DateTime?>("PaidAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PaymentId")
                         .HasColumnType("text");
+
+                    b.Property<decimal>("PrepaymentAmount")
+                        .HasColumnType("numeric");
 
                     b.Property<string>("Source")
                         .IsRequired()
