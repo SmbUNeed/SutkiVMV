@@ -196,6 +196,7 @@ public class CreateBookingDto : IDetailedBooking
     public DateTime StartDate   { get; set; }
     public DateTime EndDate     { get; set; }
     public int      Guests      { get; set; }
+    public decimal? AdminPrice  { get; set; }
 }
 public class ChangeStatusDto
 {

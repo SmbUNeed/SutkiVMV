@@ -14,7 +14,7 @@ namespace SutkiVMVCS.Services.Shared
         }
 
         public async Task<(Booking? Booking, string? Error)> CreateAsync(Apartment apartment, int clientId, int guests,
-    DateTime start, DateTime end, string source, CancellationToken ct, string status = "Pending")
+    DateTime start, DateTime end, string source, CancellationToken ct, string status = "Pending", decimal? price = null)
         {
             var s = start.ToUniversalTime();
             var e = end.ToUniversalTime();
@@ -30,16 +30,19 @@ namespace SutkiVMVCS.Services.Shared
 
             var rules = await _context.PriceRules.ToListAsync(ct);
 
-            // Соседние брони: одна заканчивается ровно в начале новой, другая начинается ровно в конце новой
-            var before = await _context.Bookings.FirstOrDefaultAsync(b =>
-                b.ApartmentId == apartment.Id && b.ClientId == clientId &&
-                b.Guests == guests && b.Status == status &&
-                b.EndDate == s, ct);
+            Booking? before = null, after = null;
+            if (price == null)
+            {
+                before = await _context.Bookings.FirstOrDefaultAsync(b =>
+                    b.ApartmentId == apartment.Id && b.ClientId == clientId &&
+                    b.Guests == guests && b.Status == status &&
+                    b.EndDate == s, ct);
 
-            var after = await _context.Bookings.FirstOrDefaultAsync(b =>
-                b.ApartmentId == apartment.Id && b.ClientId == clientId &&
-                b.Guests == guests && b.Status == status &&
-                b.StartDate == e, ct);
+                after = await _context.Bookings.FirstOrDefaultAsync(b =>
+                    b.ApartmentId == apartment.Id && b.ClientId == clientId &&
+                    b.Guests == guests && b.Status == status &&
+                    b.StartDate == e, ct);
+            }
 
             if (before != null || after != null)
             {
@@ -55,9 +58,13 @@ namespace SutkiVMVCS.Services.Shared
                 if (before != null && after != null)
                     _context.Bookings.Remove(after);
 
-                await _context.SaveChangesAsync(ct); // одна транзакция: update + delete
+                await _context.SaveChangesAsync(ct);
                 return (target, null);
             }
+
+            var basePrice = PricingService.CalculateTotal(s, e, guests, apartment, rules);
+            var total = price ?? basePrice;
+            var discount = basePrice - total;
 
             var booking = new Booking
             {
@@ -66,10 +73,13 @@ namespace SutkiVMVCS.Services.Shared
                 Guests = guests,
                 StartDate = s,
                 EndDate = e,
-                TotalPrice = PricingService.CalculateTotal(s, e, guests, apartment, rules),
                 Status = status,   // было "Pending", параметр status игнорировался
                 Source = source,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                BasePrice = basePrice,
+                TotalPrice = total,
+                DiscountAmount = discount,
+                PrepaymentAmount = PricingService.CalculatePrepayment(s, guests, apartment, rules, basePrice, total),
             };
 
             _context.Bookings.Add(booking);

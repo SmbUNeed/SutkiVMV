@@ -85,10 +85,32 @@ public class BookingsController : ControllerBase
             return NotFound(new { message = "Клиент не найден" });
 
         var (booking, error) = await bookingService.CreateAsync(
-            apartment, dto.ClientId, dto.Guests, dto.StartDate, dto.EndDate, "Вручную", ct, "Confirmed");
+            apartment, dto.ClientId, dto.Guests, dto.StartDate, dto.EndDate, "Вручную", ct, "Confirmed", price: dto.AdminPrice);
         if (booking == null) return Conflict(new { message = error });
 
         return Ok();
+    }
+
+    [HttpPatch]
+    [Authorize(Roles = "Admin")]
+    public async Task<string?> SetDiscountAsync(int bookingId, int adminId, decimal discount, string? reason, CancellationToken ct)
+    {
+        var b = await _context.Bookings.Include(x => x.Apartment).FirstOrDefaultAsync(x => x.Id == bookingId, ct);
+        if (b == null) return "Бронь не найдена";
+        if (b.PaidAmount > 0) return "Бронь уже оплачена";
+        if (discount < 0 || discount > b.BasePrice) return "Некорректная скидка";
+
+        var rules = await _context.PriceRules.ToListAsync(ct);
+        b.DiscountAmount = discount;
+        b.DiscountReason = reason;
+        b.DiscountByAdminId = adminId;
+        b.DiscountAt = DateTime.UtcNow;
+        b.TotalPrice = b.BasePrice - discount;
+        b.PrepaymentAmount = PricingService.CalculatePrepayment(b.StartDate, b.Guests, b.Apartment, rules, b.BasePrice, b.TotalPrice);
+        if (b.Status == "Pending") b.Status = "AwaitingPayment";
+
+        await _context.SaveChangesAsync(ct);
+        return null;
     }
 
     // PATCH /api/bookings/{id}/status — изменить статус (confirm / cancel)

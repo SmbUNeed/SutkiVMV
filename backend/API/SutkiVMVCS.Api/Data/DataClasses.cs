@@ -48,9 +48,6 @@ public class Booking
     public DateTime StartDate   { get; set; }
     public DateTime EndDate     { get; set; }
 
-    [Precision(18, 2)]
-    public decimal  TotalPrice  { get; set; }
-
     public string   Status    { get; set; } = "";
     public DateTime CreatedAt { get; set; }
 
@@ -60,6 +57,15 @@ public class Booking
 
     public string? PaymentId { get; set; }
     public DateTime? PaidAt { get; set; }
+    [Precision(18, 2)]
+    public decimal TotalPrice { get; set; }
+    public decimal BasePrice { get; set; }
+    public decimal DiscountAmount { get; set; }
+    public string? DiscountReason { get; set; }
+    public int? DiscountByAdminId { get; set; }
+    public DateTime? DiscountAt { get; set; }
+    public decimal PrepaymentAmount { get; set; }
+    public decimal PaidAmount { get; set; }
 }
 
 // Глобальное место рядом

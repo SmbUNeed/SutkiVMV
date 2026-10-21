@@ -63,5 +63,12 @@ namespace SutkiVMVCS.Services.Shared
             if (endThisYear < start) endThisYear = endThisYear.AddYears(1);
             return date >= start && date <= endThisYear;
         }
+
+        public static decimal CalculatePrepayment(DateTime start, int guests, Apartment apt,
+            List<PriceRule> rules, decimal basePrice, decimal total)
+        {
+            var firstNight = CalculateTotal(start, start.AddDays(1), guests, apt, rules);
+            return basePrice == 0 ? 0 : Math.Round(firstNight * total / basePrice, 2);
+        }
     }
 }
