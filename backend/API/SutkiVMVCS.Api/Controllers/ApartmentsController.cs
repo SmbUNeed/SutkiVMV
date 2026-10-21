@@ -231,7 +231,6 @@ public class ApartmentsController : ControllerBase
         apt.Address = updated.Address;
         apt.Description = updated.Description;
         apt.PricePerNight = updated.PricePerNight;
-        apt.HourOverpayment = updated.HourOverpayment;
         apt.RoomsCount = updated.RoomsCount;
         apt.Guests = updated.Guests;
         apt.GuestOverpayment = updated.GuestOverpayment;
@@ -460,7 +459,6 @@ public class ApartmentsController : ControllerBase
         Guests = a.Guests,
         GuestOverpayment = a.GuestOverpayment,
         PricePerNight = a.PricePerNight,
-        HourOverpayment = a.HourOverpayment,
         RoomsCount = a.RoomsCount,
         Area = a.Area,
         IsActive = a.IsActive,
@@ -500,7 +498,6 @@ public class ApartmentsController : ControllerBase
         Guests = a.Guests,
         GuestOverpayment = a.GuestOverpayment,
         PricePerNight = a.PricePerNight,
-        HourOverpayment = a.HourOverpayment,
         RoomsCount = a.RoomsCount,
         Area = a.Area,
         IsActive = a.IsActive,

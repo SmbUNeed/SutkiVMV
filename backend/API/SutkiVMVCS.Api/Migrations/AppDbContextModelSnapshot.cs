@@ -72,9 +72,6 @@ namespace SutkiVMVCS.Migrations
                     b.Property<int>("Guests")
                         .HasColumnType("integer");
 
-                    b.Property<decimal>("HourOverpayment")
-                        .HasColumnType("numeric");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
