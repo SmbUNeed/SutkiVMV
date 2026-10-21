@@ -13,9 +13,6 @@ namespace SutkiVMVCS.Services.Shared
             DateTime ed = endDate;
 
             int nights = (ed.Date - sd.Date).Days;
-            if (sd.Hour <= 7) nights += 1;
-            else if (sd.Hour <= 11) additional += apartment.PricePerNight / 2;
-            if (ed.Hour > 12) additional += (ed.Hour - 12) * (apartment.HourOverpayment == 0 ? 400 : apartment.HourOverpayment);
 
             int overguest = guests - apartment.Guests;
 
