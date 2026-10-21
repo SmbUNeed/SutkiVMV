@@ -29,16 +29,16 @@ public class PhotosController : ControllerBase
         [FromForm] IFormFileCollection files,
         [FromForm] int mainPhotoIndex = 0)
     {
-        var apartment = await _context.Apartments.FindAsync(aptId);
+        var apartment = await _context.Apartments.FindAsync(new object[] { aptId }, ct);
         if (apartment == null) return NotFound(new { message = "Квартира не найдена" });
         if (!files.Any()) return BadRequest(new { message = "Файлы не переданы" });
 
-        // data/uploads/{aptId}/
         var aptDir = Path.Combine(_uploadRoot, aptId.ToString());
         Directory.CreateDirectory(aptDir);
 
-        bool hasExisting = await _context.ApartmentGallery.AnyAsync(g => g.ApartmentId == aptId);
-        int saved = 0;
+        bool hasExisting = await _context.ApartmentGallery.AnyAsync(g => g.ApartmentId == aptId, ct);
+        int mainIndex = mainPhotoIndex >= 0 ? mainPhotoIndex : (hasExisting ? -1 : 0);
+        var added = new List<ApartmentGallery>();
 
         for (int i = 0; i < files.Count; i++)
         {
@@ -48,36 +48,33 @@ public class PhotosController : ControllerBase
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (!AllowedExtensions.Contains(ext)) continue;
 
-            var fileName = await ImageHelper.SaveAsWebp(file.OpenReadStream(), aptDir);
+            await using var stream = file.OpenReadStream();
+            var fileName = await ImageHelper.SaveAsWebp(stream, aptDir);
 
-            // mainPhotoIndex == -1 → не менять главное при добавлении фото в редакторе
-            bool isMain = (!hasExisting && i == 0)
-                       || (mainPhotoIndex >= 0 && i == mainPhotoIndex);
-
-            if (isMain)
-            {
-                // Снимаем флаг со старого главного
-                await _context.ApartmentGallery
-                    .Where(g => g.ApartmentId == aptId && g.IsMain)
-                    .ExecuteUpdateAsync(s => s.SetProperty(g => g.IsMain, false));
-            }
-
-            _context.ApartmentGallery.Add(new ApartmentGallery
+            added.Add(new ApartmentGallery
             {
                 ApartmentId = aptId,
                 ImagePath = $"/uploads/{aptId}/{fileName}",
-                IsMain = isMain
+                IsMain = i == mainIndex
             });
-
-            hasExisting = true;
-            saved++;
         }
 
-        if (saved == 0)
+        if (added.Count == 0)
             return BadRequest(new { message = "Ни один файл не прошёл проверку типа" });
 
+        if (!hasExisting && !added.Any(p => p.IsMain))
+            added[0].IsMain = true;
+
+        if (added.Any(p => p.IsMain))
+        {
+            await _context.ApartmentGallery
+                .Where(g => g.ApartmentId == aptId && g.IsMain)
+                .ExecuteUpdateAsync(s => s.SetProperty(g => g.IsMain, false), ct);
+        }
+
+        _context.ApartmentGallery.AddRange(added);
         await _context.SaveChangesAsync(ct);
-        return Ok(new { message = $"Загружено фото: {saved}" });
+        return Ok(new { message = $"Загружено фото: {added.Count}" });
     }
 
     // DELETE api/apartments/{aptId}/photos/{photoId}
@@ -85,28 +82,35 @@ public class PhotosController : ControllerBase
     public async Task<ActionResult> Delete(int aptId, int photoId, CancellationToken ct)
     {
         var photo = await _context.ApartmentGallery
-            .FirstOrDefaultAsync(g => g.Id == photoId && g.ApartmentId == aptId);
+            .FirstOrDefaultAsync(g => g.Id == photoId && g.ApartmentId == aptId, ct);
         if (photo == null) return NotFound();
 
-        // Удаляем файл с диска
-        // ImagePath вида /uploads/{aptId}/{file}
-        var relPath = photo.ImagePath.TrimStart('/').Substring("uploads/".Length); // "{aptId}/{file}"
-        var diskPath = Path.Combine(_uploadRoot, relPath);
-        if (System.IO.File.Exists(diskPath)) System.IO.File.Delete(diskPath);
+        var oldPath = photo.ImagePath;
 
-        bool wasMain = photo.IsMain;
+        if (photo.IsMain)
+        {
+            var next = await _context.ApartmentGallery
+                .Where(g => g.ApartmentId == aptId && g.Id != photoId)
+                .OrderBy(g => g.Id)
+                .FirstOrDefaultAsync(ct);
+            if (next != null) next.IsMain = true;
+        }
+
         _context.ApartmentGallery.Remove(photo);
         await _context.SaveChangesAsync(ct);
 
-        // Назначаем следующее фото главным
-        if (wasMain)
-        {
-            var next = await _context.ApartmentGallery
-                .FirstOrDefaultAsync(g => g.ApartmentId == aptId);
-            if (next != null) { next.IsMain = true; await _context.SaveChangesAsync(ct); }
-        }
-
+        TryDeleteFile(oldPath);
         return NoContent();
+    }
+
+    private void TryDeleteFile(string? imagePath)
+    {
+        const string prefix = "/uploads/";
+        if (string.IsNullOrEmpty(imagePath) || !imagePath.StartsWith(prefix, StringComparison.Ordinal)) return;
+        var root = Path.GetFullPath(_uploadRoot) + Path.DirectorySeparatorChar;
+        var diskPath = Path.GetFullPath(Path.Combine(_uploadRoot, imagePath.Substring(prefix.Length)));
+        if (diskPath.StartsWith(root, StringComparison.Ordinal) && System.IO.File.Exists(diskPath))
+            System.IO.File.Delete(diskPath);
     }
 
     // PATCH api/apartments/{aptId}/photos/{photoId}/set-main
