@@ -49,20 +49,21 @@ namespace SutkiVMVCS.Services.Shared
         private static bool Matches(PriceRule r, DateOnly date)
         {
             var end = r.EndDate ?? r.StartDate;
+
             if (!r.IsRecurringYearly)
                 return date >= r.StartDate && date <= end;
 
-            bool wraps = (end.Month, end.Day).CompareTo((r.StartDate.Month, r.StartDate.Day)) < 0;
-            for (int y = date.Year - 1; y <= date.Year; y++)
-            {
-                var s = Safe(y, r.StartDate.Month, r.StartDate.Day);
-                var e = Safe(wraps ? y + 1 : y, end.Month, end.Day);
-                if (date >= s && date <= e) return true;
-            }
-            return false;
+            var start = new DateOnly(date.Year, r.StartDate.Month, r.StartDate.Day);
+            var endThisYear = new DateOnly(date.Year, end.Month, end.Day);
+            if (endThisYear < start) endThisYear = endThisYear.AddYears(1);
+            return date >= start && date <= endThisYear;
         }
 
-        private static DateOnly Safe(int y, int m, int d) =>
-            new(y, m, Math.Min(d, DateTime.DaysInMonth(y, m)));
+        public static decimal CalculatePrepayment(DateTime start, int guests, Apartment apt,
+            List<PriceRule> rules, decimal basePrice, decimal total)
+        {
+            var firstNight = CalculateTotal(start, start.AddDays(1), guests, apt, rules);
+            return basePrice == 0 ? 0 : Math.Round(firstNight * total / basePrice, 2);
+        }
     }
 }
