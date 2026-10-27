@@ -181,7 +181,8 @@ namespace SutkiVMVCS.Migrations
                         .HasColumnType("integer");
 
                     b.Property<decimal>("BasePrice")
-                        .HasColumnType("numeric");
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
 
                     b.Property<int>("ClientId")
                         .HasColumnType("integer");
@@ -190,7 +191,8 @@ namespace SutkiVMVCS.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal>("DiscountAmount")
-                        .HasColumnType("numeric");
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
 
                     b.Property<DateTime?>("DiscountAt")
                         .HasColumnType("timestamp with time zone");
@@ -208,7 +210,8 @@ namespace SutkiVMVCS.Migrations
                         .HasColumnType("integer");
 
                     b.Property<decimal>("PaidAmount")
-                        .HasColumnType("numeric");
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
 
                     b.Property<DateTime?>("PaidAt")
                         .HasColumnType("timestamp with time zone");
@@ -217,7 +220,8 @@ namespace SutkiVMVCS.Migrations
                         .HasColumnType("text");
 
                     b.Property<decimal>("PrepaymentAmount")
-                        .HasColumnType("numeric");
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
 
                     b.Property<string>("Source")
                         .IsRequired()
@@ -231,8 +235,8 @@ namespace SutkiVMVCS.Migrations
                         .HasColumnType("text");
 
                     b.Property<decimal>("TotalPrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("numeric(18,2)");
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
 
                     b.HasKey("Id");
 

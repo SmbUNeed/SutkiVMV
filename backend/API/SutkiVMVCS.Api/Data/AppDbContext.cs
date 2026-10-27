@@ -66,6 +66,20 @@ public class AppDbContext : DbContext
                 .HasConversion(v => _encryptor.Encrypt(v), v => _encryptor.Decrypt(v));
         });
 
+        modelBuilder.Entity<Booking>(entity =>
+        {
+            entity.Property(b => b.TotalPrice)
+               .HasPrecision(12, 2);
+            entity.Property(b => b.BasePrice)
+                .HasPrecision(12, 2);
+            entity.Property(b => b.DiscountAmount)
+               .HasPrecision(12, 2);
+            entity.Property(b => b.PrepaymentAmount)
+               .HasPrecision(12, 2);
+            entity.Property(b => b.PaidAmount)
+             .HasPrecision(12, 2);
+        });
+
         // ── Индексы для частых запросов ───────────────────────────────
         modelBuilder.Entity<Apartment>()
             .HasIndex(a => new { a.IsActive, a.IsDeleted });

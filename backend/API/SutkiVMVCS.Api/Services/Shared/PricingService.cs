@@ -63,7 +63,7 @@ namespace SutkiVMVCS.Services.Shared
             List<PriceRule> rules, decimal basePrice, decimal total)
         {
             var firstNight = CalculateTotal(start, start.AddDays(1), guests, apt, rules);
-            return basePrice == 0 ? 0 : Math.Round(firstNight * total / basePrice, 2);
+            return basePrice == 0 ? 0 : Math.Round(firstNight * total / basePrice, 2, MidpointRounding.AwayFromZero);
         }
     }
 }
