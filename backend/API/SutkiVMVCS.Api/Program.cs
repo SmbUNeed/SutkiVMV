@@ -129,26 +129,24 @@ builder.Services.AddSwaggerGen(c =>
 //  APP SERVICES
 // ═══════════════════════════════════════════════════════════════════════
 
-builder.Services.AddSingleton<FcmService>();
-
-builder.Services.AddMemoryCache();
-builder.Services.AddScoped<SettingsService>();
-
-builder.Services.AddHttpClient<ResendClient>();
-builder.Services.AddHttpClient<PaymentsController>();
 builder.Services.Configure<ResendClientOptions>(options =>
     options.ApiToken = builder.Configuration["Resend:ApiKey"]!);
-builder.Services.AddTransient<IResend, ResendClient>();
+
+builder.Services.AddHttpClient<IResend, ResendClient>();
+builder.Services.AddHttpClient<IYooKassaService, YooKassaService>();
+
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<ICalService>();
+builder.Services.AddScoped<SettingsService>();
+
+builder.Services.AddSingleton<FcmService>();
+builder.Services.AddMemoryCache();
 
 builder.Services.AddSingleton<MaxBotWorker>();
 builder.Services.AddSingleton<IMaxService>(sp => sp.GetRequiredService<MaxBotWorker>());
 builder.Services.AddHostedService(sp => sp.GetRequiredService<MaxBotWorker>());
 
-builder.Services.AddScoped<ICalService>();
 builder.Services.AddHostedService<ICalSyncService>();
-
-builder.Services.AddHttpClient<IYooKassaService, YooKassaService>();
 
 // ═══════════════════════════════════════════════════════════════════════
 //  HELPERS
