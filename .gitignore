@@ -499,4 +499,6 @@ gen/
 # Если используете Rider или другие инструменты JetBrains
 .idea/.idea.*/
 
+.aspnet/
+
 appsettings.json
