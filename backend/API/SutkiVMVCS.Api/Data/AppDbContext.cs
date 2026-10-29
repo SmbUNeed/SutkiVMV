@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SutkiVMV.Models;
 using SutkiVMVCS.Api.Services.Security;
+using System.Security.Cryptography;
 
 namespace SutkiVMV.Data;
 
@@ -29,6 +30,42 @@ public class AppDbContext : DbContext
     public DbSet<DeviceToken>          DeviceTokens         => Set<DeviceToken>();
     public DbSet<SiteSettings>         SiteSettings         => Set<SiteSettings>();
     public DbSet<PriceRule>            PriceRules           => Set<PriceRule>();
+
+    public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
+    {
+        foreach (var entry in ChangeTracker.Entries<Booking>())
+        {
+            if (entry.State == EntityState.Added
+                && string.IsNullOrWhiteSpace(entry.Entity.PublicToken))
+            {
+                entry.Entity.PublicToken = GenerateSecureToken();
+            }
+        }
+        return await base.SaveChangesAsync(ct);
+    }
+
+    public override int SaveChanges()
+    {
+        foreach (var entry in ChangeTracker.Entries<Booking>())
+        {
+            if (entry.State == EntityState.Added
+                && string.IsNullOrWhiteSpace(entry.Entity.PublicToken))
+            {
+                entry.Entity.PublicToken = GenerateSecureToken();
+            }
+        }
+        return base.SaveChanges();
+    }
+
+    private static string GenerateSecureToken()
+    {
+        // 32 байта = 64 hex-символа, криптографически стойкий
+        return Convert.ToHexString(RandomNumberGenerator.GetBytes(32)).ToLower();
+
+        // Альтернатива — URL-safe base64 (короче, 43 символа):
+        // return Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
+        //     .TrimEnd('=').Replace('+', '-').Replace('/', '_');
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

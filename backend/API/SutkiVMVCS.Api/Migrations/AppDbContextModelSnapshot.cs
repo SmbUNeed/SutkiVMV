@@ -223,6 +223,10 @@ namespace SutkiVMVCS.Migrations
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)");
 
+                    b.Property<string>("PublicToken")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Source")
                         .IsRequired()
                         .HasColumnType("text");

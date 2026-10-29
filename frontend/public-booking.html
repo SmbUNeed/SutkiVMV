@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бронирование — SutkiVMV</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- ═══ HEADER (такой же, как везде) ═══ -->
+    <header class="header">
+        <div class="container header-content">
+            <a href="index.html" class="logo">Sutki<span>VMV</span></a>
+
+            <div class="header-contacts">
+                <a href="https://max.ru/u/f9LHodD0cOJt5_8nBNoKKj4uQ985gCyApObnd0K5Gnbi0TT3lORA5EOsNEE" class="contact-btn contact-max" target="_blank" title="Max">
+                    <i class="fa-solid fa-comment-dots"></i>
+                    <span class="contact-label">Max</span>
+                </a>
+                <a href="https://t.me/PaWellRe" class="contact-btn contact-tg" target="_blank" title="Telegram">
+                    <i class="fa-brands fa-telegram"></i>
+                    <span class="contact-label">Telegram</span>
+                </a>
+                <a href="tel:+79054113687" class="contact-btn contact-phone">
+                    <i class="fa-solid fa-phone"></i>
+                    <span class="contact-label">+7 (905) 411-36-87</span>
+                </a>
+            </div>
+
+            <div class="header-right">
+                <a href="wiki.html" class="header-nav-link"><i class="fa-solid fa-book-open"></i> Путеводитель</a>
+                <button class="theme-toggle" onclick="toggleTheme()" title="Сменить тему">
+                    <i class="fa-solid fa-moon icon-moon"></i>
+                    <i class="fa-solid fa-sun icon-sun"></i>
+                </button>
+                <div id="headerUser"></div>
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu()"><i class="fa-solid fa-bars"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══ MAIN ═══ -->
+    <main class="public-booking-main">
+        <div class="container">
+
+            <!-- Состояние загрузки -->
+            <div id="bookingLoading" class="public-booking-state">
+                <i class="fa-solid fa-spinner fa-spin fa-2x" style="color:var(--primary);"></i>
+                <p>Загружаем бронирование...</p>
+            </div>
+
+            <!-- Ошибка (невалидный токен) -->
+            <div id="bookingError" class="public-booking-state" style="display:none;">
+                <i class="fa-solid fa-circle-exclamation fa-2x"></i>
+                <h2>Бронирование не найдено</h2>
+                <p id="bookingErrorMsg">Ссылка недействительна или срок её действия истёк.</p>
+                <a href="index.html" class="btn-primary" style="margin-top:18px;display:inline-flex;">
+                    <i class="fa-solid fa-house"></i> На главную
+                </a>
+            </div>
+
+            <!-- Основной контент брони -->
+            <div id="bookingContent" class="public-booking-body" style="display:none;">
+
+                <!-- ЛЕВАЯ КОЛОНКА: квартира -->
+                <div class="public-booking-left">
+
+                    <!-- Галерея -->
+                    <div class="gallery">
+                        <img class="main-img" id="bookingMainImg" alt="">
+                        <div class="thumbnails" id="bookingThumbs"></div>
+                    </div>
+
+                    <h2 id="bookingTitle" style="font-family:var(--font-head);font-size:1.7rem;font-weight:800;margin-bottom:8px;"></h2>
+
+                    <div class="modal-specs" id="bookingSpecs" style="margin-bottom:20px;"></div>
+
+                    <!-- Табы -->
+                    <div class="modal-tabs">
+                        <button class="modal-tab active" onclick="switchBookingTab('desc', this)">Описание</button>
+                        <button class="modal-tab" onclick="switchBookingTab('amenities', this)">Удобства</button>
+                        <button class="modal-tab" onclick="switchBookingTab('nearby', this)">Рядом</button>
+                        <button class="modal-tab" onclick="switchBookingTab('rules', this)">Правила</button>
+                    </div>
+
+                    <div id="tab-desc" class="modal-tab-content">
+                        <div class="modal-description">
+                            <p id="bookingDesc"></p>
+                        </div>
+                    </div>
+
+                    <div id="tab-amenities" class="modal-tab-content" style="display:none;">
+                        <div class="modal-amenities" id="bookingAmenities"></div>
+                    </div>
+
+                    <div id="tab-nearby" class="modal-tab-content" style="display:none;">
+                        <div id="bookingNearby"></div>
+                    </div>
+
+                    <div id="tab-rules" class="modal-tab-content" style="display:none;">
+                        <div id="bookingRules"></div>
+                    </div>
+
+                </div>
+
+                <!-- ПРАВАЯ КОЛОНКА: детали брони -->
+                <div class="public-booking-right">
+                    <div class="booking-widget">
+                        <h3>Детали бронирования</h3>
+
+                        <div class="booking-summary" id="bookingSummary" style="margin-top:14px;"></div>
+
+                        <div id="bookingStatusBlock" style="margin-top:14px;"></div>
+
+                        <!-- Плашка для неавторизованных -->
+                        <div id="bookingAuthGate" class="auth-gate" style="display:none;margin-top:18px;">
+                            <p>Войдите, чтобы видеть все брони в кабинете и управлять ими</p>
+                            <div class="auth-gate-btns">
+                                <a href="login.html" class="btn-auth btn-auth-primary">
+                                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Войти
+                                </a>
+                                <a href="register.html" class="btn-auth btn-auth-ghost">Регистрация</a>
+                            </div>
+                        </div>
+
+                        <!-- Плашка для авторизованных (если это их бронь) -->
+                        <div id="bookingOwnedHint" style="display:none;margin-top:18px;padding:14px;background:rgba(27,160,80,0.08);border:1.5px solid rgba(27,160,80,0.25);border-radius:var(--r-sm);text-align:center;">
+                            <p style="color:var(--green);font-weight:700;font-size:0.9rem;margin-bottom:10px;">
+                                <i class="fa-solid fa-circle-check"></i> Это ваша бронь
+                            </p>
+                            <a href="cabinet.html" class="btn-auth btn-auth-primary" style="display:inline-flex;">
+                                <i class="fa-solid fa-user"></i> Открыть в кабинете
+                            </a>
+                        </div>
+
+                        <!-- Кнопка "Скопировать ссылку" -->
+                        <button class="btn-book" style="margin-top:18px;background:var(--paper-3);color:var(--ink-2);border:1.5px solid var(--border);" onclick="copyBookingLink()">
+                            <i class="fa-solid fa-link"></i> Скопировать ссылку
+                        </button>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ═══ FOOTER ═══ -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div>
+                    <h4>SutkiVMV</h4>
+                    <p>Комфортная аренда квартир посуточно в Минеральных Водах</p>
+                </div>
+                <div>
+                    <h4>Контакты</h4>
+                    <p>
+                        Email: sutkivmv@gmail.com<br>
+                        Телефон: <a href="tel:+79054113687">+7 (905) 411-36-87</a><br>
+                        ИНН: 263005621635<br>
+                        ОГРНИП: 316265100153752
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ═══ LIGHTBOX (переиспользуем из index.html) ═══ -->
+    <div class="lightbox" id="lightbox" onclick="lightboxBgClick(event)">
+        <button class="lightbox-close" onclick="closeLightbox()"><i class="fa-solid fa-xmark"></i></button>
+        <button class="lightbox-arrow prev" onclick="lightboxStep(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+        <img class="lightbox-img" id="lightboxImg" alt="">
+        <button class="lightbox-arrow next" onclick="lightboxStep(1)"><i class="fa-solid fa-chevron-right"></i></button>
+        <div class="lightbox-counter" id="lightboxCounter"></div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="public-booking.js"></script>
+</body>
+</html>

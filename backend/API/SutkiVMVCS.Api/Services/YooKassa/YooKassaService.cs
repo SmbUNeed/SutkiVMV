@@ -36,7 +36,7 @@ public class YooKassaService : IYooKassaService
             confirmation = new
             {
                 type = "redirect",
-                return_url = $"{returnUrl}/cabinet.html?booking={booking.Id}"
+                return_url = $"{returnUrl}/public-booking?id={booking.Id}&token={booking.PublicToken}"
             },
             capture = true,
             description,

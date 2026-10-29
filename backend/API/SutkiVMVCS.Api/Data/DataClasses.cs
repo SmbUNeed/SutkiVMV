@@ -54,6 +54,8 @@ public class Booking
     public Client    Client    { get; set; } = null!;
     public string    Source    { get; set; } = null!;
 
+    public string PublicToken { get; set; } = "";
+
     public string? PaymentId { get; set; }
     public DateTime? PaidAt { get; set; }
     [Precision(18, 2)]

@@ -193,6 +193,49 @@ public class BookingsController : ControllerBase
         return NoContent();
     }
 
+    [HttpGet("{id:int}/public/{token}")]
+    [AllowAnonymous]
+    public async Task<ActionResult> GetPublicBooking(int id, string token, CancellationToken ct) {
+        var booking = await _context.Bookings
+        .Include(b => b.Apartment)
+            .ThenInclude(a => a.ApartmentGallery)
+        .Include(b => b.Apartment)
+            .ThenInclude(a => a.ApartmentAmenities)
+        .Include(b => b.Apartment)
+            .ThenInclude(a => a.Rules)
+        .Include(b => b.Apartment)
+            .ThenInclude(a => a.Nearby)   // ← если Nearby это отдельная таблица
+        .Include(b => b.Client)
+        .FirstOrDefaultAsync(b => b.Id == id, ct);
+        if (booking == null || booking.PublicToken != token) return NotFound("Бронирование не найдено");
+
+        var apt = booking.Apartment;
+        var result = new
+        {
+            id,
+            status = booking.Status,
+            startDate = booking.StartDate,
+            endDate = booking.EndDate,
+            guests = booking.Guests,
+            totalPrice = booking.TotalPrice,
+            fullName = booking.Client.FullName,
+            apartment = new {
+                apt.Id,
+                apt.Title,
+                apt.Description,
+                apt.Area,
+                apt.RoomsCount,
+                apt.Guests,
+                apt.MainImage,
+                apt.ApartmentGallery,
+                apt.ApartmentAmenities,
+                apt.Nearby,
+                apt.Rules
+            }
+        };
+        return Ok(result);
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private static AdminBookingDto ToAdminDto(Booking b) => new()
