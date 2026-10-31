@@ -10,7 +10,7 @@ let galleryUrls = [];
 function imgUrl(path) {
     if (!path) return null;
     if (path.startsWith('https') || path.startsWith('http')) return path;
-    return API_URL + path;
+    return API_BASE + path;
 }
 
 function formatDate(isoStr) {
