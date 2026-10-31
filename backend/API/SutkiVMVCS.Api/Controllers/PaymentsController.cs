@@ -25,7 +25,7 @@ public class PaymentsController : ControllerBase
     }
 
     [HttpPost("create")]
-    [Authorize(Roles = "Admin")] //[Authorize]
+    [Authorize]
     public async Task<IActionResult> Create([FromBody] CreatePaymentDto dto, CancellationToken ct)
     {
         var booking = await _context.Bookings
@@ -51,7 +51,7 @@ public class PaymentsController : ControllerBase
     }
 
     [HttpPost("book-guest")]
-    [Authorize(Roles = "Admin")]//[AllowAnonymous]
+    [AllowAnonymous]
     public async Task<IActionResult> BookGuest([FromBody] GuestBookingDto dto, CancellationToken ct)
     {
         if (dto.StartDate >= dto.EndDate)
@@ -60,10 +60,15 @@ public class PaymentsController : ControllerBase
         if (string.IsNullOrWhiteSpace(dto.PhoneNumber) || string.IsNullOrWhiteSpace(dto.FullName))
             return BadRequest(new { message = "Укажите имя и телефон" });
 
+        string? phoneNumber = PhoneHelper.Normalize(dto.PhoneNumber);
+
         var apartment = await _context.Apartments.FindAsync(new object[] { dto.ApartmentId }, ct);
         if (apartment == null || !apartment.IsActive || apartment.IsDeleted)
             return NotFound(new { message = "Квартира не найдена или недоступна" });
 
+        if (phoneNumber == null) return BadRequest("Некорректный номер телефона");
+        else if (phoneNumber != "79097587308") return BadRequest("Данная функция находится в разработке"); //Тест-костыль
+            
         var start = dto.StartDate.ToUniversalTime();
         var end = dto.EndDate.ToUniversalTime();
 
@@ -95,7 +100,7 @@ public class PaymentsController : ControllerBase
             client = new Client
             {
                 FullName = dto.FullName,
-                PhoneNumber = dto.PhoneNumber,
+                PhoneNumber = phoneNumber,
                 UserId = null,
                 InBlackList = false
             };

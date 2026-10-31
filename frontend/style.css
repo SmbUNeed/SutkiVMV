@@ -720,6 +720,22 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     padding: 9px 18px; border-radius: var(--r-full);
     font-weight: 800; font-size: 0.85rem; transition: all var(--transition);
 }
+.auth-gate-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 14px 0;
+    color: var(--ink-3);
+    font-size: 0.8rem;
+}
+.auth-gate-divider::before,
+.auth-gate-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--ink-3);
+    opacity: .4;
+}
 .booking-success-msg {
     background: rgba(27,160,80,0.1); border: 1.5px solid rgba(27,160,80,0.3);
     border-radius: var(--r-sm); padding: 14px; text-align: center;
