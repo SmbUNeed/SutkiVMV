@@ -560,7 +560,7 @@ function renderBookingWidget() {
     } else {
         el.innerHTML = `
             <div class="auth-gate">
-                <p>Забронируйте без регистрации — укажите телефон,<br>чтобы мы могли связаться с вами и внесите предоплату.</p>
+                <p>Забронируйте без регистрации — укажите номер телефона,<br> и внесите предоплату.</p>
 
                 <div class="guests-row">
                     <div class="num-input">
@@ -623,8 +623,6 @@ async function handleGuestBook() {
         return;
     }
 
-    //ПОЛЯ И СОГЛАСИЯ
-
     const nameInput = document.getElementById('bookFullName');
     const phoneInput = document.getElementById('bookPhone');
     const privacyCheck = document.getElementById('checkPrivacy');
@@ -634,10 +632,11 @@ async function handleGuestBook() {
     const phoneNumber = phoneInput?.value?.trim();
 
     if (!fullName) {
-        alert('Пожалуйста, введите ваше полное имя.');
+        alert('Пожалуйста, введите ваше имя.');
         nameInput?.focus();
         return;
     }
+
     if (!phoneNumber) {
         alert('Пожалуйста, введите номер телефона.');
         phoneInput?.focus();
@@ -646,40 +645,51 @@ async function handleGuestBook() {
 
     if (!privacyCheck || !privacyCheck.checked) {
         alert('Для продолжения необходимо согласиться с политикой конфиденциальности.');
-        privacyCheck?.focus();
-        return;
-    }
-    if (!agreementCheck || !agreementCheck.checked) {
-        alert('Для продолжения необходимо принять пользовательское соглашение.');
-        agreementCheck?.focus();
         return;
     }
 
-    //
+    if (!agreementCheck || !agreementCheck.checked) {
+        alert('Для продолжения необходимо принять пользовательское соглашение.');
+        return;
+    }
 
     const guestsInput = document.getElementById('bookGuests');
     const adults = Math.max(1, parseInt(guestsInput?.value, 10) || 1);
 
-    btn = document.getElementById("btnPayGuest")
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Оформляем...';
+    const btn = document.getElementById("btnPayGuest");
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Оформляем...';
+    }
 
     try {
-        const response = await apiBookAsGuestAndPay(currentApartment.id, selectedCheckIn, selectedCheckOut, adults, fullName, phoneNumber)
+        const response = await apiBookAsGuestAndPay(
+            currentApartment.id,
+            selectedCheckIn,
+            selectedCheckOut,
+            adults,
+            fullName,     
+            phoneNumber   
+        );
+
         alert('Бронирование создано! Перенаправляем на страницу оплаты.');
         closeModal();
 
-        if (response && response.url) {
-            window.location.href = response.payUrl;
+        const redirectUrl = response?.payUrl || response?.url;
+        if (redirectUrl) {
+            window.location.href = redirectUrl;
         } else {
-            apartments = await apiGetApartments();
+            const apartments = await apiGetApartments();
             filteredApartments = [...apartments];
             applyFilters();
         }
     } catch (err) {
-        alert(`Ошибка: ${err.message}`);
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Оплатить и забронировать';
+        alert(`Ошибка: ${err.message || 'Не удалось оформить бронирование'}`);
+
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Оплатить и забронировать';
+        }
     }
 }
 
