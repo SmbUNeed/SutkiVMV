@@ -200,18 +200,16 @@ public class BookingsController : ControllerBase
         var booking = await _context.Bookings
             .Include(b => b.Client)
             .Include(b => b.Apartment)
-                .ThenInclude(a => a.MainImage)
-            .Include(b => b.Apartment)
-                .ThenInclude(a => a.ApartmentGallery)
+                .ThenInclude(a => a.ApartmentGallery) 
             .Include(b => b.Apartment)
                 .ThenInclude(a => a.ApartmentAmenities)
-                    .ThenInclude(aa => aa.Amenity)       // <-- Загружаем саму удобство
+                    .ThenInclude(aa => aa.Amenity)    
             .Include(b => b.Apartment)
                 .ThenInclude(a => a.Rules)
-                    .ThenInclude(r => r.Rule)            // <-- Загружаем само правило
+                    .ThenInclude(r => r.Rule)         
             .Include(b => b.Apartment)
                 .ThenInclude(a => a.Nearby)
-                    .ThenInclude(n => n.NearbyPlace)     // <-- Загружаем само место рядом
+                    .ThenInclude(n => n.NearbyPlace)  
             .FirstOrDefaultAsync(b => b.Id == id, ct);
 
         if (booking == null || booking.PublicToken != token)
@@ -221,7 +219,6 @@ public class BookingsController : ControllerBase
 
         var apt = booking.Apartment;
 
-        // Явная проекция данных. Это УБИРАЕТ циклические ссылки и делает JSON в 100 раз легче!
         var result = new
         {
             id = booking.Id,
@@ -239,7 +236,7 @@ public class BookingsController : ControllerBase
                 apt.Area,
                 apt.RoomsCount,
                 apt.Guests,
-                MainImage = apt.MainImage != null ? new { apt.MainImage.Id, apt.MainImage.ImagePath, apt.MainImage.IsMain } : null,
+                apt.MainImage,
 
                 ApartmentGallery = apt.ApartmentGallery
                     .Where(g => g != null)
