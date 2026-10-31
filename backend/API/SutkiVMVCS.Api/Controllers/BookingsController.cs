@@ -195,44 +195,80 @@ public class BookingsController : ControllerBase
 
     [HttpGet("{id:int}/public/{token}")]
     [AllowAnonymous]
-    public async Task<ActionResult> GetPublicBooking(int id, string token, CancellationToken ct) {
+    public async Task<ActionResult> GetPublicBooking(int id, string token, CancellationToken ct)
+    {
         var booking = await _context.Bookings
-        .Include(b => b.Apartment)
-            .ThenInclude(a => a.ApartmentGallery)
-        .Include(b => b.Apartment)
-            .ThenInclude(a => a.ApartmentAmenities)
-        .Include(b => b.Apartment)
-            .ThenInclude(a => a.Rules)
-        .Include(b => b.Apartment)
-            .ThenInclude(a => a.Nearby)   // ← если Nearby это отдельная таблица
-        .Include(b => b.Client)
-        .FirstOrDefaultAsync(b => b.Id == id, ct);
-        if (booking == null || booking.PublicToken != token) return NotFound("Бронирование не найдено");
+            .Include(b => b.Client)
+            .Include(b => b.Apartment)
+                .ThenInclude(a => a.MainImage)
+            .Include(b => b.Apartment)
+                .ThenInclude(a => a.ApartmentGallery)
+            .Include(b => b.Apartment)
+                .ThenInclude(a => a.ApartmentAmenities)
+                    .ThenInclude(aa => aa.Amenity)       // <-- Загружаем саму удобство
+            .Include(b => b.Apartment)
+                .ThenInclude(a => a.Rules)
+                    .ThenInclude(r => r.Rule)            // <-- Загружаем само правило
+            .Include(b => b.Apartment)
+                .ThenInclude(a => a.Nearby)
+                    .ThenInclude(n => n.NearbyPlace)     // <-- Загружаем само место рядом
+            .FirstOrDefaultAsync(b => b.Id == id, ct);
+
+        if (booking == null || booking.PublicToken != token)
+        {
+            return NotFound(new { message = "Бронирование не найдено или ссылка недействительна" });
+        }
 
         var apt = booking.Apartment;
+
+        // Явная проекция данных. Это УБИРАЕТ циклические ссылки и делает JSON в 100 раз легче!
         var result = new
         {
-            id,
+            id = booking.Id,
             status = booking.Status,
             startDate = booking.StartDate,
             endDate = booking.EndDate,
             guests = booking.Guests,
             totalPrice = booking.TotalPrice,
-            fullName = booking.Client.FullName,
-            apartment = new {
+            fullName = booking.Client?.FullName ?? "Гость",
+            apartment = new
+            {
                 apt.Id,
                 apt.Title,
                 apt.Description,
                 apt.Area,
                 apt.RoomsCount,
                 apt.Guests,
-                apt.MainImage,
-                apt.ApartmentGallery,
-                apt.ApartmentAmenities,
-                apt.Nearby,
-                apt.Rules
+                MainImage = apt.MainImage != null ? new { apt.MainImage.Id, apt.MainImage.ImagePath, apt.MainImage.IsMain } : null,
+
+                ApartmentGallery = apt.ApartmentGallery
+                    .Where(g => g != null)
+                    .Select(g => new { g.Id, g.ImagePath, g.IsMain })
+                    .ToList(),
+
+                ApartmentAmenities = apt.ApartmentAmenities
+                    .Where(aa => aa.Amenity != null)
+                    .Select(aa => new { aa.Amenity.Id, aa.Amenity.Name, aa.Amenity.Icon })
+                    .ToList(),
+
+                Rules = apt.Rules
+                    .Where(r => r.Rule != null)
+                    .Select(r => new { r.Rule.Id, r.Rule.Text, r.Rule.Icon })
+                    .ToList(),
+
+                Nearby = apt.Nearby
+                    .Where(n => n.NearbyPlace != null)
+                    .Select(n => new {
+                        n.NearbyPlace.Id,
+                        n.NearbyPlace.Name,
+                        n.NearbyPlace.Icon,
+                        n.NearbyPlace.WikiPlaceId,
+                        n.Distance
+                    })
+                    .ToList()
             }
         };
+
         return Ok(result);
     }
 

@@ -55,10 +55,15 @@ async function loadBooking(id, token) {
 
 // ── Рендер ──────────────────────────────────────────────
 function renderBooking(booking) {
-    bookingData = booking;
+    window.bookingData = booking;
     const apt = booking.apartment;
 
-    // Заголовок и спеки
+    if (!apt) {
+        console.error("Данные квартиры отсутствуют");
+        return;
+    }
+
+    // 1. Заголовок и спеки
     document.getElementById('bookingTitle').textContent = apt.title;
     document.getElementById('bookingSpecs').innerHTML = `
         <span><i class="fa-solid fa-user-group"></i> до ${apt.guests} гостей</span>
@@ -66,20 +71,23 @@ function renderBooking(booking) {
         <span><i class="fa-solid fa-door-open"></i> ${apt.roomsCount} комн.</span>
     `;
 
-    // Галерея — используем apartmentGallery
+    // 2. Галерея
     const mainImg = document.getElementById('bookingMainImg');
     const thumbs = document.getElementById('bookingThumbs');
     const gallery = apt.apartmentGallery || [];
-    const firstSrc = imgUrl(apt.mainImage) || 'https://placehold.co/600x340?text=Нет+фото';
+
+    const firstSrc = (apt.mainImage && imgUrl(apt.mainImage.imagePath)) || 'https://placehold.co/600x340?text=Нет+фото';
     mainImg.src = firstSrc;
 
-    galleryUrls = gallery.length
+    const galleryUrls = gallery.length
         ? gallery.map(g => imgUrl(g.imagePath)).filter(Boolean)
         : [firstSrc];
 
     mainImg.onclick = () => {
         const idx = galleryUrls.indexOf(mainImg.src);
-        openLightbox(galleryUrls, idx < 0 ? 0 : idx);
+        if (typeof openLightbox === 'function') {
+            openLightbox(galleryUrls, idx < 0 ? 0 : idx);
+        }
     };
 
     thumbs.innerHTML = '';
@@ -100,41 +108,43 @@ function renderBooking(booking) {
         });
     }
 
-    // Описание
+    // 3. Описание
     document.getElementById('bookingDesc').textContent = apt.description || 'Описание не указано';
 
-    // Удобства — используем apartmentAmenities
+    // 4. Удобства (теперь amenity точно не null благодаря бэкенду)
     const amenities = apt.apartmentAmenities || [];
     document.getElementById('bookingAmenities').innerHTML = amenities.length
-        ? amenities.map(a => `<span class="amenity-tag"><i class="fa-solid ${a.icon || 'fa-check'}"></i>${a.name}</span>`).join('')
+        ? amenities.map(a => `<span class="amenity-tag"><i class="fa-solid ${a.amenity.icon || 'fa-check'}"></i> ${a.amenity.name}</span>`).join('')
         : '<p style="color:var(--ink-3);">Не указано</p>';
 
-    // Рядом
+    // 5. Рядом
     const nearby = apt.nearby || [];
     document.getElementById('bookingNearby').innerHTML = nearby.length
         ? nearby.map(n => {
+            const place = n.nearbyPlace;
             const inner = `
-                <i class="fa-solid ${n.icon || 'fa-location-dot'}"></i>
-                <span>${n.name}</span>
+                <i class="fa-solid ${place.icon || 'fa-location-dot'}"></i>
+                <span>${place.name}</span>
                 <span class="modal-nearby-dist">${n.distance || ''}</span>
-                ${n.wikiPlaceId ? '<i class="fa-solid fa-arrow-up-right-from-square modal-nearby-arrow"></i>' : ''}`;
-            return n.wikiPlaceId
-                ? `<a class="modal-nearby linked" href="wiki.html?place=${n.wikiPlaceId}">${inner}</a>`
+                ${place.wikiPlaceId ? '<i class="fa-solid fa-arrow-up-right-from-square modal-nearby-arrow"></i>' : ''}`;
+
+            return place.wikiPlaceId
+                ? `<a class="modal-nearby linked" href="wiki.html?place=${place.wikiPlaceId}">${inner}</a>`
                 : `<div class="modal-nearby">${inner}</div>`;
         }).join('')
         : '<p style="color:var(--ink-3);">Не указано</p>';
 
-    // Правила
+    // 6. Правила
     const rules = apt.rules || [];
     document.getElementById('bookingRules').innerHTML = rules.length
         ? rules.map(r => `
             <div class="modal-rule">
-                <i class="fa-solid ${r.icon || 'fa-circle-info'}"></i>
-                <span>${r.text}</span>
+                <i class="fa-solid ${r.rule.icon || 'fa-circle-info'}"></i>
+                <span>${r.rule.text}</span>
             </div>`).join('')
         : '<p style="color:var(--ink-3);">Правила не указаны</p>';
 
-    // Карточка брони
+    // 7. Карточка брони
     const nights = Math.max(1, Math.round((new Date(booking.endDate) - new Date(booking.startDate)) / 86_400_000));
     const rows = [
         `<div class="row"><span>Заезд</span><strong>${formatDate(booking.startDate)}</strong></div>`,
@@ -142,30 +152,37 @@ function renderBooking(booking) {
         `<div class="row"><span>Длительность</span><strong>${nights} ${pluralNights(nights)}</strong></div>`,
         `<div class="row"><span>Гостей</span><strong>${booking.guests}</strong></div>`,
     ];
+
     if (booking.fullName) {
         rows.push(`<div class="row"><span>Гость</span><strong>${booking.fullName}</strong></div>`);
     }
-    rows.push(`<div class="row total"><span>Итого оплачено</span><strong>${(booking.totalPrice || 0).toLocaleString('ru-RU')} ₽</strong></div>`);
+
+    rows.push(`<div class="row total"><span>Итого</span><strong>${(booking.totalPrice || 0).toLocaleString('ru-RU')} ₽</strong></div>`);
     document.getElementById('bookingSummary').innerHTML = rows.join('');
 
-    // Статус
-    const st = statusLabel(booking.status);
-    document.getElementById('bookingStatusBlock').innerHTML = `
-        <span class="status-badge ${st.cls}">
-            <i class="fa-solid ${st.icon}"></i> ${st.text}
-        </span>
-    `;
-
-    // Авторизация
-    if (typeof isLoggedIn === 'function' && isLoggedIn()) {
-        document.getElementById('bookingOwnedHint').style.display = 'block';
-    } else {
-        document.getElementById('bookingAuthGate').style.display = 'block';
+    // 8. Статус
+    if (typeof statusLabel === 'function') {
+        const st = statusLabel(booking.status);
+        document.getElementById('bookingStatusBlock').innerHTML = `
+            <span class="status-badge ${st.cls}">
+                <i class="fa-solid ${st.icon}"></i> ${st.text}
+            </span>
+        `;
     }
 
-    // Показываем контент
-    document.getElementById('bookingLoading').style.display = 'none';
-    document.getElementById('bookingContent').style.display = 'grid';
+    // 9. Авторизация
+    const authGate = document.getElementById('bookingAuthGate');
+    const ownedHint = document.getElementById('bookingOwnedHint');
+    const isLogged = typeof isLoggedIn === 'function' && isLoggedIn();
+
+    if (authGate) authGate.style.display = isLogged ? 'none' : 'block';
+    if (ownedHint) ownedHint.style.display = isLogged ? 'block' : 'none';
+
+    // 10. Показываем контент
+    const loading = document.getElementById('bookingLoading');
+    const content = document.getElementById('bookingContent');
+    if (loading) loading.style.display = 'none';
+    if (content) content.style.display = 'grid';
 }
 
 function showError(msg) {
