@@ -613,32 +613,6 @@ document.addEventListener('keydown', function (event) {
 });
 
 // ── Бронирование ─────────────────────────────────────────
-async function handleBookFree() {
-    if (!selectedCheckIn || !selectedCheckOut) {
-        alert('Пожалуйста, выберите даты заезда и выезда.');
-        return;
-    }
-    const guestsInput = document.getElementById('bookGuests');
-    const adults = Math.max(1, parseInt(guestsInput?.value, 10) || 1);
-
-    const btn = document.getElementById('btnBook');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Оформляем...';
-
-    try {
-        await apiBookAsUser(currentApartment.id, selectedCheckIn, selectedCheckOut, adults);
-        alert('Бронирование успешно оформлено! Ожидайте подтверждения.');
-        closeModal();
-        apartments = await apiGetApartments();
-        filteredApartments = [...apartments];
-        applyFilters();
-    } catch (err) {
-        alert(`Ошибка: ${err.message}`);
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-calendar-check"></i> Забронировать';
-    }
-}
-
 async function handleGuestBook() {
     if (!selectedCheckIn || !selectedCheckOut) {
         alert('Пожалуйста, выберите даты заезда и выезда.');
@@ -690,12 +664,19 @@ async function handleGuestBook() {
             selectedCheckIn,
             selectedCheckOut,
             adults,
-            fullName,     
-            phoneNumber   
+            fullName,
+            phoneNumber
         );
 
         alert('Бронирование создано! Перенаправляем на страницу оплаты.');
-        closeModal();
+
+        // Закрываем модалку гостевого бронирования
+        closeGuestBookModal();
+
+        // Если у вас есть другая модалка (например, с деталями квартиры), закройте и её
+        if (typeof closeModal === 'function') {
+            closeModal();
+        }
 
         const redirectUrl = response?.payUrl || response?.url;
         if (redirectUrl) {
