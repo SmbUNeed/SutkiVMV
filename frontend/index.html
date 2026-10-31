@@ -236,34 +236,47 @@
         </div>
     </div>
 
-    <!-- ── MODAL GUEST BOOK PAY ─────────────────────────────── -->
-    <div class="form-group">
-        <label for="bookFullName">Ваше имя <span style="color:red">*</span></label>
-        <input type="text" id="bookFullName" placeholder="Иван Иванов" required>
-    </div>
+    <!-- ── MODAL GUEST BOOK ─────────────────────────────── -->
+    <div class="modal-guest-overlay" id="guestBookModal" onclick="closeGuestBookModalOnOverlay(event)">
+        <div class="modal-guest-content">
+            <button class="modal-guest-close" onclick="closeGuestBookModal()" aria-label="Закрыть">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
 
-    <div class="form-group" style="margin-top: 12px;">
-        <label for="bookPhone">Номер телефона <span style="color:red">*</span></label>
-        <input type="tel" id="bookPhone" placeholder="+7 (999) 999-99-99" required>
-    </div>
+            <h2 class="modal-guest-title">Бронирование без регистрации</h2>
+            <p class="modal-guest-subtitle">Заполните данные для бронирования квартиры</p>
 
-    <div class="form-check" style="margin-top: 16px;">
-        <input type="checkbox" id="checkPrivacy" required>
-        <label for="checkPrivacy" style="font-size: 0.85rem;">
-            Я согласен с <a href="/privacy" target="_blank">политикой конфиденциальности</a>
-        </label>
-    </div>
+            <form id="guestBookForm" onsubmit="event.preventDefault(); handleGuestBook();">
+                <div class="form-group">
+                    <label for="bookFullName">Ваше имя <span style="color:red">*</span></label>
+                    <input type="text" id="bookFullName" placeholder="Иван Иванов" required>
+                </div>
 
-    <div class="form-check" style="margin-top: 8px;">
-        <input type="checkbox" id="checkAgreement" required>
-        <label for="checkAgreement" style="font-size: 0.85rem;">
-            Я принимаю <a href="/terms" target="_blank">пользовательское соглашение</a>
-        </label>
-    </div>
+                <div class="form-group">
+                    <label for="bookPhone">Номер телефона <span style="color:red">*</span></label>
+                    <input type="tel" id="bookPhone" placeholder="+7 (999) 999-99-99" required>
+                </div>
 
-    <button class="btn-book" id="btnPayGuest" onclick="handleGuestBook()" style="margin-top: 20px; width: 100%;">
-        <i class="fa-solid fa-credit-card"></i> Оплатить и забронировать
-    </button>
+                <div class="form-check">
+                    <input type="checkbox" id="checkPrivacy" required>
+                    <label for="checkPrivacy">
+                        Я согласен с <a href="/privacy" target="_blank">политикой конфиденциальности</a>
+                    </label>
+                </div>
+
+                <div class="form-check">
+                    <input type="checkbox" id="checkAgreement" required>
+                    <label for="checkAgreement">
+                        Я принимаю <a href="/terms" target="_blank">пользовательское соглашение</a>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-book" id="btnPayGuest" style="margin-top: 20px; width: 100%;">
+                    <i class="fa-solid fa-credit-card"></i> Оплатить и забронировать
+                </button>
+            </form>
+        </div>
+    </div>
 
     <!-- ── LIGHTBOX ─────────────────────────────────────────── -->
     <div class="lightbox" id="lightbox" onclick="lightboxBgClick(event)">
