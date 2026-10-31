@@ -74,12 +74,26 @@ public class YooKassaService : IYooKassaService
         }
 
         var json = JsonDocument.Parse(body).RootElement;
-        var status = json.GetProperty("status").GetString(); // "succeeded" | "canceled" | "pending" | ...
+        var status = json.GetProperty("status").GetString(); // "succeeded" | "canceled" | "pending"
 
-        int? bookingId = json.TryGetProperty("metadata", out var meta) &&
-                          meta.TryGetProperty("booking_id", out var bId)
-            ? bId.GetInt32()
-            : null;
+        int? bookingId = null;
+
+        // Безопасное извлечение booking_id из metadata
+        if (json.TryGetProperty("metadata", out var meta) &&
+            meta.TryGetProperty("booking_id", out var bIdElement)) // Убедитесь, что ключ именно "booking_id" (или "bookingId", как вы отправляли)
+        {
+            // ЮKassa всегда отдает значения в metadata как строки!
+            string? bIdString = bIdElement.GetString();
+
+            if (int.TryParse(bIdString, out int parsedId))
+            {
+                bookingId = parsedId;
+            }
+            else
+            {
+                Console.WriteLine($"[YooKassa] Warning: Не удалось распарсить booking_id из строки: '{bIdString}'");
+            }
+        }
 
         return new YooKassaPaymentStatus(true, status, bookingId, null);
     }
