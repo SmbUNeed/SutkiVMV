@@ -90,7 +90,7 @@ public class PaymentsController : ControllerBase
         // ВАЖНО: сверяем только с UserId == null, чтобы случайно не привязать
         // бронь к чужому зарегистрированному аккаунту по совпавшему номеру.
         var client = (await _context.Clients.ToListAsync(ct))
-            .FirstOrDefault(cl => cl.PhoneNumber == dto.PhoneNumber); 
+            .FirstOrDefault(cl => cl.PhoneNumber == phoneNumber); 
         
         if (client != null && client.InBlackList)
             return BadRequest(new { message = "Бронирование недоступно. Обратитесь в поддержку." });
@@ -108,7 +108,7 @@ public class PaymentsController : ControllerBase
             await _context.SaveChangesAsync(ct); // чтобы получить client.Id
         }
         else {
-            return BadRequest(new { message = "Данна функция доступна только для пользователей без аккаунта. Войдите в свой профиль и забронируйте." });
+            client.FullName = dto.FullName;
         }
 
         var rules = await _context.PriceRules.ToListAsync(ct);

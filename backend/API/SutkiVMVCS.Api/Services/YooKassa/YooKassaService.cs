@@ -24,8 +24,6 @@ public class YooKassaService : IYooKassaService
 
     public async Task<YooKassaPaymentResult> CreatePaymentAsync(Booking booking, string description, CancellationToken ct)
     {
-        var returnUrl = _config["AllowedOrigin"]!.Split(',')[0];
-
         var payload = new
         {
             amount = new
@@ -36,7 +34,7 @@ public class YooKassaService : IYooKassaService
             confirmation = new
             {
                 type = "redirect",
-                return_url = $"{returnUrl}/public-booking?id={booking.Id}&token={booking.PublicToken}"
+                return_url = $"https://sutkivmv.ru/public-booking.html?id={booking.Id}&token={booking.PublicToken}"
             },
             capture = true,
             description,
