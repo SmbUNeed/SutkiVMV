@@ -560,23 +560,11 @@ function renderBookingWidget() {
     } else {
         el.innerHTML = `
             <div class="auth-gate">
-                <p>Забронируйте без регистрации — укажите номер телефона,<br> и внесите предоплату.</p>
-
-                <div class="guests-row">
-                    <div class="num-input">
-                        <button type="button" onclick="stepNum('bookGuests',-1)">−</button>
-                        <input type="number" id="bookGuests" min="1" max="20" value="1" oninput="updateBookingSummary()">
-                        <button type="button" onclick="stepNum('bookGuests',1)">+</button>
-                    </div>
-                    <span style="color:var(--ink-3);font-size:0.85rem;">Гостей</span>
-                </div>
-
-                <button class="btn-book" id="btnGuestBook" onclick="handleGuestBook()">
+                <p>Забронируйте квартиру без регистрации</p>
+                <button class="btn-book" onclick="openGuestBookModal()">
                     <i class="fa-solid fa-credit-card"></i> Забронировать и оплатить
                 </button>
-
                 <div class="auth-gate-divider"><span>или</span></div>
-
                 <div class="auth-gate-btns">
                     <a href="login.html" class="btn-auth btn-auth-primary">
                         <i class="fa-solid fa-arrow-right-to-bracket"></i> Войти
@@ -589,8 +577,42 @@ function renderBookingWidget() {
     }
 }
 
+// Открыть модальное окно гостевого бронирования
+function openGuestBookModal() {
+    const modal = document.getElementById('guestBookModal');
+    if (modal) {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Блокируем скролл фона
+    }
+}
+
+// Закрыть модальное окно
+function closeGuestBookModal() {
+    const modal = document.getElementById('guestBookModal');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = ''; // Возвращаем скролл
+    }
+}
+
+// Закрытие по клику на overlay (вне модалки)
+function closeGuestBookModalOnOverlay(event) {
+    if (event.target === event.currentTarget) {
+        closeGuestBookModal();
+    }
+}
+
+// Закрытие по Escape
+document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') {
+        const modal = document.getElementById('guestBookModal');
+        if (modal && modal.classList.contains('active')) {
+            closeGuestBookModal();
+        }
+    }
+});
+
 // ── Бронирование ─────────────────────────────────────────
-// Залогинен, бесплатно — переименовал handleBook -> handleBookFree, логика без изменений
 async function handleBookFree() {
     if (!selectedCheckIn || !selectedCheckOut) {
         alert('Пожалуйста, выберите даты заезда и выезда.');
