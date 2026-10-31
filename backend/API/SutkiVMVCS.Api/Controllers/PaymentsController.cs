@@ -67,7 +67,7 @@ public class PaymentsController : ControllerBase
             return NotFound(new { message = "Квартира не найдена или недоступна" });
 
         if (phoneNumber == null) return BadRequest("Некорректный номер телефона");
-        else if (phoneNumber != "79097587308") return BadRequest("Данная функция находится в разработке"); //Тест-костыль
+        else if (phoneNumber != "+79097587308") return BadRequest("Данная функция находится в разработке"); //Тест-костыль
             
         var start = dto.StartDate.ToUniversalTime();
         var end = dto.EndDate.ToUniversalTime();
