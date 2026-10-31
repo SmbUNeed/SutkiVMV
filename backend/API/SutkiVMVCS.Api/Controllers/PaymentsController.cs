@@ -6,6 +6,7 @@ using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
 using SutkiVMVCS.Services.Shared;
 using SutkiVMVCS.Services.YooKassa;
+using System.Globalization;
 using System.Text.Json;
 using Telegram.Bot.Requests.Abstractions;
 
@@ -145,36 +146,62 @@ public class PaymentsController : ControllerBase
         var body = await new StreamReader(Request.Body).ReadToEndAsync(ct);
 
         JsonElement json;
-        try { json = JsonDocument.Parse(body).RootElement; }
-        catch { return Ok(); }
+        try
+        {
+            json = JsonDocument.Parse(body).RootElement;
+        }
+        catch
+        {
+            return Ok(); 
+        }
 
+        var eventType = json.GetProperty("event").GetString();
         var paymentId = json.GetProperty("object").GetProperty("id").GetString();
+
         if (string.IsNullOrEmpty(paymentId)) return Ok();
 
-        // Не доверяем содержимому вебхука — перепроверяем статус напрямую в ЮKassa
-        var status = await _yooKassa.GetPaymentStatusAsync(paymentId, ct);
-        if (!status.Success || status.BookingId == null) return Ok();
+        decimal? webhookAmount = null;
+        if (json.TryGetProperty("object", out var obj) &&
+            obj.TryGetProperty("amount", out var amountObj) &&
+            amountObj.TryGetProperty("value", out var valueElement))
+        {
+            if (decimal.TryParse(valueElement.GetString(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal amount))
+            {
+                webhookAmount = amount;
+            }
+        }
+
+        var statusResult = await _yooKassa.GetPaymentStatusAsync(paymentId, ct);
+        if (!statusResult.Success || statusResult.BookingId == null) return Ok();
 
         var booking = await _context.Bookings
-            .Include(b => b.Apartment)
-            .Include(b => b.Client)
-            .FirstOrDefaultAsync(b => b.Id == status.BookingId, ct);
+            .Include(b => b.Apartment) 
+            .Include(b => b.Client) 
+            .FirstOrDefaultAsync(b => b.Id == statusResult.BookingId, ct);
 
         if (booking == null) return Ok();
         if (booking.PaymentId != paymentId) return Ok();
 
-        switch (status.Status)
+        switch (statusResult.Status?.ToLower())
         {
-            case "succeeded" when booking.Status != "Confirmed":
-                booking.Status = "Confirmed";
-                booking.PaidAt = DateTime.UtcNow;
-                await _context.SaveChangesAsync(ct);
-                await NotifyPaid(booking);
+            case "succeeded":
+                if (booking.Status != "Confirmed")
+                {
+                    booking.Status = "Confirmed";
+                    booking.PaidAt = DateTime.UtcNow;
+
+                    booking.PaidAmount = webhookAmount ?? booking.TotalPrice;
+
+                    await _context.SaveChangesAsync(ct);
+                }
                 break;
 
-            case "canceled" when booking.Status != "Cancelled":
-                booking.Status = "Cancelled";
-                await _context.SaveChangesAsync(ct);
+            case "canceled":
+                if (booking.Status != "Cancelled")
+                {
+                    booking.Status = "Cancelled";
+                    await _context.SaveChangesAsync(ct);
+                }
                 break;
         }
 
