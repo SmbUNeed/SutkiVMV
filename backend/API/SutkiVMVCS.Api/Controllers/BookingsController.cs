@@ -27,6 +27,7 @@ public class BookingsController : ControllerBase
         var bookings = await _context.Bookings
             .Include(b => b.Apartment)
             .Include(b => b.Client)
+            .Include(b => b.Payments)
             .OrderByDescending(b => b.CreatedAt)
             .AsNoTracking()
             .ToListAsync();
@@ -62,6 +63,7 @@ public class BookingsController : ControllerBase
             .Where(b => b.ClientId == clientId)
             .Include(b => b.Apartment)
             .Include(b => b.Client)
+            .Include(b => b.Payments)
             .OrderByDescending(b => b.CreatedAt)
             .AsNoTracking()
             .ToListAsync();
