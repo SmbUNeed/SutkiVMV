@@ -116,7 +116,7 @@ async function initiatePayment(bookingId, payInFull) {
     if (!confirm(confirmMsg)) return;
 
     try {
-        const res = await authFetch('/api/payments/create', {
+        const res = await authFetch('/payments/create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ bookingId, payInFull })
