@@ -108,6 +108,37 @@ async function saveProfile() {
     }
 }
 
+async function initiatePayment(bookingId, payInFull) {
+    const confirmMsg = payInFull
+        ? 'Перейти к оплате оставшейся суммы?'
+        : 'Перейти к оплате предоплаты?';
+
+    if (!confirm(confirmMsg)) return;
+
+    try {
+        const res = await authFetch('/api/payments/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bookingId, payInFull })
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.message || 'Ошибка создания платежа');
+        }
+
+        const data = await res.json();
+
+        if (data.url) {
+            window.location.href = data.url;
+        } else {
+            alert('Платеж создан, но ссылка для оплаты не получена');
+        }
+    } catch (err) {
+        alert(err.message);
+    }
+}
+
 async function loadBookings() {
     const list = document.getElementById('bookingsList');
     try {
@@ -142,26 +173,40 @@ async function loadBookings() {
             };
             const [cls, text] = statusMap[b.status] ?? ['', b.status];
 
-            // ── Считаем оплату ──
-            const paid = typeof b.paidAmount === 'number'
-                ? b.paidAmount
-                : (b.status === 'Confirmed' ? b.totalPrice : 0);
+            const paid = typeof b.paidAmount === 'number' ? b.paidAmount : (b.status === 'Confirmed' ? b.totalPrice : 0);
             const paidClamped = Math.min(paid, b.totalPrice);
-            const paidPct = b.totalPrice > 0
-                ? Math.round((paidClamped / b.totalPrice) * 100)
-                : 0;
-            const paidCls = paidClamped >= b.totalPrice
-                ? ''
-                : paidClamped > 0
-                    ? 'partial'
-                    : 'unpaid';
+            const remaining = Math.max(0, b.totalPrice - paidClamped);
+            const paidPct = b.totalPrice > 0 ? Math.round((paidClamped / b.totalPrice) * 100) : 0;
+            const paidCls = paidClamped >= b.totalPrice ? '' : paidClamped > 0 ? 'partial' : 'unpaid';
+
             const paidText = paidClamped >= b.totalPrice
                 ? `Оплачено ${paidClamped.toLocaleString('ru-RU')} ₽`
                 : paidClamped > 0
-                    ? `Оплачено ${paidClamped.toLocaleString('ru-RU')} из ${b.totalPrice.toLocaleString('ru-RU')} ₽`
+                    ? `Внесено ${paidClamped.toLocaleString('ru-RU')} из ${b.totalPrice.toLocaleString('ru-RU')} ₽`
                     : 'Ожидает оплаты';
 
-            return `
+            let payButtonsHtml = '';
+            if (remaining > 0 && b.status !== 'Cancelled') {
+                if (paidClamped > 0) {
+                    payButtonsHtml = `
+                        <button class="booking-pay-btn" onclick="initiatePayment(${b.id}, true)">
+                            <i class="fa-solid fa-credit-card"></i> Доплатить ${remaining.toLocaleString('ru-RU')} ₽
+                        </button>`;
+                            } else {
+                                const prepayment = b.prepaymentAmount ?? Math.round(b.totalPrice * 0.3);
+                                payButtonsHtml = `
+                        <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;">
+                            <button class="booking-pay-btn booking-pay-btn-secondary" onclick="initiatePayment(${b.id}, false)" style="flex:1; min-width:140px;">
+                                <i class="fa-solid fa-wallet"></i> Предоплата ${prepayment.toLocaleString('ru-RU')} ₽
+                            </button>
+                            <button class="booking-pay-btn" onclick="initiatePayment(${b.id}, true)" style="flex:1; min-width:140px;">
+                                <i class="fa-solid fa-credit-card"></i> Оплатить полностью
+                            </button>
+                        </div>`;
+                            }
+                        }
+
+                        return `
                 <div class="booking-card">
                     ${imgSrc
                                 ? `<img class="booking-card-img" src="${imgSrc}" alt="${b.apartmentTitle}" loading="lazy">`
@@ -179,6 +224,7 @@ async function loadBookings() {
                             </div>
                             <span class="status-badge ${cls}">${text}</span>
                         </div>
+            
                         <div class="booking-payment">
                             <div class="booking-payment-row">
                                 <span>${paidText}</span>
@@ -187,6 +233,7 @@ async function loadBookings() {
                             <div class="booking-payment-bar">
                                 <div class="booking-payment-bar-fill ${paidCls}" style="width:${paidPct}%"></div>
                             </div>
+                            ${payButtonsHtml}
                         </div>
                     </div>
                 </div>`;

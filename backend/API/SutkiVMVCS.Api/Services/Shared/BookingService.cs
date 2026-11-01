@@ -14,8 +14,16 @@ namespace SutkiVMVCS.Services.Shared
             _context = context;
         }
 
-        public async Task<(Booking? Booking, string? Error)> CreateAsync(Apartment apartment, int clientId, int guests,
-    DateTime start, DateTime end, BookingSource source, CancellationToken ct, BookingStatus status = BookingStatus.Pending, decimal? price = null)
+        public async Task<(Booking? Booking, string? Error)> CreateAsync(
+            Apartment apartment,
+            int clientId,
+            int guests,
+            DateTime start,
+            DateTime end,
+            BookingSource source,
+            CancellationToken ct,
+            BookingStatus status = BookingStatus.Pending,
+            decimal? price = null)
         {
             var s = start.ToUniversalTime();
             var e = end.ToUniversalTime();
@@ -47,17 +55,34 @@ namespace SutkiVMVCS.Services.Shared
 
             if (before != null || after != null)
             {
-                // Оставляем более раннюю бронь, вторую (если есть) удаляем
                 var target = before ?? after!;
                 var mergedStart = before?.StartDate ?? s;
                 var mergedEnd = after?.EndDate ?? e;
 
+                // ── МИГРАЦИЯ ПЛАТЕЖЕЙ ──
+                // Если удаляем after, переносим все его платежи на target (before)
+                if (before != null && after != null)
+                {
+                    // ЗАМЕНИ 'Payment' НА РЕАЛЬНОЕ ИМЯ ТВОЕЙ МОДЕЛИ ПЛАТЕЖЕЙ (например, Transaction или BookingPayment)
+                    var paymentsToMove = await _context.Payments
+                        .Where(p => p.BookingId == after.Id)
+                        .ToListAsync(ct);
+
+                    foreach (var payment in paymentsToMove)
+                    {
+                        payment.BookingId = target.Id;
+                    }
+
+                    _context.Bookings.Remove(after);
+                }
+
+                // Обновляем параметры целевой брони
                 target.StartDate = mergedStart;
                 target.EndDate = mergedEnd;
                 target.TotalPrice = PricingService.CalculateTotal(mergedStart, mergedEnd, guests, apartment, rules);
 
-                if (before != null && after != null)
-                    _context.Bookings.Remove(after);
+                // Статус НЕ меняем, как и требовалось. 
+                // Теперь у target будет 2 записи о платежах (если предоплаты были у обеих броней).
 
                 await _context.SaveChangesAsync(ct);
                 return (target, null);
@@ -67,7 +92,8 @@ namespace SutkiVMVCS.Services.Shared
             var total = price ?? basePrice;
             var discount = basePrice - total;
 
-            if (price < 0 || price > basePrice) return (null, "Некорректная цена");
+            if (total < 0 || total > basePrice)
+                return (null, "Некорректная цена");
 
             var booking = new Booking
             {
@@ -76,7 +102,7 @@ namespace SutkiVMVCS.Services.Shared
                 Guests = guests,
                 StartDate = s,
                 EndDate = e,
-                Status = status,   // было "Pending", параметр status игнорировался
+                Status = status,
                 Source = source,
                 CreatedAt = DateTime.UtcNow,
                 BasePrice = basePrice,

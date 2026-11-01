@@ -232,6 +232,7 @@ public class AuthController : ControllerBase
             StartDate   = b.StartDate,
             EndDate     = b.EndDate,
             TotalPrice  = b.TotalPrice,
+            PrepaymentAmount = b.PrepaymentAmount,
             PaidAmount  = b.PaidAmount,
             Status      = b.Status.ToString(),
             CreatedAt   = b.CreatedAt
