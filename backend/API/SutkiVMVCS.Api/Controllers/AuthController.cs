@@ -216,6 +216,7 @@ public class AuthController : ControllerBase
             .Where(b => b.ClientId == client.Id)
             .Include(b => b.Apartment)
                 .ThenInclude(a => a.ApartmentGallery)
+            .Include(b => b.Payments)
             .OrderByDescending(b => b.CreatedAt)
             .AsNoTracking()
             .ToListAsync();
@@ -231,6 +232,7 @@ public class AuthController : ControllerBase
             StartDate   = b.StartDate,
             EndDate     = b.EndDate,
             TotalPrice  = b.TotalPrice,
+            PaidAmount  = b.PaidAmount,
             Status      = b.Status.ToString(),
             CreatedAt   = b.CreatedAt
         }));
