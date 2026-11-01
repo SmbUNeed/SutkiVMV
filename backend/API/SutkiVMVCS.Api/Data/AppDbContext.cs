@@ -125,6 +125,7 @@ public class AppDbContext : DbContext
             entity.HasIndex(b => b.ClientId);
             entity.HasIndex(b => b.ApartmentId);
             entity.HasIndex(x => x.PublicToken).IsUnique();
+            entity.Property(b => b.PublicToken).HasDefaultValue(GenerateSecureToken());
         });
 
         modelBuilder.Entity<Payment>(entity =>
