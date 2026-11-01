@@ -215,7 +215,9 @@ namespace SutkiVMVCS.Migrations
 
                     b.Property<string>("PublicToken")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("0bb6052a4b1d253df2c44b4fd6ea7005c986591506a24ac1b03f27df52ad7056");
 
                     b.Property<string>("Source")
                         .IsRequired()
