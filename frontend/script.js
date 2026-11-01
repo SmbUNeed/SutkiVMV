@@ -547,14 +547,6 @@ function renderBookingWidget() {
     const el = document.getElementById('bookingWidget');
     if (isLoggedIn()) {
         el.innerHTML = `
-            <div class="guests-row">
-                <div class="num-input">
-                    <button type="button" onclick="stepNum('bookGuests',-1)">−</button>
-                    <input type="number" id="bookGuests" min="1" max="20" value="1" oninput="updateBookingSummary()">
-                    <button type="button" onclick="stepNum('bookGuests',1)">+</button>
-                </div>
-                <span style="color:var(--ink-3);font-size:0.85rem;">Гостей</span>
-            </div>
             <button class="btn-book" id="btnBook" onclick="handleBookFree()">
                 <i class="fa-solid fa-calendar-check"></i> Забронировать
             </button>`;
@@ -611,9 +603,18 @@ function calcGuestTotal() {
     return total;
 }
 
+function calcPrepayment() {
+    if (!currentApartment) return 0;
+    const guestsInput = document.getElementById('bookGuests');
+    const currentGuests = Math.max(1, parseInt(guestsInput?.value, 10) || 1);
+    const extraGuests = Math.max(0, currentGuests - currentApartment.guests);
+    const overp = currentApartment.guestOverpayment > 0 ? currentApartment.guestOverpayment : 700;
+    return currentApartment.pricePerNight + extraGuests * overp;
+}
+
 function updatePaymentTypeSums() {
     const total = calcGuestTotal();
-    const prepayment = Math.round(total * 0.3);
+    const prepayment = calcPrepayment();
     const preEl = document.getElementById('prepaymentSum');
     const fullEl = document.getElementById('fullSum');
     if (preEl) preEl.textContent = total > 0 ? `${prepayment.toLocaleString('ru-RU')} ₽` : '—';
@@ -624,7 +625,7 @@ function updateGuestPayButton() {
     const btn = document.getElementById('btnPayGuest');
     if (!btn) return;
     const total = calcGuestTotal();
-    const prepayment = Math.round(total * 0.3);
+    const prepayment = calcPrepayment();
     if (total <= 0) {
         btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Оплатить и забронировать';
         return;
