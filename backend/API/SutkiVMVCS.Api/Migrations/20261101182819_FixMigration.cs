@@ -5,32 +5,51 @@
 namespace SutkiVMVCS.Migrations
 {
     /// <inheritdoc />
-    public partial class DefaultPublicTokenValue : Migration
+    public partial class FixMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropIndex(
+                name: "IX_Bookings_PublicToken",
+                table: "Bookings");
+
             migrationBuilder.AlterColumn<string>(
                 name: "PublicToken",
                 table: "Bookings",
-                type: "text",
+                type: "character varying(100)",
+                maxLength: 100,
                 nullable: false,
-                defaultValue: "0bb6052a4b1d253df2c44b4fd6ea7005c986591506a24ac1b03f27df52ad7056",
                 oldClrType: typeof(string),
                 oldType: "text");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Bookings_PublicToken",
+                table: "Bookings",
+                column: "PublicToken");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropIndex(
+                name: "IX_Bookings_PublicToken",
+                table: "Bookings");
+
             migrationBuilder.AlterColumn<string>(
                 name: "PublicToken",
                 table: "Bookings",
                 type: "text",
                 nullable: false,
                 oldClrType: typeof(string),
-                oldType: "text",
-                oldDefaultValue: "0bb6052a4b1d253df2c44b4fd6ea7005c986591506a24ac1b03f27df52ad7056");
+                oldType: "character varying(100)",
+                oldMaxLength: 100);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Bookings_PublicToken",
+                table: "Bookings",
+                column: "PublicToken",
+                unique: true);
         }
     }
 }

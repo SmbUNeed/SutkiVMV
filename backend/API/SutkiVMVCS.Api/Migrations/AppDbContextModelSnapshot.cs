@@ -215,9 +215,8 @@ namespace SutkiVMVCS.Migrations
 
                     b.Property<string>("PublicToken")
                         .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("text")
-                        .HasDefaultValue("0bb6052a4b1d253df2c44b4fd6ea7005c986591506a24ac1b03f27df52ad7056");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Source")
                         .IsRequired()
@@ -242,8 +241,7 @@ namespace SutkiVMVCS.Migrations
 
                     b.HasIndex("ClientId");
 
-                    b.HasIndex("PublicToken")
-                        .IsUnique();
+                    b.HasIndex("PublicToken");
 
                     b.ToTable("Bookings");
                 });

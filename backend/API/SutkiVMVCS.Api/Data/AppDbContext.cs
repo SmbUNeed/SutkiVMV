@@ -106,16 +106,13 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<Booking>(entity =>
         {
-            entity.Property(b => b.TotalPrice)
-               .HasPrecision(12, 2);
-            entity.Property(b => b.BasePrice)
-                .HasPrecision(12, 2);
-            entity.Property(b => b.DiscountAmount)
-               .HasPrecision(12, 2);
-            entity.Property(b => b.PrepaymentAmount)
-               .HasPrecision(12, 2);
+            entity.Property(b => b.TotalPrice).HasPrecision(12, 2);
+            entity.Property(b => b.BasePrice).HasPrecision(12, 2);
+            entity.Property(b => b.DiscountAmount).HasPrecision(12, 2);
+            entity.Property(b => b.PrepaymentAmount).HasPrecision(12, 2);
+
             entity.Property(x => x.Status)
-                .HasConversion<string>() 
+                .HasConversion<string>()
                 .HasMaxLength(30);
 
             entity.Property(x => x.Source)
@@ -124,8 +121,12 @@ public class AppDbContext : DbContext
 
             entity.HasIndex(b => b.ClientId);
             entity.HasIndex(b => b.ApartmentId);
-            entity.HasIndex(x => x.PublicToken).IsUnique();
-            entity.Property(b => b.PublicToken).HasDefaultValue(GenerateSecureToken());
+
+            entity.Property(b => b.PublicToken)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            entity.HasIndex(x => x.PublicToken);
         });
 
         modelBuilder.Entity<Payment>(entity =>
