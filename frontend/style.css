@@ -598,132 +598,221 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     overflow-y: auto; max-height: 88vh; min-width: 0;
 }
 .share-btn {
-        position: absolute;
-        top: 14px;
-        right: 58px;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        border: none;
-        background: rgba(255,255,255,0.9);
-        color: var(--ink-2);
-        font-size: 0.95rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: var(--shadow-sm);
-        transition: all var(--transition);
-        cursor: pointer;
-    }
-    [data-theme="dark"] .share-btn { background: rgba(40,35,28,0.9); }
+    position: absolute;
+    top: 14px;
+    right: 58px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.9);
+    color: var(--ink-2);
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition);
+    cursor: pointer;
+}
+[data-theme="dark"] .share-btn { background: rgba(40,35,28,0.9); }
     .share-btn:hover { background: var(--primary); color: #fff; }
 
-/* ── MODAL GUEST BOOK ─────────────────────────────── */
 .modal-guest-overlay {
     display: none;
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.6);
+    inset: 0;
+    background: rgba(30,26,22,0.56);
+    backdrop-filter: blur(5px);
     z-index: 9999;
     justify-content: center;
     align-items: center;
+    padding: 20px;
     animation: fadeIn 0.2s ease;
 }
 .modal-guest-overlay.active {
     display: flex;
 }
 .modal-guest-content {
-    background: white;
-    border-radius: 16px;
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: var(--r-lg);
     padding: 32px;
     max-width: 480px;
-    width: 90%;
+    width: 100%;
     max-height: 90vh;
     overflow-y: auto;
     position: relative;
     animation: slideUp 0.3s ease;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-lg);
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
 }
 .modal-guest-close {
     position: absolute;
     top: 16px;
     right: 16px;
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: var(--ink-3, #666);
-    width: 32px;
-    height: 32px;
+    background: var(--paper-2);
+    border: 1.5px solid var(--border);
+    color: var(--ink-2);
+    width: 34px;
+    height: 34px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    transition: background 0.2s;
+    font-size: 1rem;
+    transition: all var(--transition);
 }
 .modal-guest-close:hover {
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--ink);
+    color: #fff;
+    border-color: var(--ink);
 }
 .modal-guest-title {
-    margin: 0 0 8px 0;
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--ink-1, #1a1a1a);
+    font-family: var(--font-head);
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--ink);
+    margin: 0 0 6px 0;
+    line-height: 1.2;
 }
 .modal-guest-subtitle {
-    margin: 0 0 24px 0;
-    font-size: 0.95rem;
-    color: var(--ink-3, #666);
+    font-size: 0.9rem;
+    color: var(--ink-3);
+    margin: 0 0 22px 0;
+    font-weight: 600;
 }
 .modal-guest-content .form-group {
-    margin-bottom: 16px;
+    margin-bottom: 14px;
 }
 .modal-guest-content .form-group label {
     display: block;
     margin-bottom: 6px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--ink-1, #1a1a1a);
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--ink-3);
 }
 .modal-guest-content .form-group input {
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1.5px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: 11px 14px;
     width: 100%;
-    padding: 12px 14px;
-    border: 1px solid var(--ink-3, #ccc);
-    border-radius: 8px;
-    font-size: 1rem;
     outline: none;
-    transition: border-color 0.2s;
+    transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
 }
 .modal-guest-content .form-group input:focus {
-    border-color: var(--accent, #2563eb);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-bg);
+}
+.modal-guest-content .form-group input::placeholder {
+    color: var(--ink-3);
 }
 .modal-guest-content .form-check {
     display: flex;
     align-items: flex-start;
     gap: 8px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 .modal-guest-content .form-check input[type="checkbox"] {
     margin-top: 3px;
     width: 16px;
     height: 16px;
     cursor: pointer;
+    accent-color: var(--primary);
 }
+
 .modal-guest-content .form-check label {
-    font-size: 0.85rem;
-    color: var(--ink-2, #444);
+    font-size: 0.82rem;
+    color: var(--ink-2);
     line-height: 1.4;
     cursor: pointer;
+    font-weight: 600;
 }
+
 .modal-guest-content .form-check a {
-    color: var(--accent, #2563eb);
-    text-decoration: none;
+    color: var(--primary);
+    font-weight: 700;
 }
+
 .modal-guest-content .form-check a:hover {
     text-decoration: underline;
+}
+.payment-type-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 18px 0 16px;
+}
+.payment-type-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 14px 10px;
+    background: var(--paper-2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--r-sm);
+    color: var(--ink-2);
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: all var(--transition);
+}
+.payment-type-btn:hover {
+    border-color: var(--primary);
+    background: var(--primary-bg);
+}
+.payment-type-btn.active {
+    border-color: var(--primary);
+    background: var(--primary-bg);
+    color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+}
+.payment-type-btn i {
+    font-size: 1.05rem;
+}
+.payment-type-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+.payment-type-sum {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--ink);
+}
+.payment-type-btn.active .payment-type-sum {
+    color: var(--primary);
+}
+.btn-pay-guest {
+    width: 100%;
+    padding: 13px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--r-sm);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+.btn-pay-guest:hover {
+    background: var(--primary-lt);
+}
+.btn-pay-guest:disabled {
+    opacity: 0.52;
+    cursor: not-allowed;
 }
 
 /* Gallery */
