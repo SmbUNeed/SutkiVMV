@@ -1095,6 +1095,13 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .booking-pay-btn-secondary:active {
     transform: translateY(0);
 }
+.booking-owned-hint-compact {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 12px 0;
+    justify-content: flex-start;
+}
 .btn-copy-link {
     display: inline-flex;
     align-items: center;
