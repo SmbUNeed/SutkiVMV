@@ -202,6 +202,7 @@ public class BookingsController : ControllerBase
     {
         var booking = await _context.Bookings
             .Include(b => b.Client)
+            .Include(b => b.Payments)
             .Include(b => b.Apartment)
                 .ThenInclude(a => a.ApartmentGallery) 
             .Include(b => b.Apartment)
@@ -229,6 +230,7 @@ public class BookingsController : ControllerBase
             startDate = booking.StartDate,
             endDate = booking.EndDate,
             guests = booking.Guests,
+            paidAmount = booking.PaidAmount,
             totalPrice = booking.TotalPrice,
             fullName = booking.Client?.FullName ?? "Гость",
             apartment = new

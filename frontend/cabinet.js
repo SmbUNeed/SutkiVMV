@@ -142,11 +142,30 @@ async function loadBookings() {
             };
             const [cls, text] = statusMap[b.status] ?? ['', b.status];
 
+            // ── Считаем оплату ──
+            const paid = typeof b.paidAmount === 'number'
+                ? b.paidAmount
+                : (b.status === 'Confirmed' ? b.totalPrice : 0);
+            const paidClamped = Math.min(paid, b.totalPrice);
+            const paidPct = b.totalPrice > 0
+                ? Math.round((paidClamped / b.totalPrice) * 100)
+                : 0;
+            const paidCls = paidClamped >= b.totalPrice
+                ? ''
+                : paidClamped > 0
+                    ? 'partial'
+                    : 'unpaid';
+            const paidText = paidClamped >= b.totalPrice
+                ? `Оплачено ${paidClamped.toLocaleString('ru-RU')} ₽`
+                : paidClamped > 0
+                    ? `Оплачено ${paidClamped.toLocaleString('ru-RU')} из ${b.totalPrice.toLocaleString('ru-RU')} ₽`
+                    : 'Ожидает оплаты';
+
             return `
                 <div class="booking-card">
                     ${imgSrc
-                        ? `<img class="booking-card-img" src="${imgSrc}" alt="${b.apartmentTitle}" loading="lazy">`
-                        : `<div class="booking-card-img-placeholder"><i class="fa-solid fa-image"></i></div>`}
+                                ? `<img class="booking-card-img" src="${imgSrc}" alt="${b.apartmentTitle}" loading="lazy">`
+                                : `<div class="booking-card-img-placeholder"><i class="fa-solid fa-image"></i></div>`}
                     <div class="booking-card-info">
                         <div class="booking-card-title">${b.apartmentTitle}</div>
                         <div class="booking-card-dates">
@@ -159,6 +178,15 @@ async function loadBookings() {
                                 ${b.pricePerNight ? `<span class="booking-card-nights"> (${b.pricePerNight.toLocaleString('ru-RU')} ₽/ночь)</span>` : ''}
                             </div>
                             <span class="status-badge ${cls}">${text}</span>
+                        </div>
+                        <div class="booking-payment">
+                            <div class="booking-payment-row">
+                                <span>${paidText}</span>
+                                <span class="paid-amount ${paidCls}">${paidPct}%</span>
+                            </div>
+                            <div class="booking-payment-bar">
+                                <div class="booking-payment-bar-fill ${paidCls}" style="width:${paidPct}%"></div>
+                            </div>
                         </div>
                     </div>
                 </div>`;
