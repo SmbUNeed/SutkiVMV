@@ -376,6 +376,7 @@ public class BookingsController : ControllerBase
         Status = b.Status.ToString(),
         Source = b.Source.ToString(),
         CreatedAt = b.CreatedAt,
-        Guests = b.Guests
+        Guests = b.Guests,
+        PublicToken = b.PublicToken
     };
 }
