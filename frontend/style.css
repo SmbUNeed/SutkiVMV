@@ -774,6 +774,102 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     color: var(--primary);
     box-shadow: 0 0 0 3px var(--primary-glow);
 }
+
+.guests-verify-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--primary-bg);
+    border: 1.5px solid var(--primary-glow);
+    border-radius: var(--r-sm);
+    margin-bottom: 18px;
+    font-size: 0.82rem;
+    color: var(--ink-2);
+    line-height: 1.45;
+    font-weight: 600;
+}
+
+    .guests-verify-notice i {
+        color: var(--primary);
+        font-size: 0.95rem;
+        margin-top: 1px;
+        flex-shrink: 0;
+    }
+
+.booking-type-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.booking-type-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 12px 8px;
+    background: var(--paper-2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--r-sm);
+    color: var(--ink-2);
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+    .booking-type-btn:hover {
+        border-color: var(--primary);
+        background: var(--primary-bg);
+    }
+
+    .booking-type-btn.active {
+        border-color: var(--primary);
+        background: var(--primary-bg);
+        color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+
+    .booking-type-btn i {
+        font-size: 1rem;
+    }
+
+.booking-type-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.booking-type-sum,
+.booking-type-hint {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--ink);
+}
+
+.booking-type-btn.active .booking-type-sum,
+.booking-type-btn.active .booking-type-hint {
+    color: var(--primary);
+}
+
+.booking-type-description {
+    padding: 12px 14px;
+    background: var(--paper-3);
+    border-radius: var(--r-sm);
+    font-size: 0.84rem;
+    color: var(--ink-2);
+    line-height: 1.5;
+    font-weight: 600;
+    margin-bottom: 16px;
+    min-height: 48px;
+}
+
+@media (max-width: 480px) {
+    .booking-type-selector {
+        grid-template-columns: 1fr;
+    }
+}
+
 .payment-type-btn i {
     font-size: 1.05rem;
 }

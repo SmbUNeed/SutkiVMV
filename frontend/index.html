@@ -253,6 +253,11 @@
             <h2 class="modal-guest-title">Бронирование без регистрации</h2>
             <p class="modal-guest-subtitle">Заполните данные для бронирования квартиры</p>
 
+            <div class="guests-verify-notice">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Пожалуйста, убедитесь, что указали верное количество гостей — от этого зависит итоговая стоимость.</span>
+            </div>
+
             <div class="form-group">
                 <label for="bookFullName">Ваше имя *</label>
                 <input type="text" id="bookFullName" placeholder="Иван Иванов" required>
@@ -287,6 +292,53 @@
 
             <button type="button" id="btnPayGuest" class="btn-pay-guest" onclick="handleGuestBook()">
                 <i class="fa-solid fa-wallet"></i> Оплатить и забронировать
+            </button>
+        </div>
+    </div>
+
+    <!-- ── MODAL USER BOOK ─────────────────────────────── -->
+    <div id="userBookModal" class="modal-guest-overlay" onclick="closeUserBookModalOnOverlay(event)">
+        <div class="modal-guest-content">
+            <button class="modal-guest-close" onclick="closeUserBookModal()" type="button">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h2 class="modal-guest-title">Подтверждение бронирования</h2>
+            <p class="modal-guest-subtitle">Выберите способ бронирования квартиры</p>
+
+            <div class="guests-verify-notice">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Пожалуйста, убедитесь, что указали верное количество гостей — от этого зависит итоговая стоимость.</span>
+            </div>
+
+            <div class="booking-type-selector">
+                <button type="button" class="booking-type-btn active" data-type="free" onclick="selectBookingType('free')">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span class="booking-type-label">Бесплатно</span>
+                    <span class="booking-type-hint">Ожидание подтверждения</span>
+                </button>
+                <button type="button" class="booking-type-btn" data-type="prepayment" onclick="selectBookingType('prepayment')">
+                    <i class="fa-solid fa-wallet"></i>
+                    <span class="booking-type-label">Предоплата</span>
+                    <span class="booking-type-sum" id="userPrepaymentSum">—</span>
+                </button>
+                <button type="button" class="booking-type-btn" data-type="full" onclick="selectBookingType('full')">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span class="booking-type-label">Полная оплата</span>
+                    <span class="booking-type-sum" id="userFullSum">—</span>
+                </button>
+            </div>
+
+            <div id="bookingTypeDescription" class="booking-type-description">
+                Бронь будет создана со статусом «Ожидает подтверждения». Администратор проверит её и свяжется с вами.
+            </div>
+
+            <div class="form-check">
+                <input type="checkbox" id="userCheckAgreement">
+                <label for="userCheckAgreement">Я принимаю <a href="/terms">пользовательское соглашение</a></label>
+            </div>
+
+            <button type="button" id="btnUserBook" class="btn-pay-guest" onclick="handleUserBook()">
+                <i class="fa-solid fa-calendar-check"></i> Забронировать
             </button>
         </div>
     </div>

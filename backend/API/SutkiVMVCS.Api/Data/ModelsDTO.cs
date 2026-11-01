@@ -245,6 +245,7 @@ public class UserCreateBookingDto : IDetailedBooking
     public DateTime StartDate   { get; set; }
     public DateTime EndDate     { get; set; }
     public int Guests { get; set; } = 0;
+    public bool PayInFull { get; set; } = false;
 }
 public record GuestBookingDto(
     int ApartmentId,
@@ -255,6 +256,7 @@ public record GuestBookingDto(
     string PhoneNumber,
     bool PayInFull
     );
+
 // ── Client ─────────────────────────────────────────────────────────────
 public class ClientDto
 {

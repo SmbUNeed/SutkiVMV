@@ -254,6 +254,18 @@ public class AuthController : ControllerBase
         if (client == null || client.InBlackList)
             return BadRequest(new { message = "Профиль клиента не найден. Обратитесь в поддержку." });
 
+        if ((dto.EndDate - dto.StartDate).Days > 10) return BadRequest(new { message = "Бесплатное бронирование доступно на срок не более 10 суток. Пожалуйста, выберите оплату." });
+
+        bool hasRecentPendingBooking = await _context.Bookings.AnyAsync(b =>
+            b.ClientId == client.Id &&
+            b.Status == BookingStatus.Pending &&
+            (DateTime.UtcNow - b.CreatedAt).TotalHours <= 24,
+            ct);
+        if (hasRecentPendingBooking)
+        {
+            return BadRequest(new { message = "Вы уже создавали заявку на бесплатное бронирование в последние 24 часа. Попробуйте позже или выберите оплату." });
+        }
+
         var apartment = await _context.Apartments.FindAsync(new object?[] { dto.ApartmentId }, ct);
         if (apartment == null || !apartment.IsActive || apartment.IsDeleted)
             return NotFound(new { message = "Квартира не найдена или недоступна" });

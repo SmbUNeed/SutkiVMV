@@ -13,6 +13,12 @@ let selectedCheckOut = null;
 let guests = 1;
 let selectedPaymentType = 'prepayment';
 
+const BOOKING_TYPE_DESCRIPTIONS = {
+    free: 'Бронь будет создана со статусом «Ожидает подтверждения». Администратор проверит её и свяжется с вами.',
+    prepayment: 'После оплаты предоплаты бронь будет автоматически подтверждена.',
+    full: 'После полной оплаты бронь будет автоматически подтверждена.'
+};
+
 // Выбранные удобства (Set имён)
 let selectedAmenities = new Set();
 
@@ -543,34 +549,40 @@ function changeGuests(delta) {
 }
 
 // ── Виджет бронирования ──────────────────────────────────
+let selectedBookingType = 'free';
+
 function renderBookingWidget() {
     const el = document.getElementById('bookingWidget');
     if (isLoggedIn()) {
         el.innerHTML = `
-            <button class="btn-book" id="btnBook" onclick="handleBookFree()">
-                <i class="fa-solid fa-calendar-check"></i> Забронировать
-            </button>`;
+        <button class="btn-book" id="btnBook" onclick="openUserBookModal()">
+            <i class="fa-solid fa-calendar-check"></i> Забронировать
+        </button>`;
     } else {
         el.innerHTML = `
-            <div class="auth-gate">
-                <p>Забронируйте квартиру без регистрации</p>
-                <button class="btn-book" onclick="openGuestBookModal()">
-                    <i class="fa-solid fa-credit-card"></i> Забронировать и оплатить
-                </button>
-                <div class="auth-gate-divider"><span>или</span></div>
-                <div class="auth-gate-btns">
-                    <a href="login.html" class="btn-auth btn-auth-primary">
-                        <i class="fa-solid fa-arrow-right-to-bracket"></i> Войти
-                    </a>
-                    <a href="register.html" class="btn-auth btn-auth-ghost">
-                        Зарегистрироваться
-                    </a>
-                </div>
-            </div>`;
+        <div class="auth-gate">
+            <p>Забронируйте квартиру без регистрации</p>
+            <button class="btn-book" onclick="openGuestBookModal()">
+                <i class="fa-solid fa-credit-card"></i> Забронировать и оплатить
+            </button>
+            <div class="auth-gate-divider"><span>или</span></div>
+            <div class="auth-gate-btns">
+                <a href="login.html" class="btn-auth btn-auth-primary">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Войти
+                </a>
+                <a href="register.html" class="btn-auth btn-auth-ghost">
+                    Зарегистрироваться
+                </a>
+            </div>
+        </div>`;
     }
 }
 
 function openGuestBookModal() {
+    if (!selectedCheckIn || !selectedCheckOut) {
+        alert('Пожалуйста, выберите даты заезда и выезда в календаре.');
+        return;
+    }
     const modal = document.getElementById('guestBookModal');
     if (!modal) return;
     modal.classList.add('active');
@@ -637,23 +649,20 @@ function updateGuestPayButton() {
     }
 }
 
-// Закрыть модальное окно
 function closeGuestBookModal() {
     const modal = document.getElementById('guestBookModal');
     if (modal) {
         modal.classList.remove('active');
-        document.body.style.overflow = ''; // Возвращаем скролл
+        document.body.style.overflow = '';
     }
 }
 
-// Закрытие по клику на overlay (вне модалки)
 function closeGuestBookModalOnOverlay(event) {
     if (event.target === event.currentTarget) {
         closeGuestBookModal();
     }
 }
 
-// Закрытие по Escape
 document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape') {
         const modal = document.getElementById('guestBookModal');
@@ -662,6 +671,131 @@ document.addEventListener('keydown', function (event) {
         }
     }
 });
+
+function openUserBookModal() {
+    if (!selectedCheckIn || !selectedCheckOut) {
+        alert('Пожалуйста, выберите даты заезда и выезда.');
+        return;
+    }
+    const modal = document.getElementById('userBookModal');
+    if (!modal) return;
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    selectedBookingType = 'free';
+    document.querySelectorAll('.booking-type-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.type === 'free');
+    });
+    updateUserBookingSums();
+    updateUserBookButton();
+    updateBookingTypeDescription();
+}
+
+function closeUserBookModal() {
+    const modal = document.getElementById('userBookModal');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+function closeUserBookModalOnOverlay(event) {
+    if (event.target === event.currentTarget) closeUserBookModal();
+}
+
+function selectBookingType(type) {
+    selectedBookingType = type;
+    document.querySelectorAll('.booking-type-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.type === type);
+    });
+    updateUserBookButton();
+    updateBookingTypeDescription();
+}
+
+function updateBookingTypeDescription() {
+    const el = document.getElementById('bookingTypeDescription');
+    if (el) el.textContent = BOOKING_TYPE_DESCRIPTIONS[selectedBookingType] || '';
+}
+
+function updateUserBookingSums() {
+    const total = calcGuestTotal();
+    const prepayment = calcPrepayment();
+    const preEl = document.getElementById('userPrepaymentSum');
+    const fullEl = document.getElementById('userFullSum');
+    if (preEl) preEl.textContent = total > 0 ? `${prepayment.toLocaleString('ru-RU')} ₽` : '—';
+    if (fullEl) fullEl.textContent = total > 0 ? `${total.toLocaleString('ru-RU')} ₽` : '—';
+}
+
+function updateUserBookButton() {
+    const btn = document.getElementById('btnUserBook');
+    if (!btn) return;
+    const total = calcGuestTotal();
+    const prepayment = calcPrepayment();
+    if (selectedBookingType === 'free') {
+        btn.innerHTML = '<i class="fa-solid fa-calendar-check"></i> Забронировать бесплатно';
+    } else if (selectedBookingType === 'full') {
+        btn.innerHTML = `<i class="fa-solid fa-credit-card"></i> Оплатить ${total.toLocaleString('ru-RU')} ₽`;
+    } else {
+        btn.innerHTML = `<i class="fa-solid fa-wallet"></i> Оплатить ${prepayment.toLocaleString('ru-RU')} ₽`;
+    }
+}
+
+async function handleUserBook() {
+    if (!selectedCheckIn || !selectedCheckOut) {
+        alert('Пожалуйста, выберите даты заезда и выезда.');
+        return;
+    }
+    if (selectedBookingType === 'free') {
+        const nights = (new Date(selectedCheckOut) - new Date(selectedCheckIn)) / 86_400_000;
+        if (nights > 10) {
+            alert('Бесплатное бронирование доступно на срок не более 10 суток. Для более длительного срока выберите оплату.');
+            return;
+        }
+    }
+    const agreementCheck = document.getElementById('userCheckAgreement');
+    if (!agreementCheck?.checked) {
+        alert('Необходимо принять пользовательское соглашение.');
+        return;
+    }
+    const guestsInput = document.getElementById('bookGuests');
+    const adults = Math.max(1, parseInt(guestsInput?.value, 10) || 1);
+    const btn = document.getElementById('btnUserBook');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Оформляем...';
+    }
+    try {
+        if (selectedBookingType === 'free') {
+            await apiBookAsUser(currentApartment.id, selectedCheckIn, selectedCheckOut, adults);
+            closeUserBookModal();
+            closeModal();
+            alert('Бронирование создано! Ожидайте подтверждения администратора.');
+            const apartments = await apiGetApartments();
+            filteredApartments = [...apartments];
+            applyFilters();
+        } else {
+            const user = getUser();
+            const fullName = user?.fullName || '';
+            const phoneNumber = user?.phoneNumber || '';
+            const response = await apiBookAsUserAndPay(
+                currentApartment.id,
+                selectedCheckIn,
+                selectedCheckOut,
+                adults,
+                selectedBookingType === 'prepayment'
+            );
+            closeUserBookModal();
+            closeModal();
+            const redirectUrl = response?.payUrl || response?.url;
+            if (redirectUrl) window.location.href = redirectUrl;
+        }
+    } catch (err) {
+        alert(`Ошибка: ${err.message || 'Не удалось оформить бронирование'}`);
+        if (btn) {
+            btn.disabled = false;
+            updateUserBookButton();
+        }
+    }
+}
 
 // ── Бронирование ─────────────────────────────────────────
 async function handleGuestBook() {
@@ -858,6 +992,9 @@ function updateBookingSummary() {
                 <strong>${total.toLocaleString('ru-RU')} ₽</strong>
             </div>`;
         updatePaymentTypeSums();
+        updateGuestPayButton();
+        updateUserBookingSums();
+        updateUserBookButton();
         updateGuestPayButton();
         el.style.display = 'block';
     } else {

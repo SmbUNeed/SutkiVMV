@@ -8,6 +8,7 @@ using SutkiVMVCS.Data;
 using SutkiVMVCS.Services.Shared;
 using SutkiVMVCS.Services.YooKassa;
 using System.Globalization;
+using System.Security.Claims;
 using System.Text.Json;
 using Telegram.Bot.Requests.Abstractions;
 
@@ -190,6 +191,55 @@ public class PaymentsController : ControllerBase
         };
 
         _context.Payments.Add(payment);
+        await _context.SaveChangesAsync(ct);
+
+        return Ok(new { url = result.ConfirmationUrl, paymentId = result.PaymentId, bookingId = booking.Id });
+    }
+
+    [HttpPost("book-and-pay")]
+    [Authorize]
+    public async Task<IActionResult> BookAndPay([FromBody] UserCreateBookingDto dto, CancellationToken ct)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        int clientId = (await _context.Clients.FirstAsync(c => c.UserId == userId)).Id;
+
+        var apartment = await _context.Apartments.FindAsync(new object[] { dto.ApartmentId }, ct);
+        if (apartment == null) return NotFound(new { message = "Квартира не найдена" });
+
+        var rules = await _context.PriceRules.ToListAsync(ct);
+        decimal total = PricingService.CalculateTotal(dto.StartDate, dto.EndDate, dto.Guests, apartment, rules);
+        decimal prepaymentAmount = PricingService.CalculatePrepayment(dto.StartDate, dto.Guests, apartment, rules, total, total);
+        decimal amountToCharge = dto.PayInFull ? total : prepaymentAmount;
+
+        var booking = new Booking
+        {
+            ApartmentId = dto.ApartmentId,
+            ClientId = clientId,
+            Guests = dto.Guests,
+            StartDate = dto.StartDate.ToUniversalTime(),
+            EndDate = dto.EndDate.ToUniversalTime(),
+            TotalPrice = total,
+            BasePrice = total,
+            PrepaymentAmount = prepaymentAmount,
+            Status = BookingStatus.AwaitingPayment,
+            Source = BookingSource.SiteUser,
+            CreatedAt = DateTime.UtcNow
+        };
+        _context.Bookings.Add(booking);
+        await _context.SaveChangesAsync(ct);
+
+        var result = await _yooKassa.CreatePaymentAsync(booking, $"Бронь #{booking.Id} — {apartment.Title}", amountToCharge, ct);
+        if (!result.Success) return BadRequest(new { message = result.Error });
+
+        _context.Payments.Add(new Payment
+        {
+            PaymentId = result.PaymentId!,
+            BookingId = booking.Id,
+            Status = PaymentStatus.Pending,
+            Type = dto.PayInFull ? PaymentType.Full : PaymentType.Prepayment,
+            CreatedAt = DateTime.UtcNow
+        });
         await _context.SaveChangesAsync(ct);
 
         return Ok(new { url = result.ConfirmationUrl, paymentId = result.PaymentId, bookingId = booking.Id });
