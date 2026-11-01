@@ -208,17 +208,23 @@ public class PaymentsController : ControllerBase
         }
         catch
         {
-            return Ok(); 
+            return Ok();
         }
 
-        var eventType = json.GetProperty("event").GetString();
-        var paymentId = json.GetProperty("object").GetProperty("id").GetString();
+        if (!json.TryGetProperty("event", out var eventProp) ||
+            !json.TryGetProperty("object", out var obj) ||
+            !obj.TryGetProperty("id", out var idProp))
+        {
+            return Ok();
+        }
+
+        var eventType = eventProp.GetString();
+        var paymentId = idProp.GetString();
 
         if (string.IsNullOrEmpty(paymentId)) return Ok();
 
         decimal? webhookAmount = null;
-        if (json.TryGetProperty("object", out var obj) &&
-            obj.TryGetProperty("amount", out var amountObj) &&
+        if (obj.TryGetProperty("amount", out var amountObj) &&
             amountObj.TryGetProperty("value", out var valueElement))
         {
             if (decimal.TryParse(valueElement.GetString(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal amount))
@@ -228,20 +234,23 @@ public class PaymentsController : ControllerBase
         }
 
         var statusResult = await _yooKassa.GetPaymentStatusAsync(paymentId, ct);
-        if (!statusResult.Success || statusResult.BookingId == null) return Ok();
-
-        var booking = await _context.Bookings
-            .Include(b => b.Apartment) 
-            .Include(b => b.Client) 
-            .FirstOrDefaultAsync(b => b.Id == statusResult.BookingId, ct);
-
-        if (booking == null) return Ok();
+        if (!statusResult.Success || statusResult.BookingId == null)
+        {
+            return Ok();
+        }
 
         var payment = await _context.Payments
-            .Where(p => p.BookingId == booking.Id)
-            .FirstOrDefaultAsync(p => p.PaymentId == paymentId);
+            .Include(p => p.Booking)
+                .ThenInclude(b => b.Apartment)
+            .Include(p => p.Booking)
+                .ThenInclude(b => b.Client)
+            .Include(p => p.Booking)
+                .ThenInclude(b => b.Payments)
+            .FirstOrDefaultAsync(p => p.PaymentId == paymentId, ct);
 
-        if (payment == null) return Ok();
+        if (payment?.Booking == null) return Ok();
+
+        var booking = payment.Booking;
 
         switch (statusResult.Status?.ToLower())
         {
@@ -249,21 +258,30 @@ public class PaymentsController : ControllerBase
                 if (payment.Status != PaymentStatus.Succeeded)
                 {
                     payment.Status = PaymentStatus.Succeeded;
-                    payment.PaidAt = DateTime.Now;
-                    payment.Paid = webhookAmount ?? 0;
+                    payment.PaidAt = DateTime.UtcNow;
+
+                    if (webhookAmount.HasValue && payment.Paid == 0)
+                    {
+                        payment.Paid = webhookAmount.Value;
+                    }
 
                     decimal paidAmount = booking.Payments
                         .Where(p => p.Status == PaymentStatus.Succeeded)
                         .Sum(p => p.Paid);
 
-                    if (!booking.Prepaid && paidAmount >= booking.PrepaymentAmount)
+                    if (!booking.Prepaid && booking.PrepaymentAmount > 0 && paidAmount >= booking.PrepaymentAmount)
                     {
                         booking.Prepaid = true;
+                    }
 
-                        if (booking.Status == BookingStatus.AwaitingPayment || booking.Status == BookingStatus.Pending)
-                        {
-                            booking.Status = BookingStatus.Cancelled;
-                        }
+                    if (booking.Status == BookingStatus.AwaitingPayment)
+                    {
+                        booking.Status = BookingStatus.Confirmed;
+                    }
+
+                    if (paidAmount >= booking.TotalPrice)
+                    {
+                        booking.Status = BookingStatus.Confirmed;
                     }
 
                     await _context.SaveChangesAsync(ct);
@@ -271,9 +289,16 @@ public class PaymentsController : ControllerBase
                 break;
 
             case "canceled":
-                if (booking.Status != BookingStatus.Cancelled)
+                if (payment.Status != PaymentStatus.Canceled)
                 {
-                    booking.Status = BookingStatus.Cancelled;
+                    payment.Status = PaymentStatus.Canceled;
+
+                    if (booking.Status == BookingStatus.AwaitingPayment &&
+                        !booking.Payments.Any(p => p.Status == PaymentStatus.Succeeded))
+                    {
+                        booking.Status = BookingStatus.Cancelled;
+                    }
+
                     await _context.SaveChangesAsync(ct);
                 }
                 break;

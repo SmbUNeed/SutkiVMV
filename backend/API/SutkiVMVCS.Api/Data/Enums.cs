@@ -8,7 +8,7 @@
     }
 
     public enum PaymentStatus {
-        Cancelled,
+        Canceled,
         Pending,
         Succeeded,
         Refunded
