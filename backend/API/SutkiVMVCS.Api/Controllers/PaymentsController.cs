@@ -202,7 +202,8 @@ public class PaymentsController : ControllerBase
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        int clientId = (await _context.Clients.FirstAsync(c => c.UserId == userId)).Id;
+        var client = await _context.Clients.FirstAsync(c => c.UserId == userId);
+        if (client == null) return NotFound(new { message = "Клиент не найден" });
 
         var apartment = await _context.Apartments.FindAsync(new object[] { dto.ApartmentId }, ct);
         if (apartment == null) return NotFound(new { message = "Квартира не найдена" });
@@ -215,7 +216,7 @@ public class PaymentsController : ControllerBase
         var booking = new Booking
         {
             ApartmentId = dto.ApartmentId,
-            ClientId = clientId,
+            ClientId = client.Id,
             Guests = dto.Guests,
             StartDate = dto.StartDate.ToUniversalTime(),
             EndDate = dto.EndDate.ToUniversalTime(),

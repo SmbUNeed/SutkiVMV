@@ -94,6 +94,16 @@ async function apiBookAsGuestAndPay(apartmentId, startDate, endDate, guests, ful
     return data;
 }
 
+async function apiBookAsUserAndPay(apartmentId, startDate, endDate, guests, payInFull = false) {
+    const res = await authFetch('payments/book-and-pay', {
+        method: 'POST',
+        body: JSON.stringify({ apartmentId, startDate, endDate, guests, payInFull })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Ошибка бронирования');
+    return data;
+}
+
 const amenName = a => (typeof a === 'string' ? a : a?.name);
 
 // ── Grid ─────────────────────────────────────────────────
@@ -793,9 +803,6 @@ async function handleUserBook() {
             filteredApartments = [...apartments];
             applyFilters();
         } else {
-            const user = getUser();
-            const fullName = user?.fullName || '';
-            const phoneNumber = user?.phoneNumber || '';
             const response = await apiBookAsUserAndPay(
                 currentApartment.id,
                 selectedCheckIn,
@@ -805,7 +812,7 @@ async function handleUserBook() {
             );
             closeUserBookModal();
             closeModal();
-            const redirectUrl = response?.payUrl || response?.url;
+            const redirectUrl = response?.url;
             if (redirectUrl) window.location.href = redirectUrl;
         }
     } catch (err) {
