@@ -475,7 +475,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
 
         var nights = (booking.EndDate - booking.StartDate).Days;
         var text =
-            $"🆔 Бронь #{booking.Id}  {StatusEmoji(booking.Status.ToString())}\n" +
+            $"🆔 Бронь #{booking.Id}  {StatusEmoji(booking.Status)}\n" +
             $"🏢 {booking.Apartment?.Title}\n" +
             $"👤 {booking.Client?.FullName}  {booking.Client?.PhoneNumber}\n" +
             $"📅 {booking.StartDate:dd.MM.yyyy} — {booking.EndDate:dd.MM.yyyy}  🌙{nights}\n" +
@@ -655,7 +655,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
         foreach (var b in bookings)
         {
             var nights = (b.EndDate - b.StartDate).Days;
-            sb.AppendLine($"#{b.Id} {StatusEmoji(b.Status.ToString())} {b.StartDate:dd.MM} — {b.EndDate:dd.MM.yyyy} 🌙{nights}");
+            sb.AppendLine($"#{b.Id} {StatusEmoji(b.Status)} {b.StartDate:dd.MM} — {b.EndDate:dd.MM.yyyy} 🌙{nights}");
             sb.AppendLine($"   👤 {b.Client?.FullName}  📞 {b.Client?.PhoneNumber}");
             sb.AppendLine($"   💰 {b.TotalPrice:N0} ₽\n");
         }
@@ -801,7 +801,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
     string FormatBooking(Booking b)
     {
         var nights = (b.EndDate - b.StartDate).Days;
-        return $"🆔 #{b.Id}  {StatusEmoji(b.Status.ToString())}\n" +
+        return $"🆔 #{b.Id}  {StatusEmoji(b.Status)}\n" +
                $"  🏢 {b.Apartment?.Title ?? "—"}\n" +
                $"  👤 {b.Client?.FullName ?? "—"}  {b.Client?.PhoneNumber ?? ""}\n" +
                $"  📅 {b.StartDate:dd.MM.yyyy} — {b.EndDate:dd.MM.yyyy}  🌙{nights}\n" +
@@ -811,14 +811,14 @@ public class MaxBotWorker : BackgroundService, IMaxService
     string FormatBookingShort(Booking b)
     {
         var nights = (b.EndDate - b.StartDate).Days;
-        return $"#{b.Id} {StatusEmoji(b.Status.ToString())} {b.StartDate:dd.MM} — {b.EndDate:dd.MM.yyyy} 🌙{nights} 💰{b.TotalPrice:N0}₽";
+        return $"#{b.Id} {StatusEmoji(b.Status)} {b.StartDate:dd.MM} — {b.EndDate:dd.MM.yyyy} 🌙{nights} 💰{b.TotalPrice:N0}₽";
     }
 
-    static string StatusEmoji(string status) => status switch
+    static string StatusEmoji(BookingStatus status) => status switch
     {
-        "Confirmed" => "✅",
-        "Cancelled" => "❌",
-        "Pending" => "⏳",
+        BookingStatus.Confirmed => "✅",
+        BookingStatus.Cancelled => "❌",
+        BookingStatus.Pending => "⏳",
         _ => "❓"
     };
 

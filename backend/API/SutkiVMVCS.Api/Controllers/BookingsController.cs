@@ -223,7 +223,7 @@ public class BookingsController : ControllerBase
         var result = new
         {
             id = booking.Id,
-            status = booking.Status,
+            status = booking.Status.ToString(),
             startDate = booking.StartDate,
             endDate = booking.EndDate,
             guests = booking.Guests,

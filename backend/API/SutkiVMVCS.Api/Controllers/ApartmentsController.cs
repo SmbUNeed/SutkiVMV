@@ -33,7 +33,7 @@ public class ApartmentsController : ControllerBase
         if (apt == null) return NotFound();
 
         var bookings = await _context.Bookings
-            .Where(b => b.ApartmentId == id && b.Status != SutkiVMVCS.Data.BookingStatus.Cancelled)
+            .Where(b => b.ApartmentId == id && b.Status != BookingStatus.Cancelled)
             .Select(b => new BusyPeriodDto(
                 b.StartDate.ToString("yyyy-MM-dd"),
                 b.EndDate.ToString("yyyy-MM-dd")))
