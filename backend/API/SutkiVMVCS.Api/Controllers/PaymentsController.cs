@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SutkiVMV.Data;
 using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
+using SutkiVMVCS.Data;
 using SutkiVMVCS.Services.Shared;
 using SutkiVMVCS.Services.YooKassa;
 using System.Globalization;
@@ -31,24 +32,60 @@ public class PaymentsController : ControllerBase
     {
         var booking = await _context.Bookings
             .Include(b => b.Apartment)
+            .Include(b => b.Payments)
             .FirstOrDefaultAsync(b => b.Id == dto.BookingId, ct);
 
         if (booking == null)
             return NotFound(new { message = "Бронь не найдена" });
 
-        if (booking.Status != "Pending" && booking.Status != "AwaitingPayment")
-            return BadRequest(new { message = "Бронь уже оплачена или отменена" });
+        if (booking.Status == BookingStatus.Cancelled)
+            return BadRequest(new { message = "Бронь отменена" });
+
+        decimal remaining = booking.RemainingAmount;
+        if (remaining == 0)
+            return BadRequest(new { message = "Бронь полностью оплачена"} );
+
+        decimal amountToCharge = remaining;
+        PaymentType paymentType;
+
+        if (booking.PaidAmount > 0) 
+            paymentType = PaymentType.Balance;
+        else if (dto.PayInFull) 
+            paymentType = PaymentType.Full;
+        else {
+            paymentType = PaymentType.Prepayment;
+            amountToCharge = booking.PrepaymentAmount;
+        }
 
         var result = await _yooKassa.CreatePaymentAsync(
-            booking, $"Бронь #{booking.Id} — {booking.Apartment.Title}", ct);
+            booking,
+            $"Бронь #{booking.Id} — {booking.Apartment.Title}",
+            amountToCharge,
+            ct
+        );
 
-        if (!result.Success)
+        if (!result.Success || result.PaymentId == null)
             return BadRequest(new { message = result.Error });
 
-        booking.PaymentId = result.PaymentId;
+        var payment = new Payment
+        {
+            BookingId = booking.Id,
+            PaymentId = result.PaymentId,
+            Paid = amountToCharge,
+            Status = PaymentStatus.Pending,
+            Type = paymentType,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Payments.Add(payment);
         await _context.SaveChangesAsync(ct);
 
-        return Ok(new { url = result.ConfirmationUrl, paymentId = result.PaymentId });
+        return Ok(new
+        {
+            url = result.ConfirmationUrl,
+            paymentId = result.PaymentId,
+            amount = amountToCharge
+        });
     }
 
     [HttpPost("book-guest")]
@@ -75,7 +112,7 @@ public class PaymentsController : ControllerBase
 
         bool overlap = await _context.Bookings.AnyAsync(b =>
             b.ApartmentId == dto.ApartmentId &&
-            b.Status != "Cancelled" &&
+            b.Status != BookingStatus.Cancelled &&
             b.StartDate < end &&
             b.EndDate > start, ct);
 
@@ -106,7 +143,7 @@ public class PaymentsController : ControllerBase
                 InBlackList = false
             };
             _context.Clients.Add(client);
-            await _context.SaveChangesAsync(ct); // чтобы получить client.Id
+            await _context.SaveChangesAsync(ct);
         }
         else {
             client.FullName = dto.FullName;
@@ -114,6 +151,15 @@ public class PaymentsController : ControllerBase
 
         var rules = await _context.PriceRules.ToListAsync(ct);
         decimal total = PricingService.CalculateTotal(dto.StartDate, dto.EndDate, dto.Guests, apartment, rules);
+        decimal prepaymentAmount = PricingService.CalculatePrepayment(dto.StartDate, dto.Guests, apartment, rules, total, total);
+        decimal amountToCharge;
+
+        if (dto.PayInFull) {
+            amountToCharge = total;
+        }
+        else {
+            amountToCharge = prepaymentAmount;
+        }
 
         var booking = new Booking {
             ApartmentId = dto.ApartmentId,
@@ -122,18 +168,28 @@ public class PaymentsController : ControllerBase
             StartDate = start,
             EndDate = end,
             TotalPrice = total,
-            Status = "AwaitingPayment", // отличается от "Pending" — админу нечего подтверждать, пока не оплачено
-            Source = "SiteGuest",
+            BasePrice = total,
+            PrepaymentAmount = prepaymentAmount,
+            Status = BookingStatus.AwaitingPayment,
+            Source = BookingSource.SiteGuest,
             CreatedAt = DateTime.UtcNow
         };
         _context.Bookings.Add(booking);
         await _context.SaveChangesAsync(ct);
 
-        var result = await _yooKassa.CreatePaymentAsync(booking, $"Бронь #{booking.Id} — {apartment.Title}", ct);
+        var result = await _yooKassa.CreatePaymentAsync(booking, $"Бронь #{booking.Id} — {apartment.Title}", amountToCharge, ct);
         if (!result.Success)
             return BadRequest(new { message = result.Error });
 
-        booking.PaymentId = result.PaymentId;
+        var payment = new Payment
+        {
+            PaymentId = result.PaymentId!,
+            Booking = booking,
+            Status = PaymentStatus.Pending,
+            Type = dto.PayInFull ? PaymentType.Full : PaymentType.Prepayment
+        };
+
+        _context.Payments.Add(payment);
         await _context.SaveChangesAsync(ct);
 
         return Ok(new { url = result.ConfirmationUrl, paymentId = result.PaymentId, bookingId = booking.Id });
@@ -180,26 +236,44 @@ public class PaymentsController : ControllerBase
             .FirstOrDefaultAsync(b => b.Id == statusResult.BookingId, ct);
 
         if (booking == null) return Ok();
-        if (booking.PaymentId != paymentId) return Ok();
+
+        var payment = await _context.Payments
+            .Where(p => p.BookingId == booking.Id)
+            .FirstOrDefaultAsync(p => p.PaymentId == paymentId);
+
+        if (payment == null) return Ok();
 
         switch (statusResult.Status?.ToLower())
         {
             case "succeeded":
-                if (booking.Status != "Confirmed")
+                if (payment.Status != PaymentStatus.Succeeded)
                 {
-                    booking.Status = "Confirmed";
-                    booking.PaidAt = DateTime.UtcNow;
+                    payment.Status = PaymentStatus.Succeeded;
+                    payment.PaidAt = DateTime.Now;
+                    payment.Paid = webhookAmount ?? 0;
 
-                    booking.PaidAmount = webhookAmount ?? booking.TotalPrice;
+                    decimal paidAmount = booking.Payments
+                        .Where(p => p.Status == PaymentStatus.Succeeded)
+                        .Sum(p => p.Paid);
+
+                    if (!booking.Prepaid && paidAmount >= booking.PrepaymentAmount)
+                    {
+                        booking.Prepaid = true;
+
+                        if (booking.Status == BookingStatus.AwaitingPayment || booking.Status == BookingStatus.Pending)
+                        {
+                            booking.Status = BookingStatus.Cancelled;
+                        }
+                    }
 
                     await _context.SaveChangesAsync(ct);
                 }
                 break;
 
             case "canceled":
-                if (booking.Status != "Cancelled")
+                if (booking.Status != BookingStatus.Cancelled)
                 {
-                    booking.Status = "Cancelled";
+                    booking.Status = BookingStatus.Cancelled;
                     await _context.SaveChangesAsync(ct);
                 }
                 break;

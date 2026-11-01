@@ -194,9 +194,6 @@ namespace SutkiVMVCS.Migrations
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)");
 
-                    b.Property<DateTime?>("DiscountAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int?>("DiscountByAdminId")
                         .HasColumnType("integer");
 
@@ -209,15 +206,8 @@ namespace SutkiVMVCS.Migrations
                     b.Property<int>("Guests")
                         .HasColumnType("integer");
 
-                    b.Property<decimal>("PaidAmount")
-                        .HasPrecision(12, 2)
-                        .HasColumnType("numeric(12,2)");
-
-                    b.Property<DateTime?>("PaidAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("PaymentId")
-                        .HasColumnType("text");
+                    b.Property<bool>("Prepaid")
+                        .HasColumnType("boolean");
 
                     b.Property<decimal>("PrepaymentAmount")
                         .HasPrecision(12, 2)
@@ -229,14 +219,16 @@ namespace SutkiVMVCS.Migrations
 
                     b.Property<string>("Source")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<decimal>("TotalPrice")
                         .HasPrecision(12, 2)
@@ -247,6 +239,9 @@ namespace SutkiVMVCS.Migrations
                     b.HasIndex("ApartmentId");
 
                     b.HasIndex("ClientId");
+
+                    b.HasIndex("PublicToken")
+                        .IsUnique();
 
                     b.ToTable("Bookings");
                 });
@@ -406,6 +401,52 @@ namespace SutkiVMVCS.Migrations
                     b.HasIndex("WikiPlaceId");
 
                     b.ToTable("NearbyPlaces");
+                });
+
+            modelBuilder.Entity("SutkiVMV.Models.Payment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BookingId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Paid")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<DateTime>("PaidAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PaymentId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId");
+
+                    b.HasIndex("PaymentId")
+                        .IsUnique();
+
+                    b.ToTable("Payments");
                 });
 
             modelBuilder.Entity("SutkiVMV.Models.PendingRegistration", b =>
@@ -743,6 +784,17 @@ namespace SutkiVMVCS.Migrations
                     b.Navigation("WikiPlace");
                 });
 
+            modelBuilder.Entity("SutkiVMV.Models.Payment", b =>
+                {
+                    b.HasOne("SutkiVMV.Models.Booking", "Booking")
+                        .WithMany("Payments")
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+                });
+
             modelBuilder.Entity("SutkiVMV.Models.WikiPlace", b =>
                 {
                     b.HasOne("SutkiVMV.Models.NearbyPlace", "NearbyPlace")
@@ -766,6 +818,11 @@ namespace SutkiVMVCS.Migrations
                     b.Navigation("Nearby");
 
                     b.Navigation("Rules");
+                });
+
+            modelBuilder.Entity("SutkiVMV.Models.Booking", b =>
+                {
+                    b.Navigation("Payments");
                 });
 
             modelBuilder.Entity("SutkiVMV.Models.Client", b =>

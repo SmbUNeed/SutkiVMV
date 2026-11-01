@@ -6,6 +6,7 @@ using SutkiVMV.Data;
 using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
 using SutkiVMVCS.Api.Services.Security;
+using SutkiVMVCS.Data;
 using SutkiVMVCS.Services.Shared;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -230,7 +231,7 @@ public class AuthController : ControllerBase
             StartDate   = b.StartDate,
             EndDate     = b.EndDate,
             TotalPrice  = b.TotalPrice,
-            Status      = b.Status,
+            Status      = b.Status.ToString(),
             CreatedAt   = b.CreatedAt
         }));
     }
@@ -255,7 +256,7 @@ public class AuthController : ControllerBase
             return NotFound(new { message = "Квартира не найдена или недоступна" });
 
         var (booking, error) = await bookingService.CreateAsync(
-            apartment, client.Id, dto.Guests, dto.StartDate, dto.EndDate, "Site", ct);
+            apartment, client.Id, dto.Guests, dto.StartDate, dto.EndDate, BookingSource.SiteUser, ct);
         if (booking == null) return Conflict(new { message = error });
 
         try

@@ -22,13 +22,13 @@ public class YooKassaService : IYooKassaService
             "Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{shopId}:{secretKey}")));
     }
 
-    public async Task<YooKassaPaymentResult> CreatePaymentAsync(Booking booking, string description, CancellationToken ct)
+    public async Task<YooKassaPaymentResult> CreatePaymentAsync(Booking booking, string description, decimal amountToCharge, CancellationToken ct)
     {
         var payload = new
         {
             amount = new
             {
-                value = booking.TotalPrice.ToString("F2", CultureInfo.InvariantCulture),
+                value = amountToCharge.ToString("F2", CultureInfo.InvariantCulture),
                 currency = "RUB"
             },
             confirmation = new
@@ -61,7 +61,6 @@ public class YooKassaService : IYooKassaService
         return new YooKassaPaymentResult(true, url, paymentId, null);
     }
 
-    // Спрашиваем напрямую у ЮKassa статус платежа — не доверяем телу вебхука вслепую
     public async Task<YooKassaPaymentStatus> GetPaymentStatusAsync(string paymentId, CancellationToken ct)
     {
         var response = await _http.GetAsync($"payments/{paymentId}", ct);
@@ -74,15 +73,13 @@ public class YooKassaService : IYooKassaService
         }
 
         var json = JsonDocument.Parse(body).RootElement;
-        var status = json.GetProperty("status").GetString(); // "succeeded" | "canceled" | "pending"
+        var status = json.GetProperty("status").GetString();
 
         int? bookingId = null;
 
-        // Безопасное извлечение booking_id из metadata
         if (json.TryGetProperty("metadata", out var meta) &&
-            meta.TryGetProperty("booking_id", out var bIdElement)) // Убедитесь, что ключ именно "booking_id" (или "bookingId", как вы отправляли)
+            meta.TryGetProperty("booking_id", out var bIdElement))
         {
-            // ЮKassa всегда отдает значения в metadata как строки!
             string? bIdString = bIdElement.GetString();
 
             if (int.TryParse(bIdString, out int parsedId))

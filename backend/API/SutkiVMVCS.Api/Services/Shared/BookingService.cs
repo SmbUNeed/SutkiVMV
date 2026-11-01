@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SutkiVMV.Data;
 using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
+using SutkiVMVCS.Data;
 
 namespace SutkiVMVCS.Services.Shared
 {
@@ -14,14 +15,14 @@ namespace SutkiVMVCS.Services.Shared
         }
 
         public async Task<(Booking? Booking, string? Error)> CreateAsync(Apartment apartment, int clientId, int guests,
-    DateTime start, DateTime end, string source, CancellationToken ct, string status = "Pending", decimal? price = null)
+    DateTime start, DateTime end, BookingSource source, CancellationToken ct, BookingStatus status = BookingStatus.Pending, decimal? price = null)
         {
             var s = start.ToUniversalTime();
             var e = end.ToUniversalTime();
 
             bool busy =
                 await _context.Bookings.AnyAsync(b =>
-                    b.ApartmentId == apartment.Id && b.Status != "Cancelled" &&
+                    b.ApartmentId == apartment.Id && b.Status != BookingStatus.Cancelled &&
                     b.StartDate < e && b.EndDate > s, ct) ||
                 await _context.ExternalBookings.AnyAsync(x =>
                     x.ApartmentId == apartment.Id && x.StartDate < e && x.EndDate > s, ct);

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SutkiVMV.Data;
 using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
+using SutkiVMVCS.Data;
 using SutkiVMVCS.Services.Shared;
 
 namespace SutkiVMV.Controllers;
@@ -48,7 +49,7 @@ public class BookingsController : ControllerBase
             Id = b.Id,
             StartDate = b.StartDate,
             EndDate = b.EndDate,
-            Status = b.Status
+            Status = b.Status.ToString()
         }));
     }
 
@@ -85,7 +86,7 @@ public class BookingsController : ControllerBase
             return NotFound(new { message = "Клиент не найден" });
 
         var (booking, error) = await bookingService.CreateAsync(
-            apartment, dto.ClientId, dto.Guests, dto.StartDate, dto.EndDate, "Вручную", ct, "Confirmed", price: dto.AdminPrice);
+            apartment, dto.ClientId, dto.Guests, dto.StartDate, dto.EndDate, BookingSource.AdminManual, ct, BookingStatus.Confirmed, price: dto.AdminPrice);
         if (booking == null) return Conflict(new { message = error });
 
         return Ok();
@@ -103,7 +104,7 @@ public class BookingsController : ControllerBase
         if (!allowed.Contains(dto.Status))
             return BadRequest(new { message = $"Недопустимый статус. Допустимы: {string.Join(", ", allowed)}" });
 
-        booking.Status = dto.Status;
+        booking.Status = Enum.Parse<BookingStatus>(dto.Status);
         await _context.SaveChangesAsync(ct);
         return NoContent();
     }
@@ -115,10 +116,10 @@ public class BookingsController : ControllerBase
     {
         var booking = await _context.Bookings.FindAsync(id, ct);
         if (booking == null) return NotFound();
-        if (booking.Status == "Cancelled")
+        if (booking.Status == BookingStatus.Cancelled)
             return BadRequest(new { message = "Бронирование уже отменено" });
 
-        booking.Status = "Cancelled";
+        booking.Status = BookingStatus.Cancelled;
         await _context.SaveChangesAsync(ct);
         return NoContent();
     }
@@ -129,10 +130,10 @@ public class BookingsController : ControllerBase
     {
         var booking = await _context.Bookings.FindAsync(id, ct);
         if (booking == null) return NotFound();
-        if (booking.Status == "Confirmed")
+        if (booking.Status == BookingStatus.Confirmed)
             return BadRequest(new { message = "Бронирование уже подтверждено" });
 
-        booking.Status = "Confirmed";
+        booking.Status = BookingStatus.Confirmed;
         await _context.SaveChangesAsync(ct);
         return NoContent();
     }
@@ -154,7 +155,7 @@ public class BookingsController : ControllerBase
 
         bool busy =
             await _context.Bookings.AnyAsync(b =>
-                b.Id != id && b.ApartmentId == dto.ApartmentId && b.Status != "Cancelled" &&
+                b.Id != id && b.ApartmentId == dto.ApartmentId && b.Status != BookingStatus.Confirmed &&
                 b.StartDate < e && b.EndDate > s, ct) ||
             await _context.ExternalBookings.AnyAsync(x =>
                 x.ApartmentId == dto.ApartmentId && x.StartDate < e && x.EndDate > s, ct);
@@ -176,7 +177,7 @@ public class BookingsController : ControllerBase
         booking.TotalPrice = total;
         booking.DiscountAmount = basePrice - total;
         booking.PrepaymentAmount = PricingService.CalculatePrepayment(s, dto.Guests, apartment, rules, basePrice, total);
-        if (booking.DiscountAmount > 0 && booking.Status == "Pending") booking.Status = "AwaitingPayment";
+        if (booking.DiscountAmount > 0 && booking.Status == BookingStatus.Pending) booking.Status = BookingStatus.AwaitingPayment;
 
         await _context.SaveChangesAsync(ct);
         return NoContent();
@@ -287,8 +288,8 @@ public class BookingsController : ControllerBase
         DiscountAmount = b.DiscountAmount,
         PrepaymentAmount = b.PrepaymentAmount,
         PaidAmount = b.PaidAmount,
-        Status = b.Status,
-        Source = b.Source,
+        Status = b.Status.ToString(),
+        Source = b.Source.ToString(),
         CreatedAt = b.CreatedAt,
         Guests = b.Guests
     };

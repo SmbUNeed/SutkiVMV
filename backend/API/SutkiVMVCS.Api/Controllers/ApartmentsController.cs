@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SutkiVMV.Data;
 using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
+using SutkiVMVCS.Data;
 
 namespace SutkiVMV.Controllers;
 
@@ -32,7 +33,7 @@ public class ApartmentsController : ControllerBase
         if (apt == null) return NotFound();
 
         var bookings = await _context.Bookings
-            .Where(b => b.ApartmentId == id && b.Status != "Cancelled")
+            .Where(b => b.ApartmentId == id && b.Status != SutkiVMVCS.Data.BookingStatus.Cancelled)
             .Select(b => new BusyPeriodDto(
                 b.StartDate.ToString("yyyy-MM-dd"),
                 b.EndDate.ToString("yyyy-MM-dd")))
@@ -115,7 +116,7 @@ public class ApartmentsController : ControllerBase
             .ToListAsync();
 
         var internalBusy = await _context.Bookings
-            .Where(b => b.Status != "Cancelled")
+            .Where(b => b.Status != BookingStatus.Cancelled)
             .Select(b => new { b.ApartmentId, b.StartDate, b.EndDate })
             .ToListAsync();
 
@@ -473,7 +474,7 @@ public class ApartmentsController : ControllerBase
                      .Select(aa => new AmenityDto { Id = aa.Amenity.Id, Name = aa.Amenity.Name, Icon = aa.Amenity.Icon })
                      .ToList(),
         Bookings = a.Bookings
-                     .Select(b => new BookingDto { Id = b.Id, StartDate = b.StartDate, EndDate = b.EndDate, Guests = b.Guests, Status = b.Status })
+                     .Select(b => new BookingDto { Id = b.Id, StartDate = b.StartDate, EndDate = b.EndDate, Guests = b.Guests, Status = b.Status.ToString() })
                      .ToList(),
         Rules = a.Rules
                      .Select(ar => new RuleDto { Id = ar.Rule.Id, Icon = ar.Rule.Icon, Text = ar.Rule.Text })

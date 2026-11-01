@@ -14,6 +14,7 @@ public class AppDbContext : DbContext
 
     public DbSet<Apartment>            Apartments           => Set<Apartment>();
     public DbSet<Booking>              Bookings             => Set<Booking>();
+    public DbSet<Payment>              Payments             => Set<Payment>();
     public DbSet<Amenity>              Amenities            => Set<Amenity>();
     public DbSet<Client>               Clients              => Set<Client>();
     public DbSet<User>                 Users                => Set<User>();
@@ -113,19 +114,42 @@ public class AppDbContext : DbContext
                .HasPrecision(12, 2);
             entity.Property(b => b.PrepaymentAmount)
                .HasPrecision(12, 2);
-            entity.Property(b => b.PaidAmount)
-             .HasPrecision(12, 2);
+            entity.Property(x => x.Status)
+                .HasConversion<string>() 
+                .HasMaxLength(30);
+
+            entity.Property(x => x.Source)
+                .HasConversion<string>()
+                .HasMaxLength(30);
+
+            entity.HasIndex(b => b.ClientId);
+            entity.HasIndex(b => b.ApartmentId);
+            entity.HasIndex(x => x.PublicToken).IsUnique();
+        });
+
+        modelBuilder.Entity<Payment>(entity =>
+        {
+            entity.HasIndex(p => p.BookingId);
+            entity.HasIndex(x => x.PaymentId).IsUnique();
+            entity.Property(p => p.Paid).HasPrecision(12, 2);
+            entity.Property(x => x.Status)
+            .HasConversion<string>()
+            .HasMaxLength(30);
+            entity.Property(x => x.Type)
+                .HasConversion<string>()
+                .HasMaxLength(30);
+            entity.Property(x => x.PaymentId)
+                .HasMaxLength(100)
+                .IsRequired();
+            entity.HasOne(x => x.Booking)
+                .WithMany(b => b.Payments)
+                .HasForeignKey(x => x.BookingId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // ── Индексы для частых запросов ───────────────────────────────
         modelBuilder.Entity<Apartment>()
-            .HasIndex(a => new { a.IsActive, a.IsDeleted });
-
-        modelBuilder.Entity<Booking>()
-            .HasIndex(b => b.ApartmentId);
-
-        modelBuilder.Entity<Booking>()
-            .HasIndex(b => b.ClientId);
+            .HasIndex(a => new { a.IsActive, a.IsDeleted });   
 
         modelBuilder.Entity<ApartmentRule>()
             .HasKey(ar => new { ar.ApartmentId, ar.RuleId });

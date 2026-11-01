@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SutkiVMVCS.Data;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SutkiVMV.Models;
@@ -47,26 +48,52 @@ public class Booking
     public DateTime StartDate   { get; set; }
     public DateTime EndDate     { get; set; }
 
-    public string   Status    { get; set; } = "";
     public DateTime CreatedAt { get; set; }
-
-    public Apartment Apartment { get; set; } = null!;
-    public Client    Client    { get; set; } = null!;
-    public string    Source    { get; set; } = null!;
 
     public string PublicToken { get; set; } = "";
 
-    public string? PaymentId { get; set; }
-    public DateTime? PaidAt { get; set; }
-    [Precision(18, 2)]
+    [Precision(12, 2)]
     public decimal TotalPrice { get; set; }
+    [Precision(12, 2)]
     public decimal BasePrice { get; set; }
+    [Precision(12, 2)]
     public decimal DiscountAmount { get; set; }
     public string? DiscountReason { get; set; }
     public int? DiscountByAdminId { get; set; }
-    public DateTime? DiscountAt { get; set; }
+    [Precision(12, 2)]
     public decimal PrepaymentAmount { get; set; }
-    public decimal PaidAmount { get; set; }
+    public bool Prepaid { get; set; }
+    public Apartment Apartment { get; set; } = null!;
+    public Client    Client    { get; set; } = null!;
+    public BookingStatus   Status    { get; set; } = BookingStatus.AwaitingPayment;
+    public BookingSource Source { get; set; } = BookingSource.SiteGuest;
+
+    public ICollection<Payment> Payments { get; set; } = [];
+
+    [NotMapped]
+    public decimal PaidAmount => Payments
+        .Where(p => p.Status == PaymentStatus.Succeeded)
+        .Sum(p => p.Paid);
+
+    [NotMapped]
+    public decimal RemainingAmount => Math.Max(0, TotalPrice - PaidAmount);
+
+    [NotMapped]
+    public bool IsFullyPaid => PaidAmount >= TotalPrice;
+}
+
+public class Payment {
+    public int Id { get; set; }
+    public string PaymentId { get; set; } = "";
+    public int BookingId { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime PaidAt { get; set; }
+    [Precision(12, 2)]
+    public decimal Paid { get; set; }
+    public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
+    public PaymentType Type { get; set; } = PaymentType.Full;
+
+    public Booking Booking { get; set; } = null!;
 }
 
 // Глобальное место рядом

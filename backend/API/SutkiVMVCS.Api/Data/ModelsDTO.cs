@@ -249,7 +249,9 @@ public record GuestBookingDto(
     DateTime EndDate,
     int Guests,
     string FullName,
-    string PhoneNumber);
+    string PhoneNumber,
+    bool PayInFull
+    );
 // ── Client ─────────────────────────────────────────────────────────────
 public class ClientDto
 {
@@ -329,7 +331,7 @@ public class CreatePriceRuleDto
 
 public record ResetPasswordDto(string Email, string Token, string NewPassword);
 public record BusyPeriodDto(string StartDate, string EndDate);
-public record CreatePaymentDto(int BookingId);
+public record CreatePaymentDto(int BookingId, bool PayInFull = true);
 
 public interface IDetailedBooking {
     public int ApartmentId { get; set; }
