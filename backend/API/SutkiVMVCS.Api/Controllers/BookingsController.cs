@@ -116,10 +116,10 @@ public class BookingsController : ControllerBase
     {
         var booking = await _context.Bookings.FindAsync(id, ct);
         if (booking == null) return NotFound();
-        if (booking.Status == BookingStatus.Cancelled)
+        if (booking.Status == BookingStatus.Canceled)
             return BadRequest(new { message = "Бронирование уже отменено" });
 
-        booking.Status = BookingStatus.Cancelled;
+        booking.Status = BookingStatus.Canceled;
         await _context.SaveChangesAsync(ct);
         return NoContent();
     }

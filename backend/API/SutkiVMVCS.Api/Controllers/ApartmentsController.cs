@@ -33,7 +33,7 @@ public class ApartmentsController : ControllerBase
         if (apt == null) return NotFound();
 
         var bookings = await _context.Bookings
-            .Where(b => b.ApartmentId == id && b.Status != BookingStatus.Cancelled)
+            .Where(b => b.ApartmentId == id && b.Status != BookingStatus.Canceled)
             .Select(b => new BusyPeriodDto(
                 b.StartDate.ToString("yyyy-MM-dd"),
                 b.EndDate.ToString("yyyy-MM-dd")))
@@ -116,7 +116,7 @@ public class ApartmentsController : ControllerBase
             .ToListAsync();
 
         var internalBusy = await _context.Bookings
-            .Where(b => b.Status != BookingStatus.Cancelled)
+            .Where(b => b.Status != BookingStatus.Canceled)
             .Select(b => new { b.ApartmentId, b.StartDate, b.EndDate })
             .ToListAsync();
 

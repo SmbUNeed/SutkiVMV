@@ -243,7 +243,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
 
             if (booking == null) { await AnswerCallback(callbackId, ct); await Send(chatId, "❌ Бронь не найдена.", ct); return; }
 
-            booking.Status = parts[0] == "confirm" ? BookingStatus.Confirmed : BookingStatus.Cancelled;
+            booking.Status = parts[0] == "confirm" ? BookingStatus.Confirmed : BookingStatus.Canceled;
             await db.SaveChangesAsync(ct);
 
             var originalText = upd["callback"]?["message"]?["body"]?["text"]?.GetValue<string>() ?? "";
@@ -431,7 +431,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
 
         var bookings = await db.Bookings
             .Include(b => b.Apartment).Include(b => b.Client)
-            .Where(b => b.StartDate < tomorrow && b.EndDate > today && b.Status != BookingStatus.Cancelled)
+            .Where(b => b.StartDate < tomorrow && b.EndDate > today && b.Status != BookingStatus.Canceled)
             .OrderBy(b => b.Apartment.Title)
             .AsNoTracking().ToListAsync(ct);
 
@@ -449,7 +449,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
 
         var bookings = await db.Bookings
             .Include(b => b.Apartment).Include(b => b.Client)
-            .Where(b => b.StartDate < end && b.EndDate > start && b.Status != BookingStatus.Cancelled)
+            .Where(b => b.StartDate < end && b.EndDate > start && b.Status != BookingStatus.Canceled)
             .OrderBy(b => b.Apartment.Title).ThenBy(b => b.StartDate)
             .AsNoTracking().ToListAsync(ct);
 
@@ -484,7 +484,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
         var buttons = new List<object[]>();
         if (booking.Status != BookingStatus.Confirmed)
             buttons.Add(new object[] { new { type = "callback", text = "✅ Подтвердить", payload = $"confirm_{bookingId}" } });
-        if (booking.Status != BookingStatus.Cancelled)
+        if (booking.Status != BookingStatus.Canceled)
             buttons.Add(new object[] { new { type = "callback", text = "❌ Отменить", payload = $"cancel_{bookingId}" } });
 
         await SendWithButtons(chatId, text, buttons, ct);
@@ -552,8 +552,8 @@ public class MaxBotWorker : BackgroundService, IMaxService
 
         if (client == null) { await Send(chatId, "❌ Клиент не найден.", ct); return; }
 
-        var totalSpent = client.Bookings.Where(b => b.Status != BookingStatus.Cancelled).Sum(b => b.TotalPrice);
-        var activeCount = client.Bookings.Count(b => b.Status != BookingStatus.Cancelled);
+        var totalSpent = client.Bookings.Where(b => b.Status != BookingStatus.Canceled).Sum(b => b.TotalPrice);
+        var activeCount = client.Bookings.Count(b => b.Status != BookingStatus.Canceled);
 
         var text =
             $"👤 Клиент #{client.Id}\n" +
@@ -645,7 +645,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
 
         var bookings = await db.Bookings
             .Include(b => b.Client)
-            .Where(b => b.ApartmentId == aptId && b.Status != BookingStatus.Cancelled)
+            .Where(b => b.ApartmentId == aptId && b.Status != BookingStatus.Canceled)
             .OrderByDescending(b => b.StartDate)
             .AsNoTracking().ToListAsync(ct);
 
@@ -673,7 +673,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
 
         var allBookings = await db.Bookings
             .Include(b => b.Apartment)
-            .Where(b => b.Status != BookingStatus.Cancelled)
+            .Where(b => b.Status != BookingStatus.Canceled)
             .AsNoTracking().ToListAsync(ct);
 
         var thisMonth = allBookings.Where(b => b.StartDate >= month).ToList();
@@ -817,7 +817,7 @@ public class MaxBotWorker : BackgroundService, IMaxService
     static string StatusEmoji(BookingStatus status) => status switch
     {
         BookingStatus.Confirmed => "✅",
-        BookingStatus.Cancelled => "❌",
+        BookingStatus.Canceled => "❌",
         BookingStatus.Pending => "⏳",
         _ => "❓"
     };

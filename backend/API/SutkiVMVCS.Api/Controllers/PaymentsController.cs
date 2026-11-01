@@ -38,7 +38,7 @@ public class PaymentsController : ControllerBase
         if (booking == null)
             return NotFound(new { message = "Бронь не найдена" });
 
-        if (booking.Status == BookingStatus.Cancelled)
+        if (booking.Status == BookingStatus.Canceled)
             return BadRequest(new { message = "Бронь отменена" });
 
         decimal remaining = booking.RemainingAmount;
@@ -112,7 +112,7 @@ public class PaymentsController : ControllerBase
 
         bool overlap = await _context.Bookings.AnyAsync(b =>
             b.ApartmentId == dto.ApartmentId &&
-            b.Status != BookingStatus.Cancelled &&
+            b.Status != BookingStatus.Canceled &&
             b.StartDate < end &&
             b.EndDate > start, ct);
 
@@ -296,7 +296,7 @@ public class PaymentsController : ControllerBase
                     if (booking.Status == BookingStatus.AwaitingPayment &&
                         !booking.Payments.Any(p => p.Status == PaymentStatus.Succeeded))
                     {
-                        booking.Status = BookingStatus.Cancelled;
+                        booking.Status = BookingStatus.Canceled;
                     }
 
                     await _context.SaveChangesAsync(ct);

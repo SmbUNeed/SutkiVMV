@@ -22,7 +22,7 @@ namespace SutkiVMVCS.Services.Shared
 
             bool busy =
                 await _context.Bookings.AnyAsync(b =>
-                    b.ApartmentId == apartment.Id && b.Status != BookingStatus.Cancelled &&
+                    b.ApartmentId == apartment.Id && b.Status != BookingStatus.Canceled &&
                     b.StartDate < e && b.EndDate > s, ct) ||
                 await _context.ExternalBookings.AnyAsync(x =>
                     x.ApartmentId == apartment.Id && x.StartDate < e && x.EndDate > s, ct);

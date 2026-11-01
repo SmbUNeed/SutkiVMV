@@ -33,7 +33,7 @@ public class ICalService
 
         var calendar = new Calendar();
 
-        foreach (var b in apt.Bookings.Where(b => b.Status != SutkiVMVCS.Data.BookingStatus.Cancelled))
+        foreach (var b in apt.Bookings.Where(b => b.Status != SutkiVMVCS.Data.BookingStatus.Canceled))
         {
             calendar.Events.Add(new CalendarEvent
             {
@@ -61,7 +61,7 @@ public class ICalService
         var changedBookings = new List<string>();
 
         var local = await _context.Bookings
-            .Where(b => b.ApartmentId == extCal.ApartmentId && b.Status != SutkiVMVCS.Data.BookingStatus.Cancelled)
+            .Where(b => b.ApartmentId == extCal.ApartmentId && b.Status != SutkiVMVCS.Data.BookingStatus.Canceled)
             .Select(b => new { b.StartDate, b.EndDate })
             .ToListAsync();
         var keepUids = new HashSet<string>();

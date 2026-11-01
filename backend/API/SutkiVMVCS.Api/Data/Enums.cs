@@ -1,7 +1,7 @@
 ﻿namespace SutkiVMVCS.Data
 {
     public enum BookingStatus {
-        Cancelled,
+        Canceled,
         Pending,
         Confirmed,
         AwaitingPayment
