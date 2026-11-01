@@ -1095,6 +1095,63 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .booking-pay-btn-secondary:active {
     transform: translateY(0);
 }
+.btn-copy-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: var(--paper-2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--r-full);
+    color: var(--ink-2);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition);
+    margin-top: 12px;
+}
+
+.btn-copy-link:hover {
+    background: var(--primary-bg);
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-copy-link:active {
+    transform: translateY(0);
+}
+
+.btn-copy-link i {
+    font-size: 0.85rem;
+}
+
+.btn-copy-link.copied {
+    background: rgba(27, 160, 80, 0.1);
+    border-color: var(--green);
+    color: var(--green);
+    pointer-events: none;
+}
+
+.btn-copy-link.copied i {
+    animation: checkPop 0.3s ease;
+}
+
+@keyframes checkPop {
+    0% {
+        transform: scale(0);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
 
 /* ── EMPTY STATE ─────────────────────────────────────────── */
 .empty-state { text-align: center; padding: 46px 20px; color: var(--ink-3); }

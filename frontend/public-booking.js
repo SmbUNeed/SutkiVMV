@@ -192,6 +192,42 @@ function renderBooking(booking) {
     if (content) content.style.display = 'grid';
 }
 
+async function initiatePublicPayment(bookingId, payInFull) {
+    const confirmMsg = payInFull
+        ? 'Перейти к оплате оставшейся суммы?'
+        : 'Перейти к внесению предоплаты?';
+    if (!confirm(confirmMsg)) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    if (!token) {
+        alert('Ссылка повреждена: отсутствует токен бронирования');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/bookings/${bookingId}/public/${token}/pay`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ payInFull })
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || 'Ошибка создания платежа');
+        }
+
+        const data = await res.json();
+        if (data.url) {
+            window.location.href = data.url;
+        } else {
+            alert('Платёж создан, но ссылка для оплаты не получена');
+        }
+    } catch (err) {
+        alert(err.message);
+    }
+}
+
 function showError(msg) {
     document.getElementById('bookingLoading').style.display = 'none';
     document.getElementById('bookingErrorMsg').textContent = msg;

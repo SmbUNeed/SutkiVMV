@@ -6,6 +6,7 @@ using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
 using SutkiVMVCS.Data;
 using SutkiVMVCS.Services.Shared;
+using SutkiVMVCS.Services.YooKassa;
 
 namespace SutkiVMV.Controllers;
 
@@ -230,6 +231,7 @@ public class BookingsController : ControllerBase
             startDate = booking.StartDate,
             endDate = booking.EndDate,
             guests = booking.Guests,
+            prepaymentAmount = booking.PrepaymentAmount,
             paidAmount = booking.PaidAmount,
             totalPrice = booking.TotalPrice,
             fullName = booking.Client?.FullName ?? "Гость",
@@ -272,6 +274,85 @@ public class BookingsController : ControllerBase
         };
 
         return Ok(result);
+    }
+
+    [HttpPost("{id}/public/{token}/pay")]
+    public async Task<IActionResult> PayPublic(int id, string token, [FromBody] PayPublicRequest dto, IYooKassaService yooKassa, CancellationToken ct)
+    {
+        // 1. Находим бронь и валидируем токен
+        // (используем тот же механизм, что и в GET-методе просмотра брони)
+        var booking = await _context.Bookings
+            .Include(b => b.Apartment)
+            .Include(b => b.Payments)
+            .FirstOrDefaultAsync(b => b.Id == id, ct);
+
+        if (booking == null)
+            return NotFound(new { message = "Бронь не найдена" });
+
+        // ВАЖНО: замени на реальное имя поля токена в твоей модели
+        // (например, booking.ViewToken, booking.PublicToken, booking.ShareToken)
+        if (booking.PublicToken != token)
+            return StatusCode(403, new { message = "Недействительная ссылка" });
+
+        if (booking.Status == BookingStatus.Canceled)
+            return BadRequest(new { message = "Бронь отменена" });
+
+        // 2. Считаем остаток (та же логика, что и в /api/payments/create)
+        decimal remaining = booking.RemainingAmount;
+        if (remaining <= 0)
+            return BadRequest(new { message = "Бронь полностью оплачена" });
+
+        decimal amountToCharge;
+        PaymentType paymentType;
+
+        if (booking.PaidAmount > 0)
+        {
+            // Уже есть предоплата → доплачиваем остаток (флаг игнорируем)
+            paymentType = PaymentType.Balance;
+            amountToCharge = remaining;
+        }
+        else if (dto.PayInFull)
+        {
+            paymentType = PaymentType.Full;
+            amountToCharge = remaining;
+        }
+        else
+        {
+            paymentType = PaymentType.Prepayment;
+            amountToCharge = booking.PrepaymentAmount;
+        }
+
+        // 3. Создаём платёж в ЮKassa
+        var result = await yooKassa.CreatePaymentAsync(
+            booking,
+            $"Бронь #{booking.Id} — {booking.Apartment.Title}",
+            amountToCharge,
+            ct
+        );
+
+        if (!result.Success || result.PaymentId == null)
+            return BadRequest(new { message = result.Error });
+
+        // 4. Сохраняем запись о платеже
+        var payment = new Payment
+        {
+            BookingId = booking.Id,
+            PaymentId = result.PaymentId,
+            Paid = amountToCharge,
+            Status = PaymentStatus.Pending,
+            Type = paymentType,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Payments.Add(payment);
+        await _context.SaveChangesAsync(ct);
+
+        return Ok(new
+        {
+            url = result.ConfirmationUrl,
+            paymentId = result.PaymentId,
+            amount = amountToCharge
+        });
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────

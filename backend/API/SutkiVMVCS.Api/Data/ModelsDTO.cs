@@ -334,6 +334,7 @@ public class CreatePriceRuleDto
 public record ResetPasswordDto(string Email, string Token, string NewPassword);
 public record BusyPeriodDto(string StartDate, string EndDate);
 public record CreatePaymentDto(int BookingId, bool PayInFull = true);
+public class PayPublicRequest { public bool PayInFull { get; set; } }
 
 public interface IDetailedBooking {
     public int ApartmentId { get; set; }
@@ -341,3 +342,4 @@ public interface IDetailedBooking {
     public DateTime EndDate { get; set; }
     public int Guests { get; set; }
 }
+
