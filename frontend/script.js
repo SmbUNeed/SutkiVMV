@@ -555,11 +555,31 @@ function renderBookingWidget() {
     const el = document.getElementById('bookingWidget');
     if (isLoggedIn()) {
         el.innerHTML = `
-        <button class="btn-book" id="btnBook" onclick="openUserBookModal()">
+        <button class="btn-book" id="btnBook" onclick="handleBookFree()">
             <i class="fa-solid fa-calendar-check"></i> Забронировать
         </button>`;
+        /*el.innerHTML = `
+        <button class="btn-book" id="btnBook" onclick="openUserBookModal()">
+            <i class="fa-solid fa-calendar-check"></i> Забронировать
+        </button>`;*/
     } else {
-        el.innerHTML = `
+        el.innerHTML = `<div class="auth-gate">
+            <p>Бронирование без входа временно недоступно</p>
+            <button class="btn-book" disabled style="opacity:0.5;cursor:not-allowed;">
+                <i class="fa-solid fa-clock"></i> Скоро откроется
+            </button>
+            <div class="auth-gate-divider"><span>или</span></div>
+            <div class="auth-gate-btns">
+                <a href="login.html" class="btn-auth btn-auth-primary">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Войти
+                </a>
+                <a href="register.html" class="btn-auth btn-auth-ghost">
+                    Зарегистрироваться
+                </a>
+            </div>
+        </div>`;
+        //TODO
+        /*el.innerHTML = `
         <div class="auth-gate">
             <p>Забронируйте квартиру без регистрации</p>
             <button class="btn-book" onclick="openGuestBookModal()">
@@ -574,7 +594,7 @@ function renderBookingWidget() {
                     Зарегистрироваться
                 </a>
             </div>
-        </div>`;
+        </div>`;*/
     }
 }
 
@@ -799,6 +819,9 @@ async function handleUserBook() {
 
 // ── Бронирование ─────────────────────────────────────────
 async function handleGuestBook() {
+    //TODO
+    alert('Бронирование временно недоступно. Попробуйте позже.');
+    return;
     if (!selectedCheckIn || !selectedCheckOut) {
         alert('Пожалуйста, выберите даты заезда и выезда.');
         return;
