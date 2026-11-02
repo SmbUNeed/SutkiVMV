@@ -27,6 +27,20 @@ public class PaymentsController : ControllerBase
         _yooKassa = yooKassa;
     }
 
+    [HttpGet]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetAllPayments(CancellationToken ct) {
+        var payments = await _context.Payments.Include(p => p.Booking).ToListAsync(ct);
+        return Ok(payments);
+    }
+
+    [HttpGet("booking/{id:int}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetPaymentsByBooking(int id, CancellationToken ct) {
+        var payments = await _context.Payments.Where(p => p.BookingId == id).ToListAsync();
+        return Ok(payments);
+    }
+
     [HttpPost("create")]
     [Authorize]
     public async Task<IActionResult> Create([FromBody] CreatePaymentDto dto, CancellationToken ct)
