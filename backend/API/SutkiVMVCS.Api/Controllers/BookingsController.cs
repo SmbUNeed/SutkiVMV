@@ -284,6 +284,7 @@ public class BookingsController : ControllerBase
         var booking = await _context.Bookings
             .Include(b => b.Apartment)
             .Include(b => b.Payments)
+            .Include(b => b.Client)
             .FirstOrDefaultAsync(b => b.Id == id, ct);
 
         if (booking == null)
@@ -327,6 +328,8 @@ public class BookingsController : ControllerBase
             booking,
             $"Бронь #{booking.Id} — {booking.Apartment.Title}",
             amountToCharge,
+            booking.Client.PhoneNumber,
+            booking.Client.Email,
             ct
         );
 

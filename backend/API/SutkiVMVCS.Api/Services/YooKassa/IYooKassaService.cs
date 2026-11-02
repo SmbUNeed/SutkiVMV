@@ -4,7 +4,7 @@ namespace SutkiVMVCS.Services.YooKassa
 {
     public interface IYooKassaService
     {
-        Task<YooKassaPaymentResult> CreatePaymentAsync(Booking booking, string description, decimal amountToCharge, CancellationToken ct);
+        Task<YooKassaPaymentResult> CreatePaymentAsync(Booking booking, string description, decimal amountToCharge, string clientPhone, string? clientEmail, CancellationToken ct);
         Task<YooKassaPaymentStatus> GetPaymentStatusAsync(string paymentId, CancellationToken ct);
     }
 

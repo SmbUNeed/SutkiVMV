@@ -34,6 +34,7 @@ public class PaymentsController : ControllerBase
         var booking = await _context.Bookings
             .Include(b => b.Apartment)
             .Include(b => b.Payments)
+            .Include(b => b.Client)
             .FirstOrDefaultAsync(b => b.Id == dto.BookingId, ct);
 
         if (booking == null)
@@ -62,6 +63,8 @@ public class PaymentsController : ControllerBase
             booking,
             $"Бронь #{booking.Id} — {booking.Apartment.Title}",
             amountToCharge,
+            booking.Client.PhoneNumber,
+            booking.Client.Email,
             ct
         );
 
@@ -177,7 +180,7 @@ public class PaymentsController : ControllerBase
         _context.Bookings.Add(booking);
         await _context.SaveChangesAsync(ct);
 
-        var result = await _yooKassa.CreatePaymentAsync(booking, $"Бронь #{booking.Id} — {apartment.Title}", amountToCharge, ct);
+        var result = await _yooKassa.CreatePaymentAsync(booking, $"Бронь #{booking.Id} — {apartment.Title}", amountToCharge, client.PhoneNumber, client.Email, ct);
         if (!result.Success)
             return BadRequest(new { message = result.Error });
 
@@ -229,7 +232,7 @@ public class PaymentsController : ControllerBase
         _context.Bookings.Add(booking);
         await _context.SaveChangesAsync(ct);
 
-        var result = await _yooKassa.CreatePaymentAsync(booking, $"Бронь #{booking.Id} — {apartment.Title}", amountToCharge, ct);
+        var result = await _yooKassa.CreatePaymentAsync(booking, $"Бронь #{booking.Id} — {apartment.Title}", amountToCharge, client.PhoneNumber, client.Email, ct);
         if (!result.Success) return BadRequest(new { message = result.Error });
 
         _context.Payments.Add(new Payment

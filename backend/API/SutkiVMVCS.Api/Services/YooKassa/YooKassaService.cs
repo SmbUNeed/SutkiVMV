@@ -22,8 +22,18 @@ public class YooKassaService : IYooKassaService
             "Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{shopId}:{secretKey}")));
     }
 
-    public async Task<YooKassaPaymentResult> CreatePaymentAsync(Booking booking, string description, decimal amountToCharge, CancellationToken ct)
+    public async Task<YooKassaPaymentResult> CreatePaymentAsync(Booking booking, string description, decimal amountToCharge, string clientPhone, string? clientEmail, CancellationToken ct)
     {
+        string? cleanPhone = null;
+        if (!string.IsNullOrWhiteSpace(clientPhone))
+        {
+            var digits = new string(clientPhone.Where(char.IsDigit).ToArray());
+            if (digits.Length == 11 && digits.StartsWith("7"))
+                cleanPhone = digits;
+            else if (digits.Length == 10 && digits.StartsWith("9"))
+                cleanPhone = "7" + digits;
+        }
+
         var payload = new
         {
             amount = new
@@ -38,7 +48,28 @@ public class YooKassaService : IYooKassaService
             },
             capture = true,
             description,
-            metadata = new { booking_id = booking.Id }
+            metadata = new { booking_id = booking.Id },
+            receipt = new
+            {
+                customer = new
+                {
+                    phone = cleanPhone,
+
+                    // email = $"guest{booking.Id}@sutkivmv.ru" 
+                },
+                items = new[]
+                {
+                    new
+                    {
+                        description,
+                        quantity = "1.00",
+                        amount = new { value = amountToCharge.ToString("F2", CultureInfo.InvariantCulture), currency = "RUB" },
+                        vat_code = 1, // 1 = "Без НДС" (для УСН)
+                        payment_mode = "full_payment",
+                        payment_subject = "service"
+                    }
+                }
+            }
         };
 
         var request = new HttpRequestMessage(HttpMethod.Post, "payments");
