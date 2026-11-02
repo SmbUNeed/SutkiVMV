@@ -17,13 +17,13 @@ using Telegram.Bot.Requests.Abstractions;
 public class PaymentsController : ControllerBase
 {
     private readonly AppDbContext _context;
-    private readonly IMaxService _max;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly IYooKassaService _yooKassa;
 
-    public PaymentsController(AppDbContext context, IMaxService max, IYooKassaService yooKassa)
+    public PaymentsController(AppDbContext context, IServiceScopeFactory scopeFactory, IYooKassaService yooKassa)
     {
         _context = context;
-        _max = max;
+        _scopeFactory = scopeFactory;
         _yooKassa = yooKassa;
     }
 
@@ -106,7 +106,6 @@ public class PaymentsController : ControllerBase
             return NotFound(new { message = "Квартира не найдена или недоступна" });
 
         if (phoneNumber == null) return BadRequest(new { message = "Некорректный номер телефона" });
-        else if (phoneNumber != "+79097587308") return BadRequest(new { message = "Данная функция находится в разработке" }); //Тест-костыль
             
         var start = dto.StartDate.ToUniversalTime();
         var end = dto.EndDate.ToUniversalTime();
@@ -325,18 +324,14 @@ public class PaymentsController : ControllerBase
                         booking.Prepaid = true;
                     }
 
-                    if (booking.Status == BookingStatus.AwaitingPayment)
-                    {
-                        booking.Status = BookingStatus.Confirmed;
-                    }
-
-                    if (paidAmount >= booking.TotalPrice)
+                    if (booking.Status == BookingStatus.AwaitingPayment || paidAmount >= booking.TotalPrice)
                     {
                         booking.Status = BookingStatus.Confirmed;
                     }
 
                     await _context.SaveChangesAsync(ct);
                 }
+                await NotifyPaid(booking, payment.Type);
                 break;
 
             case "canceled":
@@ -358,17 +353,48 @@ public class PaymentsController : ControllerBase
         return Ok();
     }
 
-    private async Task NotifyPaid(Booking booking)
+    private async Task NotifyPaid(Booking booking, PaymentType type)
     {
-        try
-        {
-            await _max.SendBookingNotificationAsync(
-                $"💳 Оплачено!\n🏠 {booking.Apartment?.Title}\n" +
+        string pay;
+        switch(type) {
+            case PaymentType.Prepayment:
+                pay = "Предоплата";
+                break;
+            case PaymentType.Balance:
+                pay = "Доплата";
+                break;
+            case PaymentType.Full:
+                pay = "Полная оплата";
+                break;
+            case PaymentType.Refund:
+                pay = "Возврат";
+                break;
+            default:
+                pay = "Операция";
+                break;
+        }
+
+        using var scope = _scopeFactory.CreateScope();
+        try {
+            var max = scope.ServiceProvider.GetRequiredService<IMaxService>();
+            await max.SendBookingNotificationAsync(
+                $"💳 {pay}\n🏠 {booking.Apartment?.Title}\n" +
                 $"👤 {booking.Client?.FullName}  {booking.Client?.PhoneNumber}\n" +
                 $"📅 {booking.StartDate:dd.MM.yyyy} — {booking.EndDate:dd.MM.yyyy}\n" +
                 $"💰 {booking.TotalPrice:N0} ₽",
                 booking.Id);
-        }
-        catch (Exception ex) { Console.WriteLine($"[Payments] MAX error: {ex.Message}"); }
+        } catch (Exception ex) { Console.WriteLine($"[Payments] MAX error: {ex.Message}"); }
+
+        try {
+            var data = new Dictionary<string, string>(){
+                { "bookingId", booking.Id.ToString() }
+            };
+            var tokens = await _context.DeviceTokens.Select(t => t.Token).ToListAsync();
+            var fcm = scope.ServiceProvider.GetRequiredService<FcmService>();
+            
+            foreach(var token in tokens) {
+                await fcm.SendAsync(token, $"{pay}", $"{booking.Apartment?.Title ?? ""}: ${booking.StartDate} - ${booking.EndDate}");
+            }
+        } catch (Exception ex) { Console.WriteLine($"[Payments] Fcm error: {ex.Message}"); }
     }
 }
