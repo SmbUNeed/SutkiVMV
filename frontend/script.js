@@ -877,14 +877,16 @@ async function handleGuestBook() {
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Оформляем...';
     }
     try {
+        const apartmentId = currentApartment.id;
+        const apartmentTitle = currentApartment.title;
+
         const response = await apiBookAsGuestAndPay(
-            currentApartment.id,
+            apartmentId,
             selectedCheckIn,
             selectedCheckOut,
             adults,
             fullName,
-            phoneNumber,
-            selectedPaymentType === 'full'
+            phoneNumber
         );
 
         closeGuestBookModal();
@@ -895,15 +897,14 @@ async function handleGuestBook() {
             localStorage.setItem('pendingBooking', JSON.stringify({
                 bookingId: response.bookingId,
                 paymentUrl: redirectUrl,
-                apartmentId: currentApartment.id,
-                apartmentTitle: currentApartment.title,
+                apartmentId: apartmentId,
+                apartmentTitle: apartmentTitle,
                 startDate: selectedCheckIn,
                 endDate: selectedCheckOut,
                 guests: adults,
                 totalAmount: response.amount || calcGuestTotal(),
                 createdAt: Date.now()
             }));
-
             window.location.href = redirectUrl;
         } else {
             localStorage.removeItem('pendingBooking');
@@ -915,7 +916,7 @@ async function handleGuestBook() {
         alert(`Ошибка: ${err.message || 'Не удалось оформить бронирование'}`);
         if (btn) {
             btn.disabled = false;
-            updateGuestPayButton();
+            btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Оплатить и забронировать';
         }
     }
 }
