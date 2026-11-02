@@ -29,55 +29,6 @@ async function loadSiteSettings() {
     siteSettings = await res.json();
 }
 
-const PENDING_BOOKING_KEY = 'pendingBooking';
-
-function savePendingBooking(bookingData) {
-    localStorage.setItem(PENDING_BOOKING_KEY, JSON.stringify(bookingData));
-}
-
-function getPendingBooking() {
-    const data = localStorage.getItem(PENDING_BOOKING_KEY);
-    return data ? JSON.parse(data) : null;
-}
-
-function clearPendingBooking() {
-    localStorage.removeItem(PENDING_BOOKING_KEY);
-}
-
-function showPendingBookingToast() {
-    const pending = getPendingBooking();
-    if (!pending) return;
-
-    const toast = document.getElementById('pendingBookingToast');
-    const details = document.getElementById('pendingBookingDetails');
-    if (!toast || !details) return;
-
-    const startDate = new Date(pending.startDate).toLocaleDateString('ru-RU');
-    const endDate = new Date(pending.endDate).toLocaleDateString('ru-RU');
-    details.textContent = `${pending.apartmentTitle} · ${startDate} — ${endDate} · ${pending.totalAmount.toLocaleString('ru-RU')} ₽`;
-
-    toast.classList.add('show');
-}
-
-function hidePendingBookingToast() {
-    const toast = document.getElementById('pendingBookingToast');
-    if (toast) toast.classList.remove('show');
-}
-
-function continuePendingBooking() {
-    const pending = getPendingBooking();
-    if (pending && pending.paymentUrl) {
-        window.location.href = pending.paymentUrl;
-    }
-}
-
-function cancelPendingBooking() {
-    if (confirm('Отменить бронирование? Ссылка на оплату будет удалена.')) {
-        clearPendingBooking();
-        hidePendingBookingToast();
-    }
-}
-
 // ── Хелпер URL для изображений ──────────────────────────
 function imgUrl(path) {
     if (!path) return null;
@@ -799,73 +750,60 @@ function updateUserBookButton() {
     }
 }
 
-async function handleGuestBook() {
+async function handleUserBook() {
     if (!selectedCheckIn || !selectedCheckOut) {
         alert('Пожалуйста, выберите даты заезда и выезда.');
         return;
     }
-    const nameInput = document.getElementById('bookFullName');
-    const phoneInput = document.getElementById('bookPhone');
-    const privacyCheck = document.getElementById('checkPrivacy');
-    const agreementCheck = document.getElementById('checkAgreement');
-    const fullName = nameInput?.value?.trim();
-    const phoneNumber = phoneInput?.value?.trim();
-
-    if (!fullName) { alert('Пожалуйста, введите ваше имя.'); nameInput?.focus(); return; }
-    if (!phoneNumber) { alert('Пожалуйста, введите номер телефона.'); phoneInput?.focus(); return; }
-    if (!privacyCheck?.checked) { alert('Необходимо согласиться с политикой конфиденциальности.'); return; }
-    if (!agreementCheck?.checked) { alert('Необходимо принять пользовательское соглашение.'); return; }
-
+    if (selectedBookingType === 'free') {
+        const nights = (new Date(selectedCheckOut) - new Date(selectedCheckIn)) / 86_400_000;
+        if (nights > 10) {
+            alert('Бесплатное бронирование доступно на срок не более 10 суток. Для более длительного срока выберите оплату.');
+            return;
+        }
+    }
+    const agreementCheck = document.getElementById('userCheckAgreement');
+    if (!agreementCheck?.checked) {
+        alert('Необходимо принять пользовательское соглашение.');
+        return;
+    }
     const guestsInput = document.getElementById('bookGuests');
     const adults = Math.max(1, parseInt(guestsInput?.value, 10) || 1);
-    const btn = document.getElementById('btnPayGuest');
+    const btn = document.getElementById('btnUserBook');
     if (btn) {
         btn.disabled = true;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Оформляем...';
     }
-
     try {
-        const response = await apiBookAsGuestAndPay(
-            currentApartment.id,
-            selectedCheckIn,
-            selectedCheckOut,
-            adults,
-            fullName,
-            phoneNumber,
-            selectedPaymentType === 'full'
-        );
-
-        const redirectUrl = response?.payUrl || response?.url;
-
-        if (redirectUrl) {
-            savePendingBooking({
-                bookingId: response.bookingId,
-                paymentUrl: redirectUrl,
-                apartmentId: currentApartment.id,
-                apartmentTitle: currentApartment.title,
-                startDate: selectedCheckIn,
-                endDate: selectedCheckOut,
-                guests: adults,
-                totalAmount: response.amount || calcGuestTotal(),
-                createdAt: Date.now()
-            });
-
-            closeGuestBookModal();
-            if (typeof closeModal === 'function') closeModal();
-
-            window.location.href = redirectUrl;
-        } else {
-            alert('Бронирование создано, но ссылка на оплату не получена.');
+        if (selectedBookingType === 'free') {
+            await apiBookAsUser(currentApartment.id, selectedCheckIn, selectedCheckOut, adults);
+            closeUserBookModal();
+            closeModal();
+            alert('Бронирование создано! Ожидайте подтверждения администратора.');
             const apartments = await apiGetApartments();
             filteredApartments = [...apartments];
             applyFilters();
+        } else {
+            const response = await apiBookAsUserAndPay(
+                currentApartment.id,
+                selectedCheckIn,
+                selectedCheckOut,
+                adults,
+                selectedBookingType === 'full'
+            );
+            closeUserBookModal();
+            closeModal();
+            const redirectUrl = response?.url;
+            if (redirectUrl) window.location.href = redirectUrl;
         }
     } catch (err) {
         alert(`Ошибка: ${err.message || 'Не удалось оформить бронирование'}`);
         if (btn) {
             btn.disabled = false;
-            updateGuestPayButton();
+            updateUserBookButton();
         }
+    } finally {
+        btn.disabled = false;
     }
 }
 
@@ -904,12 +842,26 @@ async function handleGuestBook() {
             phoneNumber,
             selectedPaymentType === 'full'
         );
+
         closeGuestBookModal();
         if (typeof closeModal === 'function') closeModal();
+
         const redirectUrl = response?.payUrl || response?.url;
         if (redirectUrl) {
+            localStorage.setItem('pendingBooking', JSON.stringify({
+                bookingId: response.bookingId,
+                paymentUrl: redirectUrl,
+                apartmentId: currentApartment.id,
+                apartmentTitle: currentApartment.title,
+                startDate: selectedCheckIn,
+                endDate: selectedCheckOut,
+                guests: adults,
+                totalAmount: response.amount || calcGuestTotal(),
+                createdAt: Date.now()
+            }));
             window.location.href = redirectUrl;
         } else {
+            localStorage.removeItem('pendingBooking');
             const apartments = await apiGetApartments();
             filteredApartments = [...apartments];
             applyFilters();
@@ -920,15 +872,6 @@ async function handleGuestBook() {
             btn.disabled = false;
             updateGuestPayButton();
         }
-    }
-}
-
-function checkPaymentSuccess() {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('payment_success') === 'true') {
-        clearPendingBooking();
-        hidePendingBookingToast();
-        history.replaceState(null, '', window.location.pathname);
     }
 }
 
@@ -1136,8 +1079,6 @@ async function init() {
         priceMax.max = maxPrice;
         priceMax.placeholder = `До ${maxPrice.toLocaleString('ru-RU')}`;
     }
-    checkPaymentSuccess();
-    showPendingBookingToast();
 }
 
 init();
