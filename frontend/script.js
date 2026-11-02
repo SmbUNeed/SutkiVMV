@@ -791,6 +791,7 @@ async function handleUserBook() {
                 selectedBookingType === 'full'
             );
             closeUserBookModal();
+            updateUserBookButton();
             closeModal();
             const redirectUrl = response?.url;
             if (redirectUrl) window.location.href = redirectUrl;
