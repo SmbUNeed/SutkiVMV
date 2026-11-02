@@ -565,31 +565,11 @@ function renderBookingWidget() {
     const el = document.getElementById('bookingWidget');
     if (isLoggedIn()) {
         el.innerHTML = `
-        <button class="btn-book" id="btnBook" onclick="handleUserBook()">
-            <i class="fa-solid fa-calendar-check"></i> Забронировать
-        </button>`;
-        /*el.innerHTML = `
         <button class="btn-book" id="btnBook" onclick="openUserBookModal()">
             <i class="fa-solid fa-calendar-check"></i> Забронировать
-        </button>`;*/
+        </button>`;
     } else {
-        el.innerHTML = `<div class="auth-gate">
-            <p>Бронирование без входа временно недоступно</p>
-            <button class="btn-book" disabled style="opacity:0.5;cursor:not-allowed;">
-                <i class="fa-solid fa-clock"></i> Скоро откроется
-            </button>
-            <div class="auth-gate-divider"><span>или</span></div>
-            <div class="auth-gate-btns">
-                <a href="login.html" class="btn-auth btn-auth-primary">
-                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Войти
-                </a>
-                <a href="register.html" class="btn-auth btn-auth-ghost">
-                    Зарегистрироваться
-                </a>
-            </div>
-        </div>`;
-        //TODO
-        /*el.innerHTML = `
+        el.innerHTML = `
         <div class="auth-gate">
             <p>Забронируйте квартиру без регистрации</p>
             <button class="btn-book" onclick="openGuestBookModal()">
@@ -604,7 +584,7 @@ function renderBookingWidget() {
                     Зарегистрироваться
                 </a>
             </div>
-        </div>`;*/
+        </div>`;
     }
 }
 
@@ -781,12 +761,11 @@ async function handleUserBook() {
             return;
         }
     }
-    //TODO
-    /*const agreementCheck = document.getElementById('userCheckAgreement');
+    const agreementCheck = document.getElementById('userCheckAgreement');
     if (!agreementCheck?.checked) {
         alert('Необходимо принять пользовательское соглашение.');
         return;
-    }*/
+    }
     const guestsInput = document.getElementById('bookGuests');
     const adults = Math.max(1, parseInt(guestsInput?.value, 10) || 1);
     const btn = document.getElementById('btnUserBook');
@@ -827,9 +806,6 @@ async function handleUserBook() {
 
 // ── Бронирование ─────────────────────────────────────────
 async function handleGuestBook() {
-    //TODO
-    alert('Бронирование временно недоступно. Попробуйте позже.');
-    return;
     if (!selectedCheckIn || !selectedCheckOut) {
         alert('Пожалуйста, выберите даты заезда и выезда.');
         return;
