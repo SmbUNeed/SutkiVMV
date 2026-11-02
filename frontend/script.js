@@ -565,7 +565,7 @@ function renderBookingWidget() {
     const el = document.getElementById('bookingWidget');
     if (isLoggedIn()) {
         el.innerHTML = `
-        <button class="btn-book" id="btnBook" onclick="handleBookFree()">
+        <button class="btn-book" id="btnBook" onclick="handleUserBook()">
             <i class="fa-solid fa-calendar-check"></i> Забронировать
         </button>`;
         /*el.innerHTML = `
