@@ -29,49 +29,6 @@ async function loadSiteSettings() {
     siteSettings = await res.json();
 }
 
-function getPendingBooking() {
-    const data = localStorage.getItem('pendingBooking');
-    return data ? JSON.parse(data) : null;
-}
-
-function clearPendingBooking() {
-    localStorage.removeItem('pendingBooking');
-}
-
-function showPendingBookingToast() {
-    const pending = getPendingBooking();
-    if (!pending) return;
-
-    const toast = document.getElementById('pendingBookingToast');
-    const details = document.getElementById('pendingBookingDetails');
-    if (!toast || !details) return;
-
-    const startDate = new Date(pending.startDate).toLocaleDateString('ru-RU');
-    const endDate = new Date(pending.endDate).toLocaleDateString('ru-RU');
-    details.textContent = `${pending.apartmentTitle} · ${startDate} — ${endDate} · ${pending.totalAmount.toLocaleString('ru-RU')} ₽`;
-
-    toast.classList.add('show');
-}
-
-function hidePendingBookingToast() {
-    const toast = document.getElementById('pendingBookingToast');
-    if (toast) toast.classList.remove('show');
-}
-
-function continuePendingBooking() {
-    const pending = getPendingBooking();
-    if (pending && pending.paymentUrl) {
-        window.location.href = pending.paymentUrl;
-    }
-}
-
-function cancelPendingBooking() {
-    if (confirm('Отменить бронирование? Ссылка на оплату будет удалена.')) {
-        clearPendingBooking();
-        hidePendingBookingToast();
-    }
-}
-
 // ── Хелпер URL для изображений ──────────────────────────
 function imgUrl(path) {
     if (!path) return null;
@@ -632,7 +589,6 @@ function renderBookingWidget() {
 }
 
 function openGuestBookModal() {
-
     if (!selectedCheckIn || !selectedCheckOut) {
         alert('Пожалуйста, выберите даты заезда и выезда в календаре.');
         return;
@@ -877,37 +833,21 @@ async function handleGuestBook() {
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Оформляем...';
     }
     try {
-        const apartmentId = currentApartment.id;
-        const apartmentTitle = currentApartment.title;
-
         const response = await apiBookAsGuestAndPay(
-            apartmentId,
+            currentApartment.id,
             selectedCheckIn,
             selectedCheckOut,
             adults,
             fullName,
-            phoneNumber
+            phoneNumber,
+            selectedPaymentType === 'full'
         );
-
         closeGuestBookModal();
         if (typeof closeModal === 'function') closeModal();
-
         const redirectUrl = response?.payUrl || response?.url;
         if (redirectUrl) {
-            localStorage.setItem('pendingBooking', JSON.stringify({
-                bookingId: response.bookingId,
-                paymentUrl: redirectUrl,
-                apartmentId: apartmentId,
-                apartmentTitle: apartmentTitle,
-                startDate: selectedCheckIn,
-                endDate: selectedCheckOut,
-                guests: adults,
-                totalAmount: response.amount || calcGuestTotal(),
-                createdAt: Date.now()
-            }));
             window.location.href = redirectUrl;
         } else {
-            localStorage.removeItem('pendingBooking');
             const apartments = await apiGetApartments();
             filteredApartments = [...apartments];
             applyFilters();
@@ -916,7 +856,7 @@ async function handleGuestBook() {
         alert(`Ошибка: ${err.message || 'Не удалось оформить бронирование'}`);
         if (btn) {
             btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Оплатить и забронировать';
+            updateGuestPayButton();
         }
     }
 }
@@ -1125,8 +1065,6 @@ async function init() {
         priceMax.max = maxPrice;
         priceMax.placeholder = `До ${maxPrice.toLocaleString('ru-RU')}`;
     }
-
-    showPendingBookingToast();
 }
 
 init();

@@ -190,16 +190,6 @@ function renderBooking(booking) {
     const content = document.getElementById('bookingContent');
     if (loading) loading.style.display = 'none';
     if (content) content.style.display = 'grid';
-
-    const pendingRaw = localStorage.getItem('pendingBooking');
-    if (pendingRaw) {
-        try {
-            const pending = JSON.parse(pendingRaw);
-            if (pending.bookingId === booking.id) {
-                localStorage.removeItem('pendingBooking');
-            }
-        } catch { }
-    }
 }
 
 async function initiatePublicPayment(bookingId, payInFull) {
