@@ -781,11 +781,12 @@ async function handleUserBook() {
             return;
         }
     }
-    const agreementCheck = document.getElementById('userCheckAgreement');
+    //TODO
+    /*const agreementCheck = document.getElementById('userCheckAgreement');
     if (!agreementCheck?.checked) {
         alert('Необходимо принять пользовательское соглашение.');
         return;
-    }
+    }*/
     const guestsInput = document.getElementById('bookGuests');
     const adults = Math.max(1, parseInt(guestsInput?.value, 10) || 1);
     const btn = document.getElementById('btnUserBook');
