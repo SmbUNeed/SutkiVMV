@@ -30,15 +30,44 @@ public class PaymentsController : ControllerBase
     [HttpGet]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAllPayments(CancellationToken ct) {
-        var payments = await _context.Payments.ToListAsync(ct);
-        return Ok(payments);
+        var payments = await _context.Payments
+        .Include(p => p.Booking)
+        .ToListAsync(ct);
+
+        var result = payments.Select(p => new {
+            p.Id,
+            p.PaymentId,
+            p.BookingId,
+            p.CreatedAt,
+            p.PaidAt,
+            p.Paid,
+            Status = p.Status.ToString(),
+            Type = p.Type.ToString(),
+            p.Url,
+            p.Booking
+        });
+
+        return Ok(result);
     }
 
     [HttpGet("booking/{id:int}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetPaymentsByBooking(int id, CancellationToken ct) {
-        var payments = await _context.Payments.Where(p => p.BookingId == id).Include(p => p.Booking).ToListAsync();
-        return Ok(payments);
+        var payments = await _context.Payments.Where(p => p.BookingId == id).ToListAsync();
+        var result = payments.Select(p => new {
+            p.Id,
+            p.PaymentId,
+            p.BookingId,
+            p.CreatedAt,
+            p.PaidAt,
+            p.Paid,
+            Status = p.Status.ToString(),
+            Type = p.Type.ToString(),
+            p.Url,
+            p.Booking
+        });
+
+        return Ok(result);
     }
 
     [HttpPost("create")]
