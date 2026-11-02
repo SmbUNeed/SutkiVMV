@@ -1562,19 +1562,19 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 }
 
 @media (max-width: 680px) {
-.pending-booking-toast-content {
-    flex-direction: column;
-    align-items: stretch;
-}
+    .pending-booking-toast-content {
+        flex-direction: column;
+        align-items: stretch;
+    }
 
-.pending-booking-toast-actions {
-    margin-top: 8px;
-}
+    .pending-booking-toast-actions {
+        margin-top: 8px;
+    }
 
-.pending-booking-toast-btn {
-    flex: 1;
-    justify-content: center;
-}
+    .pending-booking-toast-btn {
+        flex: 1;
+        justify-content: center;
+    }
 }
 
 /* ── RESPONSIVE ──────────────────────────────────────────── */

@@ -799,47 +799,73 @@ function updateUserBookButton() {
     }
 }
 
-try {
-    const response = await apiBookAsGuestAndPay(
-        currentApartment.id,
-        selectedCheckIn,
-        selectedCheckOut,
-        adults,
-        fullName,
-        phoneNumber,
-        selectedPaymentType === 'full'
-    );
-
-    const redirectUrl = response?.payUrl || response?.url;
-
-    if (redirectUrl) {
-        savePendingBooking({
-            bookingId: response.bookingId,
-            paymentUrl: redirectUrl,
-            apartmentId: currentApartment.id,
-            apartmentTitle: currentApartment.title,
-            startDate: selectedCheckIn,
-            endDate: selectedCheckOut,
-            guests: adults,
-            totalAmount: response.amount || calcGuestTotal(),
-            createdAt: Date.now()
-        });
-
-        closeGuestBookModal();
-        if (typeof closeModal === 'function') closeModal();
-
-        window.location.href = redirectUrl;
-    } else {
-        alert('Бронирование создано, но ссылка на оплату не получена.');
-        const apartments = await apiGetApartments();
-        filteredApartments = [...apartments];
-        applyFilters();
+async function handleGuestBook() {
+    if (!selectedCheckIn || !selectedCheckOut) {
+        alert('Пожалуйста, выберите даты заезда и выезда.');
+        return;
     }
-} catch (err) {
-    alert(`Ошибка: ${err.message || 'Не удалось оформить бронирование'}`);
+    const nameInput = document.getElementById('bookFullName');
+    const phoneInput = document.getElementById('bookPhone');
+    const privacyCheck = document.getElementById('checkPrivacy');
+    const agreementCheck = document.getElementById('checkAgreement');
+    const fullName = nameInput?.value?.trim();
+    const phoneNumber = phoneInput?.value?.trim();
+
+    if (!fullName) { alert('Пожалуйста, введите ваше имя.'); nameInput?.focus(); return; }
+    if (!phoneNumber) { alert('Пожалуйста, введите номер телефона.'); phoneInput?.focus(); return; }
+    if (!privacyCheck?.checked) { alert('Необходимо согласиться с политикой конфиденциальности.'); return; }
+    if (!agreementCheck?.checked) { alert('Необходимо принять пользовательское соглашение.'); return; }
+
+    const guestsInput = document.getElementById('bookGuests');
+    const adults = Math.max(1, parseInt(guestsInput?.value, 10) || 1);
+    const btn = document.getElementById('btnPayGuest');
     if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Оплатить и забронировать';
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Оформляем...';
+    }
+
+    try {
+        const response = await apiBookAsGuestAndPay(
+            currentApartment.id,
+            selectedCheckIn,
+            selectedCheckOut,
+            adults,
+            fullName,
+            phoneNumber,
+            selectedPaymentType === 'full'
+        );
+
+        const redirectUrl = response?.payUrl || response?.url;
+
+        if (redirectUrl) {
+            savePendingBooking({
+                bookingId: response.bookingId,
+                paymentUrl: redirectUrl,
+                apartmentId: currentApartment.id,
+                apartmentTitle: currentApartment.title,
+                startDate: selectedCheckIn,
+                endDate: selectedCheckOut,
+                guests: adults,
+                totalAmount: response.amount || calcGuestTotal(),
+                createdAt: Date.now()
+            });
+
+            closeGuestBookModal();
+            if (typeof closeModal === 'function') closeModal();
+
+            window.location.href = redirectUrl;
+        } else {
+            alert('Бронирование создано, но ссылка на оплату не получена.');
+            const apartments = await apiGetApartments();
+            filteredApartments = [...apartments];
+            applyFilters();
+        }
+    } catch (err) {
+        alert(`Ошибка: ${err.message || 'Не удалось оформить бронирование'}`);
+        if (btn) {
+            btn.disabled = false;
+            updateGuestPayButton();
+        }
     }
 }
 
