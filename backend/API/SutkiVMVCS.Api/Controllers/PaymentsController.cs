@@ -204,7 +204,10 @@ public class PaymentsController : ControllerBase
             PaymentId = result.PaymentId!,
             Booking = booking,
             Status = PaymentStatus.Pending,
-            Type = dto.PayInFull ? PaymentType.Full : PaymentType.Prepayment
+            Type = dto.PayInFull ? PaymentType.Full : PaymentType.Prepayment,
+            CreatedAt = DateTime.UtcNow,
+            Paid = amountToCharge,
+            Url = result.ConfirmationUrl
         };
 
         _context.Payments.Add(payment);
@@ -256,7 +259,9 @@ public class PaymentsController : ControllerBase
             BookingId = booking.Id,
             Status = PaymentStatus.Pending,
             Type = dto.PayInFull ? PaymentType.Full : PaymentType.Prepayment,
-            CreatedAt = DateTime.UtcNow
+            Paid = amountToCharge,
+            CreatedAt = DateTime.UtcNow,
+            Url = result.ConfirmationUrl
         });
         await _context.SaveChangesAsync(ct);
 
