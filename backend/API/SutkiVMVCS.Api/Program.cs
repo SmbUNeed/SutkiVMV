@@ -14,6 +14,7 @@ using SutkiVMVCS.Services.Shared;
 using SutkiVMVCS.Services.YooKassa;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.Json.Serialization;
 using Telegram.Bot;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -90,6 +91,7 @@ builder.Services.AddControllers()
             System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
         o.JsonSerializerOptions.PropertyNamingPolicy =
             System.Text.Json.JsonNamingPolicy.CamelCase;
+        o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
 builder.Services.AddEndpointsApiExplorer();
