@@ -1449,6 +1449,134 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     transform: translate(2px, -2px);
 }
 
+.pending-booking-toast {
+    display: none;
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9998;
+    max-width: 520px;
+    width: calc(100% - 32px);
+    animation: slideUpToast 0.3s ease;
+}
+
+.pending-booking-toast.show {
+    display: block;
+}
+
+.pending-booking-toast-content {
+    background: var(--white);
+    border: 1.5px solid var(--primary);
+    border-radius: var(--r);
+    padding: 18px;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.pending-booking-toast-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--primary-bg);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.pending-booking-toast-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.pending-booking-toast-text strong {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--ink);
+}
+
+.pending-booking-toast-text span {
+    font-size: 0.82rem;
+    color: var(--ink-3);
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.pending-booking-toast-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.pending-booking-toast-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    border-radius: var(--r-full);
+    font-size: 0.82rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all var(--transition);
+    border: none;
+    font-family: inherit;
+}
+
+.pending-booking-toast-btn.primary {
+    background: var(--primary);
+    color: #fff;
+}
+
+.pending-booking-toast-btn.primary:hover {
+    background: var(--primary-lt);
+}
+
+.pending-booking-toast-btn.ghost {
+    background: var(--paper-2);
+    color: var(--ink-2);
+    border: 1.5px solid var(--border);
+}
+
+.pending-booking-toast-btn.ghost:hover {
+    border-color: var(--red);
+    color: var(--red);
+}
+
+@keyframes slideUpToast {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@media (max-width: 680px) {
+.pending-booking-toast-content {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.pending-booking-toast-actions {
+    margin-top: 8px;
+}
+
+.pending-booking-toast-btn {
+    flex: 1;
+    justify-content: center;
+}
+}
+
 /* ── RESPONSIVE ──────────────────────────────────────────── */
 @media (max-width: 960px) {
     .modal-body { grid-template-columns: 1fr; }

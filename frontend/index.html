@@ -39,7 +39,6 @@
     <link rel="manifest" href="favicon/site.webmanifest">
 </head>
 <body>
-
     <header class="header">
         <div class="container header-content">
             <a href="index.html" class="logo">Sutki<span>VMV</span></a>
@@ -350,6 +349,26 @@
         <img class="lightbox-img" id="lightboxImg" src="" alt="">
         <button class="lightbox-arrow next" onclick="lightboxStep(1)"><i class="fa-solid fa-chevron-right"></i></button>
         <span class="lightbox-counter" id="lightboxCounter"></span>
+    </div>
+
+    <div id="pendingBookingToast" class="pending-booking-toast">
+        <div class="pending-booking-toast-content">
+            <div class="pending-booking-toast-icon">
+                <i class="fa-solid fa-clock"></i>
+            </div>
+            <div class="pending-booking-toast-text">
+                <strong>У вас есть незавершённая бронь</strong>
+                <span id="pendingBookingDetails"></span>
+            </div>
+            <div class="pending-booking-toast-actions">
+                <button class="pending-booking-toast-btn primary" onclick="continuePendingBooking()">
+                    <i class="fa-solid fa-credit-card"></i> Оплатить
+                </button>
+                <button class="pending-booking-toast-btn ghost" onclick="cancelPendingBooking()">
+                    <i class="fa-solid fa-xmark"></i> Отменить
+                </button>
+            </div>
+        </div>
     </div>
 
     <script src="auth.js" defer></script>
