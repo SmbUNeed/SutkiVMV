@@ -29,6 +29,49 @@ async function loadSiteSettings() {
     siteSettings = await res.json();
 }
 
+function getPendingBooking() {
+    const data = localStorage.getItem('pendingBooking');
+    return data ? JSON.parse(data) : null;
+}
+
+function clearPendingBooking() {
+    localStorage.removeItem('pendingBooking');
+}
+
+function showPendingBookingToast() {
+    const pending = getPendingBooking();
+    if (!pending) return;
+
+    const toast = document.getElementById('pendingBookingToast');
+    const details = document.getElementById('pendingBookingDetails');
+    if (!toast || !details) return;
+
+    const startDate = new Date(pending.startDate).toLocaleDateString('ru-RU');
+    const endDate = new Date(pending.endDate).toLocaleDateString('ru-RU');
+    details.textContent = `${pending.apartmentTitle} · ${startDate} — ${endDate} · ${pending.totalAmount.toLocaleString('ru-RU')} ₽`;
+
+    toast.classList.add('show');
+}
+
+function hidePendingBookingToast() {
+    const toast = document.getElementById('pendingBookingToast');
+    if (toast) toast.classList.remove('show');
+}
+
+function continuePendingBooking() {
+    const pending = getPendingBooking();
+    if (pending && pending.paymentUrl) {
+        window.location.href = pending.paymentUrl;
+    }
+}
+
+function cancelPendingBooking() {
+    if (confirm('Отменить бронирование? Ссылка на оплату будет удалена.')) {
+        clearPendingBooking();
+        hidePendingBookingToast();
+    }
+}
+
 // ── Хелпер URL для изображений ──────────────────────────
 function imgUrl(path) {
     if (!path) return null;
@@ -1079,6 +1122,8 @@ async function init() {
         priceMax.max = maxPrice;
         priceMax.placeholder = `До ${maxPrice.toLocaleString('ru-RU')}`;
     }
+
+    showPendingBookingToast();
 }
 
 init();
