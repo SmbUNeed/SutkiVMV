@@ -37,7 +37,7 @@ public class PaymentsController : ControllerBase
     [HttpGet("booking/{id:int}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetPaymentsByBooking(int id, CancellationToken ct) {
-        var payments = await _context.Payments.Where(p => p.BookingId == id).ToListAsync();
+        var payments = await _context.Payments.Where(p => p.BookingId == id).Include(p => p.Booking).ToListAsync();
         return Ok(payments);
     }
 
