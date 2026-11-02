@@ -147,6 +147,7 @@ builder.Services.AddSingleton<IMaxService>(sp => sp.GetRequiredService<MaxBotWor
 builder.Services.AddHostedService(sp => sp.GetRequiredService<MaxBotWorker>());
 
 builder.Services.AddHostedService<ICalSyncService>();
+builder.Services.AddHostedService<CleanupStaleBookingsService>();
 
 // ═══════════════════════════════════════════════════════════════════════
 //  HELPERS
