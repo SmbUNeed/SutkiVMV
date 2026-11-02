@@ -737,6 +737,7 @@ function updateUserBookingSums() {
 
 function updateUserBookButton() {
     const btn = document.getElementById('btnUserBook');
+
     if (!btn) return;
     const total = calcGuestTotal();
     const prepayment = calcPrepayment();
@@ -791,7 +792,6 @@ async function handleUserBook() {
                 selectedBookingType === 'full'
             );
             closeUserBookModal();
-            updateUserBookButton();
             closeModal();
             const redirectUrl = response?.url;
             if (redirectUrl) window.location.href = redirectUrl;
@@ -802,6 +802,8 @@ async function handleUserBook() {
             btn.disabled = false;
             updateUserBookButton();
         }
+    } finally {
+        btn.disabled = false;
     }
 }
 
