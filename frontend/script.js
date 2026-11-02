@@ -95,7 +95,7 @@ async function apiBookAsGuestAndPay(apartmentId, startDate, endDate, guests, ful
 }
 
 async function apiBookAsUserAndPay(apartmentId, startDate, endDate, guests, payInFull = false) {
-    const res = await authFetch('payments/book-and-pay', {
+    const res = await authFetch('/payments/book-and-pay', {
         method: 'POST',
         body: JSON.stringify({ apartmentId, startDate, endDate, guests, payInFull })
     });
