@@ -30,7 +30,7 @@ public class PaymentsController : ControllerBase
     [HttpGet]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAllPayments(CancellationToken ct) {
-        var payments = await _context.Payments.Include(p => p.Booking).ToListAsync(ct);
+        var payments = await _context.Payments.ToListAsync(ct);
         return Ok(payments);
     }
 
@@ -92,7 +92,8 @@ public class PaymentsController : ControllerBase
             Paid = amountToCharge,
             Status = PaymentStatus.Pending,
             Type = paymentType,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            Url = result.ConfirmationUrl
         };
 
         _context.Payments.Add(payment);
