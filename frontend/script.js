@@ -788,7 +788,7 @@ async function handleUserBook() {
                 selectedCheckIn,
                 selectedCheckOut,
                 adults,
-                selectedBookingType === 'prepayment'
+                selectedBookingType === 'full'
             );
             closeUserBookModal();
             closeModal();

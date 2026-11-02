@@ -92,6 +92,7 @@ public class Payment {
     public decimal Paid { get; set; }
     public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
     public PaymentType Type { get; set; } = PaymentType.Full;
+    public string? Url { get; set; } = null;
 
     public Booking Booking { get; set; } = null!;
 }
