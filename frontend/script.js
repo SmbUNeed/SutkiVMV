@@ -632,6 +632,7 @@ function renderBookingWidget() {
 }
 
 function openGuestBookModal() {
+
     if (!selectedCheckIn || !selectedCheckOut) {
         alert('Пожалуйста, выберите даты заезда и выезда в календаре.');
         return;
@@ -902,6 +903,7 @@ async function handleGuestBook() {
                 totalAmount: response.amount || calcGuestTotal(),
                 createdAt: Date.now()
             }));
+
             window.location.href = redirectUrl;
         } else {
             localStorage.removeItem('pendingBooking');
