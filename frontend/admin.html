@@ -36,6 +36,10 @@
         <div class="tag">Admin Panel</div>
     </div>
     <nav class="sb-nav">
+        <div class="ni active" onclick="showSec('app-update', this)">
+            <i class="fa-solid fa-mobile-screen"></i> Приложение
+        </div>
+
         <div class="sb-grp">Объекты</div>
         <div class="ni active" onclick="showSec('add-apt',this)">
             <i class="fa-solid fa-plus"></i> Добавить квартиру
@@ -73,6 +77,55 @@
 
 <!-- ── MAIN ─────────────────────────────────────────────── -->
 <main class="main">
+    <!-- СЕКЦИЯ: Обновление приложения -->
+    <div id="app-update" class="sec active">
+        <div class="sec-h">
+            <div class="sec-t">Обновление приложения</div>
+            <div class="sec-s">Управление версиями мобильного приложения админки</div>
+        </div>
+
+        <!-- Карточка: Текущая версия -->
+        <div class="card">
+            <div class="ct"><i class="fa-solid fa-info-circle"></i> Текущая активная версия</div>
+            <div id="appCurrentInfo">
+                <div class="ld"><i class="fa-solid fa-spinner fa-spin"></i> Загрузка данных...</div>
+            </div>
+        </div>
+
+        <!-- Карточка: Загрузка новой версии -->
+        <div class="card">
+            <div class="ct"><i class="fa-solid fa-upload"></i> Загрузить новую версию</div>
+            <form id="formAppUpload" onsubmit="uploadAppVersion(event)">
+                <div class="fg">
+                    <div class="fv">
+                        <label>Version Code (число)</label>
+                        <input type="number" id="appVersionCode" required min="1" placeholder="Например: 42">
+                    </div>
+                    <div class="fv">
+                        <label>Version Name (строка)</label>
+                        <input type="text" id="appVersionName" required placeholder="Например: 1.2.0">
+                    </div>
+                    <div class="fv sp2">
+                        <label>Список изменений (Release Notes)</label>
+                        <textarea id="appReleaseNotes" required placeholder="Что нового в этой версии?"></textarea>
+                    </div>
+                    <div class="fv sp2">
+                        <label>Файл приложения</label>
+                        <label class="up" id="appDropZone">
+                            <i class="fa-solid fa-cloud-arrow-up" style="font-size:1.5rem;margin-bottom:8px;display:block;"></i>
+                            <span id="appFileName">Нажмите, чтобы выбрать файл .apk</span>
+                            <input type="file" id="appFile" accept=".apk" required onchange="updateAppFileName(this)">
+                        </label>
+                    </div>
+                </div>
+                <div style="margin-top:24px;text-align:right;">
+                    <button type="submit" class="btn bp" id="btnAppUpload">
+                        <i class="fa-solid fa-check"></i> Загрузить обновление
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- ════ ДОБАВИТЬ КВАРТИРУ ════════════════════════════ -->
     <section id="add-apt" class="sec active">
@@ -290,7 +343,8 @@
             <div class="ct"><i class="fa-solid fa-plus"></i> Добавить место</div>
             <form id="formWikiPlace" onsubmit="createWikiPlace(event)">
                 <div class="fg">
-                    <div class="fv"><label>Название</label>
+                    <div class="fv">
+                        <label>Название</label>
                         <input type="text" id="wNewName" placeholder="Городской парк" required>
                     </div>
                     <div class="fv">

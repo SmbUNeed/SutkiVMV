@@ -1029,6 +1029,116 @@
         toast('Ссылка скопирована');
     }
 
+/* ── ОБНОВЛЕНИЕ ПРИЛОЖЕНИЯ ─────────────────────────────── */
+
+const _originalShowSec = showSec;
+showSec = function (id, el) {
+    _originalShowSec(id, el);
+    if (id === 'app-update') loadAppVersion();
+};
+
+async function loadAppVersion() {
+    const container = document.getElementById('appCurrentInfo');
+    container.innerHTML = '<div class="ld"><i class="fa-solid fa-spinner fa-spin"></i> Загрузка...</div>';
+    try {
+        const data = await api('/admin/app/latest');
+        container.innerHTML = `
+            <div class="fg" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <div style="font-size:.72rem;font-weight:700;color:var(--tm);text-transform:uppercase;">Version Code</div>
+                    <div style="font-size:1.3rem;font-weight:800;color:var(--a);">${data.versionCode}</div>
+                </div>
+                <div>
+                    <div style="font-size:.72rem;font-weight:700;color:var(--tm);text-transform:uppercase;">Version Name</div>
+                    <div style="font-size:1.3rem;font-weight:800;color:#fff;">${data.versionName}</div>
+                </div>
+            </div>
+            <div style="margin-bottom:16px;">
+                <div style="font-size:.72rem;font-weight:700;color:var(--tm);text-transform:uppercase;margin-bottom:6px;">Список изменений</div>
+                <div style="background:var(--bg3);padding:14px;border-radius:8px;font-size:.875rem;white-space:pre-wrap;line-height:1.5;">${data.releaseNotes || 'Не указано'}</div>
+            </div>
+            <a href="${data.downloadUrl}" target="_blank" class="btn bi sm">
+                <i class="fa-solid fa-download"></i> Скачать текущий APK
+            </a>
+        `;
+    } catch (err) {
+        container.innerHTML = `<div class="es"><i class="fa-solid fa-circle-exclamation"></i><p>${err.message}</p></div>`;
+    }
+}
+
+function updateAppFileName(input) {
+    const span = document.getElementById('appFileName');
+    if (input.files && input.files.length > 0) {
+        span.textContent = input.files[0].name;
+        span.style.color = 'var(--a)';
+        span.style.fontWeight = '700';
+    } else {
+        span.textContent = 'Нажмите, чтобы выбрать файл .apk';
+        span.style.color = 'var(--tm)';
+        span.style.fontWeight = '400';
+    }
+}
+
+async function uploadAppVersion(e) {
+    e.preventDefault();
+
+    const versionCode = document.getElementById('appVersionCode').value.trim();
+    const versionName = document.getElementById('appVersionName').value.trim();
+    const releaseNotes = document.getElementById('appReleaseNotes').value.trim();
+    const fileInput = document.getElementById('appFile');
+    const btn = document.getElementById('btnAppUpload');
+
+    if (!versionCode || !versionName || !releaseNotes) {
+        toast('Заполните все текстовые поля', 'er');
+        return;
+    }
+    if (!fileInput.files || fileInput.files.length === 0) {
+        toast('Выберите файл .apk', 'er');
+        return;
+    }
+    if (!fileInput.files[0].name.toLowerCase().endsWith('.apk')) {
+        toast('Разрешены только файлы с расширением .apk', 'er');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Загрузка...';
+
+    const formData = new FormData();
+    formData.append('versionCode', versionCode);
+    formData.append('versionName', versionName);
+    formData.append('releaseNotes', releaseNotes);
+    formData.append('file', fileInput.files[0]);
+
+    try {
+        const res = await fetch(API + '/admin/app/upload', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Authorization': `Bearer ${auth?.token}`
+            }
+        });
+
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.message || `Ошибка сервера: ${res.status}`);
+        }
+
+        toast('Приложение успешно обновлено!', 'ok');
+
+        document.getElementById('formAppUpload').reset();
+        updateAppFileName(fileInput);
+
+        loadAppVersion();
+
+    } catch (err) {
+        toast(err.message, 'er');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Загрузить обновление';
+    }
+}
+
     /* ── INIT ────────────────────────────────────────────── */
     (async () => {
         // ── Защита страницы: проверяем токен и роль ──────────
