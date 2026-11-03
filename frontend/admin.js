@@ -1052,9 +1052,9 @@ async function loadAppVersion() {
                 <div style="font-size:.72rem;font-weight:700;color:var(--tm);text-transform:uppercase;margin-bottom:6px;">Список изменений</div>
                 <div style="background:var(--bg3);padding:14px;border-radius:8px;font-size:.875rem;white-space:pre-wrap;line-height:1.5;">${data.releaseNotes || 'Не указано'}</div>
             </div>
-            <a href="${data.downloadUrl}" target="_blank" class="btn bi sm">
+            <button onclick="forceDownloadFile('${data.downloadUrl}', 'adminmv-v${data.versionCode}.apk')" class="btn bi sm">
                 <i class="fa-solid fa-download"></i> Скачать текущий APK
-            </a>
+            </button>
         `;
     } catch (err) {
         container.innerHTML = `<div class="es"><i class="fa-solid fa-circle-exclamation"></i><p>${err.message}</p></div>`;
@@ -1134,74 +1134,115 @@ async function uploadAppVersion(e) {
     }
 }
 
-    /* ── INIT ────────────────────────────────────────────── */
-    (async () => {
-        // ── Защита страницы: проверяем токен и роль ──────────
-        const raw = localStorage.getItem('sutkivmv_auth');
-        try { auth = raw ? JSON.parse(raw) : null; } catch { auth = null; }
+async function forceDownloadFile(url, fileName) {
+    try {
+        // Показываем пользователю, что процесс пошел
+        toast('Начинаем скачивание...', 'ok');
 
-        if (!auth?.token || auth?.user?.role !== 'Admin') {
-            document.body.innerHTML = `
-            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
-                        min-height:100vh;background:#0f1117;color:#e8eaf0;font-family:'Manrope',sans-serif;gap:16px;">
-                <i class="fa-solid fa-lock" style="font-size:3rem;color:#ef4444;"></i>
-                <h2 style="margin:0;font-size:1.4rem;">Доступ запрещён</h2>
-                <p style="color:#7a8399;margin:0;">Эта страница доступна только администратору.</p>
-                <a href="frontend/login.html"
-                   style="margin-top:8px;padding:10px 24px;background:#f59e0b;color:#000;
-                          border-radius:8px;text-decoration:none;font-weight:700;">
-                    Войти
-                </a>
-            </div>`;
+        // Делаем запрос, добавляя токен авторизации (на случай, если эндпоинт защищен)
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${auth?.token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Ошибка сервера: ${response.status}`);
+        }
+
+        // Преобразуем ответ в Blob (бинарный объект)
+        const blob = await response.blob();
+
+        // Создаем временную ссылку на этот Blob в памяти браузера
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        // Создаем невидимую ссылку и эмулируем клик по ней
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = blobUrl;
+        a.download = fileName || 'app-update.apk'; // Принудительно задаем имя файла
+        document.body.appendChild(a);
+        a.click();
+
+        // Убираем за собой
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(blobUrl);
+
+        toast('Файл успешно скачан!', 'ok');
+    } catch (err) {
+        console.error('Ошибка скачивания:', err);
+        toast('Не удалось скачать файл: ' + err.message, 'er');
+    }
+}
+
+/* ── INIT ────────────────────────────────────────────── */
+(async () => {
+    // ── Защита страницы: проверяем токен и роль ──────────
+    const raw = localStorage.getItem('sutkivmv_auth');
+    try { auth = raw ? JSON.parse(raw) : null; } catch { auth = null; }
+
+    if (!auth?.token || auth?.user?.role !== 'Admin') {
+        document.body.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+                    min-height:100vh;background:#0f1117;color:#e8eaf0;font-family:'Manrope',sans-serif;gap:16px;">
+            <i class="fa-solid fa-lock" style="font-size:3rem;color:#ef4444;"></i>
+            <h2 style="margin:0;font-size:1.4rem;">Доступ запрещён</h2>
+            <p style="color:#7a8399;margin:0;">Эта страница доступна только администратору.</p>
+            <a href="frontend/login.html"
+                style="margin-top:8px;padding:10px 24px;background:#f59e0b;color:#000;
+                        border-radius:8px;text-decoration:none;font-weight:700;">
+                Войти
+            </a>
+        </div>`;
+        return;
+    }
+
+    // ── Добавляем токен во все API-запросы ────────────────
+    const _origApi = window.api;
+    window.api = async function(url, opts = {}) {
+        const headers = { 'Content-Type': 'application/json', ...(opts.headers ?? {}) };
+        headers['Authorization'] = `Bearer ${auth.token}`;
+        const res = await fetch(API + url, { ...opts, headers });
+        if (res.status === 401 || res.status === 403) {
+            localStorage.removeItem('sutkivmv_auth');
+            location.href = 'frontend/login.html';
             return;
         }
-
-        // ── Добавляем токен во все API-запросы ────────────────
-        const _origApi = window.api;
-        window.api = async function(url, opts = {}) {
-            const headers = { 'Content-Type': 'application/json', ...(opts.headers ?? {}) };
-            headers['Authorization'] = `Bearer ${auth.token}`;
-            const res = await fetch(API + url, { ...opts, headers });
-            if (res.status === 401 || res.status === 403) {
-                localStorage.removeItem('sutkivmv_auth');
-                location.href = 'frontend/login.html';
-                return;
-            }
-            if (!res.ok) {
-                const b = await res.json().catch(() => ({}));
-                throw new Error(b.message || `HTTP ${res.status}`);
-            }
-            if (res.status === 204) return null;
-            return res.json();
-        };
-
-        // ── Показываем имя админа в сайдбаре ─────────────────
-        const foot = document.querySelector('.sb-foot');
-        if (foot) {
-            const name = auth.user.fullName || auth.user.email || 'Admin';
-            const initials = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'A';
-            const logoutLink = document.createElement('a');
-            logoutLink.href = '#';
-            logoutLink.innerHTML = `<i class="fa-solid fa-user-shield"></i> ${name}`;
-            logoutLink.style.cssText = 'color:var(--a);cursor:default;pointer-events:none;';
-            foot.insertBefore(logoutLink, foot.firstChild);
-
-            const logoutBtn = document.createElement('a');
-            logoutBtn.href = '#';
-            logoutBtn.innerHTML = '<i class="fa-solid fa-arrow-right-from-bracket"></i> Выйти';
-            logoutBtn.onclick = (e) => {
-                e.preventDefault();
-                localStorage.removeItem('sutkivmv_auth');
-                location.href = 'frontend/login.html';
-            };
-            foot.insertBefore(logoutBtn, foot.querySelector('a[href]'));
+        if (!res.ok) {
+            const b = await res.json().catch(() => ({}));
+            throw new Error(b.message || `HTTP ${res.status}`);
         }
+        if (res.status === 204) return null;
+        return res.json();
+    };
 
-        await loadAmenities();
-        await loadRulesCatalog();
-        await loadNearbyPlacesCatalog();
-        await loadWikiPlaces();
-        await loadAppVersion();
-        populateWikiNearbySelect();
-        renderAmen('amenAdd', []);
-    })();
+    // ── Показываем имя админа в сайдбаре ─────────────────
+    const foot = document.querySelector('.sb-foot');
+    if (foot) {
+        const name = auth.user.fullName || auth.user.email || 'Admin';
+        const initials = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'A';
+        const logoutLink = document.createElement('a');
+        logoutLink.href = '#';
+        logoutLink.innerHTML = `<i class="fa-solid fa-user-shield"></i> ${name}`;
+        logoutLink.style.cssText = 'color:var(--a);cursor:default;pointer-events:none;';
+        foot.insertBefore(logoutLink, foot.firstChild);
+
+        const logoutBtn = document.createElement('a');
+        logoutBtn.href = '#';
+        logoutBtn.innerHTML = '<i class="fa-solid fa-arrow-right-from-bracket"></i> Выйти';
+        logoutBtn.onclick = (e) => {
+            e.preventDefault();
+            localStorage.removeItem('sutkivmv_auth');
+            location.href = 'frontend/login.html';
+        };
+        foot.insertBefore(logoutBtn, foot.querySelector('a[href]'));
+    }
+
+    await loadAmenities();
+    await loadRulesCatalog();
+    await loadNearbyPlacesCatalog();
+    await loadWikiPlaces();
+    await loadAppVersion();
+    populateWikiNearbySelect();
+    renderAmen('amenAdd', []);
+})();
