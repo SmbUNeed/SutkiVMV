@@ -26,7 +26,7 @@ namespace SutkiVMVCS.Controllers
 
             if (latest == null) return NotFound(new {message = "Релизы не найдены"});
 
-            string downloadUrl = $"https://sutkivmv.ru/admin/app/download/{latest.VersionCode}";
+            string downloadUrl = $"https://sutkivmv.ru/api/admin/app/download/{latest.VersionCode}";
 
             return Ok(new
             {
