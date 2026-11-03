@@ -1201,6 +1201,7 @@ async function uploadAppVersion(e) {
         await loadRulesCatalog();
         await loadNearbyPlacesCatalog();
         await loadWikiPlaces();
+        await loadAppVersion();
         populateWikiNearbySelect();
         renderAmen('amenAdd', []);
     })();
