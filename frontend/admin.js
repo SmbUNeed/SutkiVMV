@@ -1032,12 +1032,6 @@
 
 /* ── ОБНОВЛЕНИЕ ПРИЛОЖЕНИЯ ─────────────────────────────── */
 
-const _originalShowSec = showSec;
-showSec = function (id, el) {
-    _originalShowSec(id, el);
-    if (id === 'app-update') loadAppVersion();
-};
-
 async function loadAppVersion() {
     const container = document.getElementById('appCurrentInfo');
     container.innerHTML = '<div class="ld"><i class="fa-solid fa-spinner fa-spin"></i> Загрузка...</div>';
