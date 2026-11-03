@@ -48,7 +48,7 @@ namespace SutkiVMVCS.Controllers
             }
 
             var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-            return File(fileStream, "application/vnd.android.package-archive", release.FileName);
+            return File(fileStream, "application/vnd.android.package-archive", release.FileName, enableRangeProcessing: true);
         }
 
         [HttpPost("app/upload")]

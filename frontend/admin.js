@@ -1036,7 +1036,7 @@ async function loadAppVersion() {
     const container = document.getElementById('appCurrentInfo');
     container.innerHTML = '<div class="ld"><i class="fa-solid fa-spinner fa-spin"></i> Загрузка...</div>';
     try {
-        const data = await api('/admin/app/latest');
+        const data = await api('/admin/app/latest', { method: 'GET' });
         container.innerHTML = `
             <div class="fg" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 16px;">
                 <div>
@@ -1136,38 +1136,42 @@ async function uploadAppVersion(e) {
 
 async function forceDownloadFile(url, fileName) {
     try {
-        // Показываем пользователю, что процесс пошел
         toast('Начинаем скачивание...', 'ok');
 
-        // Делаем запрос, добавляя токен авторизации (на случай, если эндпоинт защищен)
         const response = await fetch(url, {
-            headers: {
-                'Authorization': `Bearer ${auth?.token}`
-            }
+            headers: { 'Authorization': `Bearer ${auth?.token}` }
         });
 
         if (!response.ok) {
-            throw new Error(`Ошибка сервера: ${response.status}`);
+            // Пытаемся прочитать текст ошибки, если сервер вернул JSON
+            const errorText = await response.text();
+            try {
+                const errorJson = JSON.parse(errorText);
+                throw new Error(errorJson.message || `Ошибка сервера: ${response.status}`);
+            } catch {
+                throw new Error(`Ошибка сервера: ${response.status}`);
+            }
         }
 
-        // Преобразуем ответ в Blob (бинарный объект)
-        const blob = await response.blob();
+        // ПРОВЕРКА ТИПА СОДЕРЖИМОГО: Если вернулся HTML, значит что-то пошло не так
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('text/html')) {
+            throw new Error('Сервер вернул HTML-страницу вместо файла. Проверьте авторизацию или URL.');
+        }
 
-        // Создаем временную ссылку на этот Blob в памяти браузера
+        const blob = await response.blob();
         const blobUrl = window.URL.createObjectURL(blob);
 
-        // Создаем невидимую ссылку и эмулируем клик по ней
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = blobUrl;
-        a.download = fileName || 'app-update.apk'; // Принудительно задаем имя файла
+        a.download = fileName || 'app-update.apk';
+
         document.body.appendChild(a);
         a.click();
 
-        // Убираем за собой
         document.body.removeChild(a);
         window.URL.revokeObjectURL(blobUrl);
-
         toast('Файл успешно скачан!', 'ok');
     } catch (err) {
         console.error('Ошибка скачивания:', err);
