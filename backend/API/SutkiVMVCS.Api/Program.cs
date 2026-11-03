@@ -40,9 +40,14 @@ var wikiUploadRelPath = builder.Configuration["Storage:WikiUploadPath"]
     ?? "../../../../data/wiki_places";
 var wikiUploadAbsPath = Path.GetFullPath(
     Path.Combine(builder.Environment.ContentRootPath, wikiUploadRelPath));
+
+var appUploadRelPath = builder.Configuration["Storage:AppUploadPath"]
+    ?? "../../../../data/apk-releases";
+var appUploadAbsPath = Path.GetFullPath(
+    Path.Combine(builder.Environment.ContentRootPath, appUploadRelPath));
 Directory.CreateDirectory(wikiUploadAbsPath);
 
-builder.Services.AddSingleton(new UploadSettings(apartmentsUploadAbsPath, wikiUploadAbsPath));
+builder.Services.AddSingleton(new UploadSettings(apartmentsUploadAbsPath, wikiUploadAbsPath, appUploadAbsPath));
 
 // ═══════════════════════════════════════════════════════════════════════
 //  SECURITY
@@ -223,4 +228,4 @@ app.Run();
 //  RECORDS
 // ═══════════════════════════════════════════════════════════════════════
 
-public record UploadSettings(string ApartmentsUploadPath, string WikiUploadPath);
+public record UploadSettings(string ApartmentsUploadPath, string WikiUploadPath, string AppUploadPath);

@@ -169,6 +169,37 @@ namespace SutkiVMVCS.Migrations
                     b.ToTable("ApartmentRules");
                 });
 
+            modelBuilder.Entity("SutkiVMV.Models.AppRelease", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReleaseNotes")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("VersionCode")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("VersionName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AppReleases");
+                });
+
             modelBuilder.Entity("SutkiVMV.Models.Booking", b =>
                 {
                     b.Property<int>("Id")

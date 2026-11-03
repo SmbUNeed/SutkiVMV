@@ -31,6 +31,7 @@ public class AppDbContext : DbContext
     public DbSet<DeviceToken>          DeviceTokens         => Set<DeviceToken>();
     public DbSet<SiteSettings>         SiteSettings         => Set<SiteSettings>();
     public DbSet<PriceRule>            PriceRules           => Set<PriceRule>();
+    public DbSet<AppRelease> AppReleases => Set<AppRelease>();
 
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {

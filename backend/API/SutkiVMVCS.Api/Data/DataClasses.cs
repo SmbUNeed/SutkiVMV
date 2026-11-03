@@ -270,3 +270,12 @@ public class PriceRule
     public decimal? Multiplier { get; set; } // 2.0 = цена x2
     public decimal? FixedMarkup { get; set; } // добавка к цене за ночь
 }
+
+public class AppRelease {
+    public int Id { get; set; }
+    public int VersionCode { get; set; }
+    public string VersionName { get; set; } = "";
+    public string ReleaseNotes { get; set; } = "";
+    public string FileName { get; set; } = "";
+    public DateTime UploadedAt { get; set; }
+}

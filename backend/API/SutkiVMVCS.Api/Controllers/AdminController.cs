@@ -12,10 +12,68 @@ namespace SutkiVMVCS.Controllers
     [Route("api/admin")]
     public class AdminController : ControllerBase
     {
-        private AppDbContext _ctx;
+        private readonly AppDbContext _ctx;
+        private readonly string _appUploadPath;
 
-        public AdminController(AppDbContext ctx) {
+        public AdminController(AppDbContext ctx, UploadSettings uploadSettings) {
             _ctx = ctx;
+            _appUploadPath = uploadSettings.AppUploadPath;
+        }
+
+        [HttpGet("app/latest")]
+        public async Task<IActionResult> GetLatestAppVersion() {
+            var latest = await _ctx.AppReleases.OrderByDescending(r => r.VersionCode).FirstOrDefaultAsync();
+
+            if (latest == null) return NotFound(new {message = "Релизы не найдены"});
+
+            string downloadUrl = $"https://sutkivmv.ru/admin/app/download/{latest.VersionCode}";
+
+            return Ok(new
+            {
+                latest.VersionCode,
+                latest.VersionName,
+                latest.ReleaseNotes,
+                downloadUrl
+            });
+        }
+
+        [HttpGet("app/download/{versionCode:int}")]
+        public async Task<IActionResult> DownloadApk(int versionCode) {
+            var release = await _ctx.AppReleases.FirstOrDefaultAsync(r => r.VersionCode == versionCode);
+            if (release == null) return NotFound(new { message = $"Релизов versionCode={versionCode} не найдено" });
+
+            var filePath = Path.Combine(_appUploadPath, release.FileName);
+            if (!System.IO.File.Exists(filePath)) {
+                return NotFound(new { message = "Файл не найден на сервере" });
+            }
+
+            var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            return File(fileStream, "application/vnd.android.package-archive", release.FileName);
+        }
+
+        [HttpPost("app/upload")]
+        public async Task<IActionResult> UploadApk([FromForm] int versionCode, [FromForm] string versionName, [FromForm] string releaseNotes, IFormFile file) {
+            if (file == null || !file.FileName.EndsWith(".apk", StringComparison.OrdinalIgnoreCase))
+                return BadRequest("Требуется файл .apk");
+
+            var uniqueFileName = $"app-{versionCode}-{Guid.NewGuid():N}.apk";
+            var filePath = Path.Combine(_appUploadPath, uniqueFileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create)) {
+                await file.CopyToAsync(stream);
+            }
+
+            var release = new AppRelease
+            {
+                VersionCode = versionCode,
+                VersionName = versionName,
+                FileName = uniqueFileName,
+                ReleaseNotes = releaseNotes,
+            };
+            _ctx.AppReleases.Add(release);
+            await _ctx.SaveChangesAsync();
+
+            return Ok("Приложение успешно загружено");
         }
 
         [HttpGet("price-rules")]
