@@ -23,7 +23,8 @@
         if (id === 'rules')    loadRules();
         if (id === 'nearby')   loadNearby();
         if (id === 'wiki-places') loadWikiPlaces();
-        if (id === 'ical')     loadICal();
+        if (id === 'ical') loadICal();
+        if (id === 'app-update') loadAppVersion();
     }
 
     /* ── TOAST ───────────────────────────────────────────── */
