@@ -128,10 +128,36 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponseDto>> Login(LoginDto dto, TrigramService ts)
     {
-        foreach (var cl in _context.Clients) {
-            cl.UpdateSearchFilters(ts);
-            Console.WriteLine(cl.Email);
-            Console.WriteLine(Encoding.UTF8.GetString(ts.GenerateBloomFilter(cl.Email??"")) + "||||||||||" + Encoding.UTF8.GetString(cl.EmailTrigram));
+        using var transaction = await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            var clients = await _context.Clients.ToListAsync();
+            int updatedCount = 0;
+
+            foreach (var cl in clients)
+            {
+                var email = (cl.Email ?? "").Trim().ToLowerInvariant();
+                if (string.IsNullOrEmpty(email)) continue;
+
+                // Генерируем фильтр
+                byte[] f = ts.GenerateBloomFilter(email);
+
+                // Присваиваем
+                cl.EmailTrigram = f;
+                updatedCount++;
+            }
+
+            // ВАЖНО: Сохраняем изменения в БД!
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            Console.WriteLine($"Успешно обновлено фильтров: {updatedCount}");
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            Console.WriteLine($"Ошибка обновления: {ex.Message}");
         }
         await _context.SaveChangesAsync();
         if (string.IsNullOrWhiteSpace(dto.Email))
