@@ -14,7 +14,7 @@ namespace SutkiVMVCS.Services.Security
         {
             if (string.IsNullOrWhiteSpace(input)) return Array.Empty<byte>();
 
-            input = input.Trim().ToLowerInvariant();
+            input = input.Replace(" ", "").Replace("+", "").ToLowerInvariant();
 
             int charCount = input.Length;
             if (charCount < 3) return Array.Empty<byte>();
