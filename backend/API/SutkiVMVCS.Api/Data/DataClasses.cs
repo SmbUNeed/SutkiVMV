@@ -175,6 +175,8 @@ public class User
 
     public int ClientId { get; set; }
     public Client Client { get; set; } = null!;
+    [NotMapped]
+    public string Email => Client.Email!;
 }
 
 public class ApartmentAmenity

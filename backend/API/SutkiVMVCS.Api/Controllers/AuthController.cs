@@ -129,7 +129,7 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = "Пароль не заполнен" });
 
         var user = (await _context.Users.Include(u => u.Client).AsNoTracking().ToListAsync())
-            .FirstOrDefault(u => u.Client.Email == dto.Email); // REMAKE
+            .FirstOrDefault(u => u.Email == dto.Email); // REMAKE
 
         if (user == null || !VerifyPassword(dto.Password, user.PasswordHash))
             return Unauthorized(new { message = "Неверный email или пароль" });
@@ -409,7 +409,7 @@ public class AuthController : ControllerBase
     private static UserDto ToUserDto(User user) => new()
     {
         Id          = user.Id,
-        Email       = user.Client.Email ?? "",
+        Email       = user.Email ?? "",
         FullName    = user.Client.FullName    ?? "",
         PhoneNumber = user.Client.PhoneNumber ?? "",
         Role        = user.Role,
@@ -423,7 +423,7 @@ public class AuthController : ControllerBase
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Client.Email!),
+            new Claim(ClaimTypes.Email, user.Email!),
             new Claim(ClaimTypes.Role, user.Role)
         };
         var token = new JwtSecurityToken(
