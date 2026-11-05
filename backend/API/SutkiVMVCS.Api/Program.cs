@@ -10,6 +10,7 @@ using SutkiVMV.Models;
 using SutkiVMV.Services;
 using SutkiVMVCS.Api.Services.Security;
 using SutkiVMVCS.Controllers;
+using SutkiVMVCS.Services.Security;
 using SutkiVMVCS.Services.Shared;
 using SutkiVMVCS.Services.YooKassa;
 using System.Security.Cryptography.X509Certificates;
@@ -161,6 +162,14 @@ builder.Services.AddHostedService<CleanupStaleBookingsService>();
 // ═══════════════════════════════════════════════════════════════════════
 
 builder.Services.AddScoped<BookingService>();
+
+string? hmacKeyBase64 = builder.Configuration["Security:HmacSecretKey"];
+if (string.IsNullOrEmpty(hmacKeyBase64))
+{
+    throw new InvalidOperationException("HMAC Key is missing in config");
+}
+byte[] hmacKeyBytes = Convert.FromBase64String(hmacKeyBase64);
+builder.Services.AddSingleton<TrigramService>(sp => new TrigramService(hmacKeyBytes));
 
 // ═══════════════════════════════════════════════════════════════════════
 //  CORS
