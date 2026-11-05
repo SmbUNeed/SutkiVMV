@@ -137,6 +137,9 @@ public class AuthController : ControllerBase
         var filter = ts.GenerateBloomFilter(dto.Email);
 
         var potential = await _context.Users.Include(u => u.Client).Where(c => AppDbContext.BitwiseAndBytes(c.Client!.EmailTrigram, filter) == filter).ToListAsync();
+        foreach(var d in potential) {
+            Console.WriteLine(d.Email);
+        }
         var user = potential.Where(u => u.Email == dto.Email).FirstOrDefault();
 
         if (user.Client == null || user.Client.EmailTrigram == null)
