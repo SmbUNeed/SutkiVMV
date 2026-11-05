@@ -133,6 +133,7 @@ public class AuthController : ControllerBase
             Console.WriteLine(cl.Email);
             Console.WriteLine(ts.GenerateBloomFilter(cl.Email??"") + "||||||||||" + cl.EmailTrigram);
         }
+        await _context.SaveChangesAsync();
         if (string.IsNullOrWhiteSpace(dto.Email))
             return BadRequest(new { message = "Email не заполнен" });
 
