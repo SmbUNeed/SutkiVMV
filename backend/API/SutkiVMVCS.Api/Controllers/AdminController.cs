@@ -22,14 +22,14 @@ namespace SutkiVMVCS.Controllers
         }
 
         [HttpGet("app/latest")]
-        public async Task<IActionResult> GetLatestAppVersion(TrigramService ts) {
+        public async Task<IActionResult> GetLatestAppVersion() {
             var latest = await _ctx.AppReleases.OrderByDescending(r => r.VersionCode).FirstOrDefaultAsync();
 
             if (latest == null) return NotFound(new {message = "Релизы не найдены"});
 
             string downloadUrl = $"https://sutkivmv.ru/api/admin/app/download/{latest.VersionCode}";
 
-            await InitializeExistingClientsTrigramsAsync(_ctx, ts);
+            //await InitializeExistingClientsTrigramsAsync(_ctx, ts);
 
             return Ok(new
             {
@@ -40,7 +40,7 @@ namespace SutkiVMVCS.Controllers
             });
         }
 
-        public async Task InitializeExistingClientsTrigramsAsync(AppDbContext context, TrigramService trigramService)
+        /*public async Task InitializeExistingClientsTrigramsAsync(AppDbContext context, TrigramService trigramService)
         {
             // 1. Выкачиваем ВСЕХ существующих клиентов из базы данных.
             // Благодаря HasConversion(), свойства FullName, PhoneNumber и Email 
@@ -63,7 +63,7 @@ namespace SutkiVMVCS.Controllers
             await context.SaveChangesAsync();
 
             Console.WriteLine("Триграммы для существующих клиентов успешно сгенерированы!");
-        }
+        }*/
 
         [HttpGet("app/download/{versionCode:int}")]
         public async Task<IActionResult> DownloadApk(int versionCode) {
