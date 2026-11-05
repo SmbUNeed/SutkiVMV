@@ -47,7 +47,7 @@ public class AuthController : ControllerBase
         dto.Email = dto.Email.Trim().ToLowerInvariant();
         dto.PhoneNumber = PhoneHelper.Normalize(dto.PhoneNumber)!;
 
-        if ((await _context.Users.AsNoTracking().ToListAsync()).Any(u => u.Email == dto.Email))
+        if ((await _context.Clients.AsNoTracking().ToListAsync()).Any(c => c.Email == dto.Email)) //REMAKE
             return Conflict(new { message = "Пользователь с таким email уже существует" });
 
         if (await _context.PendingRegistrations.AsNoTracking().AnyAsync(p => p.Email == dto.Email, ct))
@@ -95,7 +95,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> UsersList()
     {
         var users = await _context.Users.AsNoTracking().OrderBy(u => u.Id)
-            .Select(u => new { u.Id, u.Email, u.Role, u.CreatedAt, u.EmailConfirmed })
+            .Select(u => new { u.Id, u.Role, u.CreatedAt, u.EmailConfirmed })
             .ToListAsync();
 
         var clients = await _context.Clients.AsNoTracking()
@@ -106,7 +106,6 @@ public class AuthController : ControllerBase
         var result = users.Select(u => new
         {
             u.Id,
-            u.Email,
             u.Role,
             u.CreatedAt,
             u.EmailConfirmed,
@@ -129,8 +128,8 @@ public class AuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(dto.Password))
             return BadRequest(new { message = "Пароль не заполнен" });
 
-        var user = (await _context.Users.AsNoTracking().ToListAsync())
-            .FirstOrDefault(u => u.Email == dto.Email);
+        var user = (await _context.Users.Include(u => u.Client).AsNoTracking().ToListAsync())
+            .FirstOrDefault(u => u.Client.Email == dto.Email); // REMAKE
 
         if (user == null || !VerifyPassword(dto.Password, user.PasswordHash))
             return Unauthorized(new { message = "Неверный email или пароль" });
@@ -143,7 +142,7 @@ public class AuthController : ControllerBase
 
         if (client == null) return Unauthorized(new { message = "Клиент не найден" });
 
-        return Ok(BuildAuthResponse(user, client));
+        return Ok(BuildAuthResponse(user));
     }
 
     // ──────────────────────────────────────────────────
@@ -157,11 +156,7 @@ public class AuthController : ControllerBase
         var user   = await _context.Users.FindAsync(userId);
         if (user == null) return NotFound();
 
-        var client = await _context.Clients
-            .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.UserId == userId);
-
-        return Ok(ToUserDto(user, client));
+        return Ok(ToUserDto(user));
     }
 
     // ──────────────────────────────────────────────────
@@ -172,7 +167,7 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<UserDto>> UpdateProfile(UpdateProfileDto dto, CancellationToken ct)
     {
         var userId = GetUserId();
-        var user = await _context.Users.FindAsync(userId);
+        var user = await _context.Users.Include(u => u.Client).FirstAsync(u => u.Id == userId);
         if (user == null) return NotFound();
 
         // Обновляем пароль если передан
@@ -182,19 +177,11 @@ public class AuthController : ControllerBase
                 return BadRequest(new { message = "Пароль должен содержать минимум 6 символов" });
             user.PasswordHash = HashPassword(dto.NewPassword);
         }
-
-        // Обновляем данные в связанном Client
-        var client = await _context.Clients
-            .FirstOrDefaultAsync(c => c.UserId == userId, ct);
-
-        if (client != null)
-        {
-            client.FullName    = dto.FullName.Trim();
-            client.PhoneNumber = dto.PhoneNumber.Trim();
-        }
+        user.Client.FullName    = dto.FullName.Trim();
+        user.Client.PhoneNumber = dto.PhoneNumber.Trim();
 
         await _context.SaveChangesAsync(ct);
-        return Ok(ToUserDto(user, client));
+        return Ok(ToUserDto(user));
     }
 
     // ──────────────────────────────────────────────────
@@ -320,7 +307,6 @@ public class AuthController : ControllerBase
 
         var user = new User
         {
-            Email = pending.Email,
             PasswordHash = pending.PasswordHash,
             Role = "User",
             CreatedAt = DateTime.UtcNow,
@@ -364,8 +350,8 @@ public class AuthController : ControllerBase
 
         email = email.Trim().ToLowerInvariant();
 
-        var user = (await _context.Users.ToListAsync()) 
-            .FirstOrDefault(u => u.Email == email);
+        var user = (await _context.Clients.Include(c => c.User).ToListAsync()) 
+            .FirstOrDefault(u => u.Email == email)?.User; //REMAKE
         if (user == null)
             return BadRequest(new { message = "Данный email не зарегистрирован" });
 
@@ -391,10 +377,10 @@ public class AuthController : ControllerBase
 
         var email = dto.Email.Trim().ToLowerInvariant();
 
-        var user = (await _context.Users.ToListAsync()).FirstOrDefault(u =>
-            u.Email == email &&
-            u.PasswordResetToken == dto.Token &&
-            u.PasswordResetExpiry > DateTime.UtcNow);
+        var user = (await _context.Clients.Include(c => c.User).ToListAsync()).FirstOrDefault(c =>
+            c.Email == email &&
+            c.User?.PasswordResetToken == dto.Token &&
+            c.User?.PasswordResetExpiry > DateTime.UtcNow)?.User; //REMAKE
 
         if (user == null)
             return BadRequest(new { message = "Ссылка недействительна или истекла" });
@@ -414,20 +400,20 @@ public class AuthController : ControllerBase
     private int GetUserId() =>
         int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-    private AuthResponseDto BuildAuthResponse(User user, Client? client) => new()
+    private AuthResponseDto BuildAuthResponse(User user) => new()
     {
         Token = GenerateToken(user),
-        User  = ToUserDto(user, client)
+        User  = ToUserDto(user)
     };
 
-    private static UserDto ToUserDto(User user, Client? client) => new()
+    private static UserDto ToUserDto(User user) => new()
     {
         Id          = user.Id,
-        Email       = user.Email,
-        FullName    = client?.FullName    ?? "",
-        PhoneNumber = client?.PhoneNumber ?? "",
+        Email       = user.Client.Email ?? "",
+        FullName    = user.Client.FullName    ?? "",
+        PhoneNumber = user.Client.PhoneNumber ?? "",
         Role        = user.Role,
-        ClientId    = client?.Id
+        ClientId    = user.Client.Id
     };
 
     private string GenerateToken(User user)
@@ -437,7 +423,7 @@ public class AuthController : ControllerBase
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Email, user.Client.Email!),
             new Claim(ClaimTypes.Role, user.Role)
         };
         var token = new JwtSecurityToken(

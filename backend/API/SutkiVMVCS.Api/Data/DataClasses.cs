@@ -163,7 +163,6 @@ public class Client
 public class User
 {
     public int      Id                    { get; set; }
-    public string   Email                 { get; set; } = "";
     public string   PasswordHash          { get; set; } = "";
     public string   Role                  { get; set; } = "User";
     public DateTime CreatedAt             { get; set; }
@@ -173,6 +172,9 @@ public class User
     public bool      IsBanned             { get; set; } = false;
     public string? PasswordResetToken { get; set; }
     public DateTime? PasswordResetExpiry { get; set; }
+
+    public int ClientId { get; set; }
+    public Client Client { get; set; } = null!;
 }
 
 public class ApartmentAmenity

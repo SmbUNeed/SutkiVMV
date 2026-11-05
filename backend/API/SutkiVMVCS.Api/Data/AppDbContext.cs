@@ -75,15 +75,6 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ApartmentAmenity>()
             .HasKey(aa => new { aa.ApartmentId, aa.AmenityId });
 
-        // ── User: уникальный email ────────────────────────────────────
-        modelBuilder.Entity<User>()
-            .HasIndex(u => u.Email)
-            .IsUnique();
-
-        modelBuilder.Entity<User>()
-            .Property(u => u.Email)
-            .HasConversion(v => _encryptor.Encrypt(v), v => _encryptor.Decrypt(v));
-
         //── Client → User(один - к - одному, необязательный) ────────────
         //UserId = null означает гостевое бронирование без регистрации
         modelBuilder.Entity<Client>()
