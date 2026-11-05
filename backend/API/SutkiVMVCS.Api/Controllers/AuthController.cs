@@ -136,7 +136,7 @@ public class AuthController : ControllerBase
 
         var filter = ts.GenerateBloomFilter(dto.Email);
 
-        var potential = await _context.Clients.Where(c => AppDbContext.BitwiseAndBytes(c.EmailTrigram, filter) == filter).ToListAsync();
+        var potential = await _context.Clients.Where(c => c.EmailTrigram == filter).ToListAsync();
         foreach(var d in potential) {
             Console.WriteLine(d.Email);
         }
