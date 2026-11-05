@@ -130,7 +130,6 @@ public class AuthController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(dto.Email))
             return BadRequest(new { message = "Email не заполнен" });
-        dto.Email = dto.Email.Trim().ToLowerInvariant();
 
         if (string.IsNullOrWhiteSpace(dto.Password))
             return BadRequest(new { message = "Пароль не заполнен" });
@@ -140,8 +139,18 @@ public class AuthController : ControllerBase
         var potential = await _context.Users.Include(u => u.Client).Where(c => AppDbContext.BitwiseAndBytes(c.Client!.EmailTrigram, filter) == filter).ToListAsync();
         var user = potential.Where(u => u.Email == dto.Email).FirstOrDefault();
 
-        if (user == null || !VerifyPassword(dto.Password, user.PasswordHash))
+        if (user.Client == null || user.Client.EmailTrigram == null)
+        {
+            // Проблема в данных: у пользователя нет связанного Client или поле пустое
+            Console.WriteLine($"DEBUG: У пользователя {user.Email} отсутствует Client или EmailTrigram");
+        }
+
+        if (!VerifyPassword(dto.Password, user.PasswordHash))
+        {
+            // Если дошли сюда, значит пользователь найден, но пароль не совпадает
+            Console.WriteLine("DEBUG: Пользователь найден, но пароль не совпадает");
             return Unauthorized(new { message = "Неверный email или пароль" });
+        }
 
         // Ищем связанного клиента
         var client = await _context.Clients.AsNoTracking().FirstOrDefaultAsync(c => c.UserId == user.Id);
