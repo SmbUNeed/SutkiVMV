@@ -12,8 +12,8 @@ using SutkiVMV.Data;
 namespace SutkiVMVCS.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261105191916_RemoveUserEmail")]
-    partial class RemoveUserEmail
+    [Migration("20261105194319_Trigrams_UserClientRelation")]
+    partial class Trigrams_UserClientRelation
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -297,6 +297,10 @@ namespace SutkiVMVCS.Migrations
                     b.Property<string>("Email")
                         .HasColumnType("text");
 
+                    b.Property<byte[]>("EmailTrigram")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("text");
@@ -304,17 +308,22 @@ namespace SutkiVMVCS.Migrations
                     b.Property<bool>("InBlackList")
                         .HasColumnType("boolean");
 
+                    b.Property<byte[]>("NameTrigram")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<byte[]>("PhoneTrigram")
+                        .IsRequired()
+                        .HasColumnType("bytea");
 
                     b.Property<int?>("UserId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
 
                     b.ToTable("Clients");
                 });
@@ -612,10 +621,7 @@ namespace SutkiVMVCS.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ClientId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ClientId1")
+                    b.Property<int?>("ClientId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
@@ -649,7 +655,8 @@ namespace SutkiVMVCS.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClientId1");
+                    b.HasIndex("ClientId")
+                        .IsUnique();
 
                     b.ToTable("Users");
                 });
@@ -774,16 +781,6 @@ namespace SutkiVMVCS.Migrations
                     b.Navigation("Client");
                 });
 
-            modelBuilder.Entity("SutkiVMV.Models.Client", b =>
-                {
-                    b.HasOne("SutkiVMV.Models.User", "User")
-                        .WithOne()
-                        .HasForeignKey("SutkiVMV.Models.Client", "UserId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("SutkiVMV.Models.ExternalBooking", b =>
                 {
                     b.HasOne("SutkiVMV.Models.Apartment", "Apartment")
@@ -836,10 +833,9 @@ namespace SutkiVMVCS.Migrations
             modelBuilder.Entity("SutkiVMV.Models.User", b =>
                 {
                     b.HasOne("SutkiVMV.Models.Client", "Client")
-                        .WithMany()
-                        .HasForeignKey("ClientId1")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .WithOne("User")
+                        .HasForeignKey("SutkiVMV.Models.User", "ClientId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Client");
                 });
@@ -877,6 +873,8 @@ namespace SutkiVMVCS.Migrations
             modelBuilder.Entity("SutkiVMV.Models.Client", b =>
                 {
                     b.Navigation("Bookings");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("SutkiVMV.Models.NearbyPlace", b =>

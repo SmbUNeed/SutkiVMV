@@ -79,10 +79,10 @@ public class AppDbContext : DbContext
         //UserId = null означает гостевое бронирование без регистрации
         modelBuilder.Entity<Client>()
             .HasOne(c => c.User)
-            .WithOne()
-            .HasForeignKey<Client>(c => c.UserId)
+            .WithOne(u => u.Client)
+            .HasForeignKey<User>(u => u.ClientId)
             .IsRequired(false)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Client>(entity =>
         {

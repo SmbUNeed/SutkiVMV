@@ -176,10 +176,10 @@ public class User
     public string? PasswordResetToken { get; set; }
     public DateTime? PasswordResetExpiry { get; set; }
 
-    public int ClientId { get; set; }
-    public Client Client { get; set; } = null!;
+    public int? ClientId { get; set; }
+    public Client? Client { get; set; } 
     [NotMapped]
-    public string Email => Client.Email!;
+    public string Email => Client!.Email!;
 }
 
 public class ApartmentAmenity

@@ -322,9 +322,6 @@ namespace SutkiVMVCS.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
                     b.ToTable("Clients");
                 });
 
@@ -621,10 +618,7 @@ namespace SutkiVMVCS.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ClientId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ClientId1")
+                    b.Property<int?>("ClientId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
@@ -658,7 +652,8 @@ namespace SutkiVMVCS.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClientId1");
+                    b.HasIndex("ClientId")
+                        .IsUnique();
 
                     b.ToTable("Users");
                 });
@@ -783,16 +778,6 @@ namespace SutkiVMVCS.Migrations
                     b.Navigation("Client");
                 });
 
-            modelBuilder.Entity("SutkiVMV.Models.Client", b =>
-                {
-                    b.HasOne("SutkiVMV.Models.User", "User")
-                        .WithOne()
-                        .HasForeignKey("SutkiVMV.Models.Client", "UserId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("SutkiVMV.Models.ExternalBooking", b =>
                 {
                     b.HasOne("SutkiVMV.Models.Apartment", "Apartment")
@@ -845,10 +830,9 @@ namespace SutkiVMVCS.Migrations
             modelBuilder.Entity("SutkiVMV.Models.User", b =>
                 {
                     b.HasOne("SutkiVMV.Models.Client", "Client")
-                        .WithMany()
-                        .HasForeignKey("ClientId1")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .WithOne("User")
+                        .HasForeignKey("SutkiVMV.Models.User", "ClientId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Client");
                 });
@@ -886,6 +870,8 @@ namespace SutkiVMVCS.Migrations
             modelBuilder.Entity("SutkiVMV.Models.Client", b =>
                 {
                     b.Navigation("Bookings");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("SutkiVMV.Models.NearbyPlace", b =>
