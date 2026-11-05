@@ -128,7 +128,6 @@ public class ApartmentNearbyPlace
     public NearbyPlace NearbyPlace { get; set; } = null!;
 }
 
-
 public class Amenity
 {
     public int    Id   { get; set; }
@@ -145,6 +144,10 @@ public class Client
     public string? AdminTag    { get; set; } = null;
     public string? AdminNote { get; set; } = null;
     public bool InBlackList { get; set; } = false;
+
+    public byte[] NameTrigram { get; set; } = [];
+    public byte[] PhoneTrigram { get; set; } = [];
+    public byte[] EmailTrigram { get; set; } = [];
 
     // null = гостевое бронирование без регистрации
     public int?  UserId { get; set; }
