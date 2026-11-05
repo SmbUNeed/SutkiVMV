@@ -5,6 +5,7 @@ using SutkiVMV.Data;
 using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
 using SutkiVMVCS.Data;
+using SutkiVMVCS.Services.Security;
 using SutkiVMVCS.Services.Shared;
 using SutkiVMVCS.Services.YooKassa;
 using System.Globalization;
@@ -109,7 +110,7 @@ public class PaymentsController : ControllerBase
 
     [HttpPost("book-guest")]
     [AllowAnonymous]
-    public async Task<IActionResult> BookGuest([FromBody] GuestBookingDto dto, CancellationToken ct)
+    public async Task<IActionResult> BookGuest([FromBody] GuestBookingDto dto, TrigramService ts, CancellationToken ct)
     {
         if (dto.StartDate >= dto.EndDate)
             return BadRequest(new { message = "Дата заезда должна быть раньше даты выезда" });
@@ -145,8 +146,11 @@ public class PaymentsController : ControllerBase
         // Ищем существующего гостевого клиента по телефону, иначе создаём нового.
         // ВАЖНО: сверяем только с UserId == null, чтобы случайно не привязать
         // бронь к чужому зарегистрированному аккаунту по совпавшему номеру.
-        var client = (await _context.Clients.ToListAsync(ct))
-            .FirstOrDefault(cl => cl.PhoneNumber == phoneNumber); 
+        byte[] searchFilter = ts.GenerateBloomFilter(dto.PhoneNumber);
+
+        var potentialMatches = await _context.Clients.Where(c => AppDbContext.BitwiseAndBytes(c.PhoneTrigram, searchFilter) == searchFilter).ToListAsync();
+
+        var client = potentialMatches.Where(pm => pm.PhoneNumber == dto.PhoneNumber).FirstOrDefault();
         
         if (client != null && client.InBlackList)
             return BadRequest(new { message = "Бронирование недоступно. Обратитесь в поддержку." });
