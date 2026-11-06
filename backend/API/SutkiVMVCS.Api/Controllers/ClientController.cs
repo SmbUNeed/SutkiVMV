@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using SutkiVMV.Data;
 using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
-using SutkiVMVCS.Services.Security;
 using SutkiVMVCS.Services.Shared;
 
 namespace SutkiVMV.Controllers;
@@ -27,24 +26,21 @@ public class ClientsController : ControllerBase
 
     // GET /api/clients/search?q=Иван
     [HttpGet("search")]
-    public async Task<ActionResult<IEnumerable<ClientDto>>> Search([FromQuery] string q, TrigramService ts)
+    public async Task<ActionResult<IEnumerable<ClientDto>>> Search([FromQuery] string q)
     {
         if (string.IsNullOrWhiteSpace(q)) return Ok(Array.Empty<ClientDto>());
+        q = q.Trim().ToLower();
 
-        byte[] searchFilter = ts.GenerateBloomFilter(q);
+        var allClients = await _context.Clients.AsNoTracking().ToListAsync();
+        // на этом этапе EF уже расшифровал поля через HasConversion — сравнение идёт в памяти C#
 
-        var potentialMatches = await _context.Clients
-            .Where(c => 
-            AppDbContext.BitwiseAndBytes(c.EmailTrigram, searchFilter) == searchFilter
-            || AppDbContext.BitwiseAndBytes(c.PhoneTrigram, searchFilter) == searchFilter
-            || AppDbContext.BitwiseAndBytes(c.NameTrigram, searchFilter) == searchFilter).ToListAsync();
+        var matched = allClients
+            .Where(c => c.FullName.Contains(q, StringComparison.CurrentCultureIgnoreCase)
+                     || c.PhoneNumber.Contains(q)
+                     || c.Email == null ? false : c.Email.Contains(q, StringComparison.CurrentCultureIgnoreCase))
+            .Take(20);
 
-        var actuallyMatches = potentialMatches.Where(pm => 
-            (pm.Email ?? "").Contains(q, StringComparison.InvariantCultureIgnoreCase)
-            || pm.PhoneNumber.Contains(q, StringComparison.CurrentCultureIgnoreCase)
-            || pm.FullName.Contains(q, StringComparison.CurrentCultureIgnoreCase)).Take(20);
-
-        return Ok(actuallyMatches.Select(ToDto));
+        return Ok(matched.Select(ToDto));
     }
 
     // GET /api/clients/{id}
