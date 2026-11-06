@@ -131,7 +131,7 @@ public class AuthController : ControllerBase
         foreach (var cl in _context.Clients) {
             cl.UpdateSearchFilters(ts);
             Console.WriteLine(cl.Email);
-            Console.WriteLine(Encoding.UTF8.GetString(ts.GenerateBloomFilter(cl.Email??"")) + "||||||||||" + Encoding.UTF8.GetString(cl.EmailTrigram));
+            Console.WriteLine(ts.GenerateBloomFilter(cl.Email??"") + "||||||||||" + cl.EmailTrigram);
         }
         await _context.SaveChangesAsync();
         if (string.IsNullOrWhiteSpace(dto.Email))
