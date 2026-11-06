@@ -29,8 +29,6 @@ namespace SutkiVMVCS.Controllers
 
             string downloadUrl = $"https://sutkivmv.ru/api/admin/app/download/{latest.VersionCode}";
 
-            await InitializeExistingClientsTrigramsAsync(_ctx, ts);
-
             return Ok(new
             {
                 latest.VersionCode,
@@ -38,31 +36,6 @@ namespace SutkiVMVCS.Controllers
                 latest.ReleaseNotes,
                 downloadUrl
             });
-        }
-
-        public async Task InitializeExistingClientsTrigramsAsync(AppDbContext context, TrigramService trigramService)
-        {
-            // 1. Выкачиваем ВСЕХ существующих клиентов из базы данных.
-            // Благодаря HasConversion(), свойства FullName, PhoneNumber и Email 
-            // автоматически придут в C# уже РАСШИФРОВАННЫМИ (чистыми строками)!
-            var allClients = await context.Clients.ToListAsync();
-
-            Console.WriteLine($"Найдено {allClients.Count} клиентов для генерации триграмм.");
-
-            foreach (var client in allClients)
-            {
-                // 2. Генерируем маски из чистых строк для каждого старого клиента
-                client.UpdateSearchFilters(trigramService);
-
-                // Переводим EF Core в состояние Modified, чтобы он понял, что нужно обновить эти поля
-                context.Entry(client).State = EntityState.Modified;
-            }
-
-            // 3. Сохраняем изменения. 
-            // EF Core обновит только колонки триграмм (а персональные данные не перезапишутся лишний раз)
-            await context.SaveChangesAsync();
-
-            Console.WriteLine("Триграммы для существующих клиентов успешно сгенерированы!");
         }
 
         [HttpGet("app/download/{versionCode:int}")]
