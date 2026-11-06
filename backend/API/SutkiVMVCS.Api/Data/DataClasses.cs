@@ -146,6 +146,8 @@ public class Client
     public string? AdminNote { get; set; } = null;
     public bool InBlackList { get; set; } = false;
 
+    public byte[] FullNameTrigram { get; set; } = null!;
+
     // null = гостевое бронирование без регистрации
     public int?  UserId { get; set; }
     public User? User   { get; set; }

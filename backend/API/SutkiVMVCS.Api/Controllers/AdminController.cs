@@ -20,6 +20,11 @@ namespace SutkiVMVCS.Controllers
             _appUploadPath = uploadSettings.AppUploadPath;
         }
 
+        [HttpPost("trigram-client-names")]
+        public async Task<IActionResult> TrigramClientNames() {
+            
+        }
+
         [HttpGet("app/latest")]
         public async Task<IActionResult> GetLatestAppVersion() {
             var latest = await _ctx.AppReleases.OrderByDescending(r => r.VersionCode).FirstOrDefaultAsync();

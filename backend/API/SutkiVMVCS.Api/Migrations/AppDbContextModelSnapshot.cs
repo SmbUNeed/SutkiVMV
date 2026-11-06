@@ -298,6 +298,10 @@ namespace SutkiVMVCS.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<byte[]>("FullNameTrigram")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
                     b.Property<bool>("InBlackList")
                         .HasColumnType("boolean");
 
