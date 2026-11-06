@@ -40,7 +40,13 @@ public class ClientsController : ControllerBase
                      || c.Email == null ? false : c.Email.Contains(q, StringComparison.CurrentCultureIgnoreCase))
             .Take(20);
 
-        return Ok(matched.Select(ToDto));
+        var m = _context.FilterClients(
+            c => c.FullNameTrigram,
+            c => c.FullName,
+            q
+        );
+
+        return Ok(m.Select(ToDto));
     }
 
     // GET /api/clients/{id}

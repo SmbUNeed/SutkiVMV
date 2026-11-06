@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SutkiVMV.Data;
 using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
+using SutkiVMVCS.Services.Security;
 
 namespace SutkiVMVCS.Controllers
 {
@@ -21,7 +22,16 @@ namespace SutkiVMVCS.Controllers
         }
 
         [HttpPost("trigram-client-names")]
-        public async Task<IActionResult> TrigramClientNames() {
+        public async Task<IActionResult> TrigramClientNames(TrigramService ts) {
+            var clients = await _ctx.Clients.ToListAsync();
+            foreach(var client in clients) {
+                var fullName = client.FullName;
+                client.FullNameTrigram = ts.GenerateBloomFilter(fullName);
+            }
+            await _ctx.SaveChangesAsync();
+
+
+
             return Ok();
         }
 

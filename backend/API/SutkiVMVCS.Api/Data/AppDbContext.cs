@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using SutkiVMV.Models;
 using SutkiVMVCS.Api.Services.Security;
+using SutkiVMVCS.Services.Security;
+using System.Linq.Expressions;
 using System.Security.Cryptography;
 
 namespace SutkiVMV.Data;
@@ -8,8 +11,10 @@ namespace SutkiVMV.Data;
 public class AppDbContext : DbContext
 {
     private readonly FieldEncryptor _encryptor;
-    public AppDbContext(DbContextOptions<AppDbContext> options, FieldEncryptor encryptor) : base(options) {
+    private readonly TrigramService _ts;
+    public AppDbContext(DbContextOptions<AppDbContext> options, FieldEncryptor encryptor, TrigramService ts) : base(options) {
         _encryptor = encryptor;
+        _ts = ts;
     }
 
     public DbSet<Apartment>            Apartments           => Set<Apartment>();
@@ -171,5 +176,51 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(n => n.WikiPlaceId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        var methodInfo = typeof(AppDbContext).GetMethod(nameof(AppDbContext.BitwiseAndBytes))!;
+        modelBuilder.HasDbFunction(methodInfo)
+            .HasTranslation(args => new SqlFunctionExpression(
+                functionName: "bytea_bitwise_and",
+                arguments: args,
+                nullable: true,
+                argumentsPropagateNullability: new[] { true, true },
+                type: typeof(byte[]),
+                typeMapping: args[0].TypeMapping // Сохраняем маппинг типа bytea
+            ));
     }
+
+    public List<Client> FilterClients(
+    Expression<Func<Client, byte[]>> bloomSelector,
+    Expression<Func<Client, string>> exactSelector, 
+    string filterString)
+    {
+        var filter = _ts.GenerateBloomFilter(filterString);
+        var bitwiseAndMethod = typeof(AppDbContext).GetMethod(nameof(AppDbContext.BitwiseAndBytes));
+
+        var bitwiseAndCall = Expression.Call(
+            bitwiseAndMethod,
+            bloomSelector.Body,
+            Expression.Constant(filter));
+
+        var bloomPredicate = Expression.Lambda<Func<Client, bool>>(
+            Expression.Equal(bitwiseAndCall, Expression.Constant(filter)),
+            bloomSelector.Parameters
+        );
+
+        var exactPredicate = Expression.Lambda<Func<Client, bool>>(
+            Expression.Equal(exactSelector.Body, Expression.Constant(filterString)),
+            exactSelector.Parameters
+        );
+
+        var combinedBody = Expression.AndAlso(bloomPredicate.Body, exactPredicate.Body);
+        var combinedPredicate = Expression.Lambda<Func<Client, bool>>(
+            combinedBody,
+            bloomPredicate.Parameters
+        );
+
+        return Clients.Where(combinedPredicate).ToList();
+    }
+
+    public static byte[] BitwiseAndBytes(byte[] a, byte[] b)
+        => throw new NotSupportedException("Этот метод предназначен только для трансляции в SQL.");
 }

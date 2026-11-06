@@ -10,6 +10,7 @@ using SutkiVMV.Models;
 using SutkiVMV.Services;
 using SutkiVMVCS.Api.Services.Security;
 using SutkiVMVCS.Controllers;
+using SutkiVMVCS.Services.Security;
 using SutkiVMVCS.Services.Shared;
 using SutkiVMVCS.Services.YooKassa;
 using System.Security.Cryptography.X509Certificates;
@@ -161,6 +162,8 @@ builder.Services.AddHostedService<CleanupStaleBookingsService>();
 // ═══════════════════════════════════════════════════════════════════════
 
 builder.Services.AddScoped<BookingService>();
+var hmacSecretKey = Convert.FromBase64String(builder.Configuration["Security:HmacSecretKey"] ?? "");
+builder.Services.AddSingleton(ts => new TrigramService(hmacSecretKey));
 
 // ═══════════════════════════════════════════════════════════════════════
 //  CORS
