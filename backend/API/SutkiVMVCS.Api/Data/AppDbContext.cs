@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using SutkiVMV.Models;
 using SutkiVMVCS.Api.Services.Security;
 using SutkiVMVCS.Services.Security;
@@ -163,17 +162,13 @@ public class AppDbContext : DbContext
             .HasForeignKey(n => n.WikiPlaceId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        var methodInfo = typeof(AppDbContext).GetMethod(nameof(AppDbContext.BitwiseAndBytes))!;
-
-        modelBuilder.HasDbFunction(methodInfo)
-            .HasTranslation(args => new SqlFunctionExpression(
-                functionName: "bytea_bitwise_and",
-                arguments: args,
-                nullable: true,
-                argumentsPropagateNullability: new[] { true, true },
-                type: typeof(byte[]),
-                typeMapping: args[0].TypeMapping
-            ));
+        modelBuilder.HasDbFunction(typeof(AppDbContext).GetMethod(nameof(BitwiseAndBytes))!)
+        .HasTranslation(args => new Microsoft.EntityFrameworkCore.Query.SqlExpressions.SqlBinaryExpression(
+            System.Linq.Expressions.ExpressionType.And,
+            args[0],
+            args[1],
+            args[0].Type,
+            args[0].TypeMapping));
     }
 
     private void UpdateClientTrigrams()
