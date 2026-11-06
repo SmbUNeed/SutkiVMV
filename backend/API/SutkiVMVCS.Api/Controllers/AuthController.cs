@@ -128,6 +128,38 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponseDto>> Login(LoginDto dto, TrigramService ts)
     {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            var clients = await _context.Clients.ToListAsync();
+            int updatedCount = 0;
+
+            foreach (var cl in clients)
+            {
+                var email = (cl.Email ?? "").Trim().ToLowerInvariant();
+                if (string.IsNullOrEmpty(email)) continue;
+
+                // Генерируем фильтр
+                byte[] f = ts.GenerateBloomFilter(email);
+
+                // Присваиваем
+                cl.EmailTrigram = f;
+                updatedCount++;
+            }
+
+            // ВАЖНО: Сохраняем изменения в БД!
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            Console.WriteLine($"Успешно обновлено фильтров: {updatedCount}");
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            Console.WriteLine($"Ошибка обновления: {ex.Message}");
+        }
+        await _context.SaveChangesAsync();
         if (string.IsNullOrWhiteSpace(dto.Email))
             return BadRequest(new { message = "Email не заполнен" });
 
@@ -142,16 +174,13 @@ public class AuthController : ControllerBase
         }
         var user = potential.Where(u => u.Email == dto.Email).FirstOrDefault()?.User;
 
-        if (user == null) return Ok();
-
         if (user?.Client == null || user.Client.EmailTrigram == null)
         {
             // Проблема в данных: у пользователя нет связанного Client или поле пустое
-            Console.WriteLine($"DEBUG: У пользователя {user?.Email} отсутствует Client или EmailTrigram");
-            return Ok();
+            Console.WriteLine($"DEBUG: У пользователя {user.Email} отсутствует Client или EmailTrigram");
         }
 
-        if (!VerifyPassword(dto.Password, user?.PasswordHash ?? ""))
+        if (!VerifyPassword(dto.Password, user.PasswordHash))
         {
             // Если дошли сюда, значит пользователь найден, но пароль не совпадает
             Console.WriteLine("DEBUG: Пользователь найден, но пароль не совпадает");
@@ -159,11 +188,11 @@ public class AuthController : ControllerBase
         }
 
         // Ищем связанного клиента
-        var client = await _context.Clients.AsNoTracking().FirstOrDefaultAsync(c => c.UserId == user!.Id);
+        var client = await _context.Clients.AsNoTracking().FirstOrDefaultAsync(c => c.UserId == user.Id);
 
         if (client == null) return Unauthorized(new { message = "Клиент не найден" });
 
-        return Ok(BuildAuthResponse(user!));
+        return Ok(BuildAuthResponse(user));
     }
 
     // ──────────────────────────────────────────────────
