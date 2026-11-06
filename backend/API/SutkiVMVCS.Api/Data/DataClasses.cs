@@ -146,9 +146,9 @@ public class Client
     public string? AdminNote { get; set; } = null;
     public bool InBlackList { get; set; } = false;
 
-    public byte[] NameTrigram { get; set; } = [];
-    public byte[] PhoneTrigram { get; set; } = [];
-    public byte[] EmailTrigram { get; set; } = [];
+    public byte[] NameTrigram { get; private set; } = [];
+    public byte[] PhoneTrigram { get; private set; } = [];
+    public byte[] EmailTrigram { get; private set; } = [];
 
     // null = гостевое бронирование без регистрации
     public int?  UserId { get; set; }
