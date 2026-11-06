@@ -129,8 +129,8 @@ public class AuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(dto.Password))
             return BadRequest(new { message = "Пароль не заполнен" });
 
-        var user = (await _context.Users.AsNoTracking().ToListAsync())
-            .FirstOrDefault(u => u.Email == dto.Email);
+        var user = (await _context.Clients.Include(c => c.User).AsNoTracking().ToListAsync())
+            .FirstOrDefault(u => u.Email == dto.Email)?.User;
 
         if (user == null || !VerifyPassword(dto.Password, user.PasswordHash))
             return Unauthorized(new { message = "Неверный email или пароль" });
