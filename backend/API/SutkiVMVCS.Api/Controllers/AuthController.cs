@@ -140,7 +140,7 @@ public class AuthController : ControllerBase
         foreach(var d in potential) {
             Console.WriteLine(d.Email);
         }
-        var user = potential.Where(u => u.Email == dto.Email).FirstOrDefault()?.User;
+        var user = potential.Where(u => u.Email == dto.Email).FirstOrDefault().User;
 
         if (user?.Client == null || user.Client.EmailTrigram == null)
         {
