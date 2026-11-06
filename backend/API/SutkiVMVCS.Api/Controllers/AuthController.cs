@@ -128,11 +128,6 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponseDto>> Login(LoginDto dto, TrigramService ts)
     {
-        foreach (var cl in _context.Clients) {
-            cl.UpdateSearchFilters(ts);
-            Console.WriteLine(cl.Email);
-            Console.WriteLine(ts.GenerateBloomFilter(cl.Email??"") + "||||||||||" + cl.EmailTrigram);
-        }
         if (string.IsNullOrWhiteSpace(dto.Email))
             return BadRequest(new { message = "Email не заполнен" });
 
