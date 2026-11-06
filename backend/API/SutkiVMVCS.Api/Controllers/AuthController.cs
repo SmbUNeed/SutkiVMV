@@ -132,7 +132,8 @@ public class AuthController : ControllerBase
         var cl = (await _context.Clients.Include(c => c.User).AsNoTracking().ToListAsync())
             .FirstOrDefault(u => u.Email == dto.Email);
 
-        if (cl == null || !VerifyPassword(dto.Password, cl.User?.PasswordHash ?? ""))
+        var user = cl?.User;
+        if (cl == null || !VerifyPassword(dto.Password, user?.PasswordHash ?? ""))
             return Unauthorized(new { message = "Неверный email или пароль" });
 
         // Ищем связанного клиента
