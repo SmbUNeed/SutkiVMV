@@ -136,13 +136,13 @@ public class AuthController : ControllerBase
 
         var filter = ts.GenerateBloomFilter(dto.Email);
 
-        var potential = await _context.Clients.Where(c => AppDbContext.BitwiseAndBytes(c.EmailTrigram, filter) == filter).ToListAsync();
+        var potential = await _context.Users.Include(u => u.Client).Where(c => AppDbContext.BitwiseAndBytes(c.Client!.EmailTrigram, filter) == filter).ToListAsync();
         foreach(var d in potential) {
             Console.WriteLine(d.Email);
         }
-        var user = potential.Where(u => u.Email == dto.Email).FirstOrDefault().User;
+        var user = potential.Where(u => u.Email == dto.Email).FirstOrDefault();
 
-        if (user?.Client == null || user.Client.EmailTrigram == null)
+        if (user.Client == null || user.Client.EmailTrigram == null)
         {
             // Проблема в данных: у пользователя нет связанного Client или поле пустое
             Console.WriteLine($"DEBUG: У пользователя {user.Email} отсутствует Client или EmailTrigram");
