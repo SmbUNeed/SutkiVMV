@@ -22,7 +22,7 @@ namespace SutkiVMVCS.Controllers
 
         [HttpPost("trigram-client-names")]
         public async Task<IActionResult> TrigramClientNames() {
-            
+            return Ok();
         }
 
         [HttpGet("app/latest")]
