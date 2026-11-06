@@ -126,7 +126,7 @@ public class AuthController : ControllerBase
     // POST api/auth/login
     // ──────────────────────────────────────────────────
     [HttpPost("login")]
-    public async Task<ActionResult<AuthResponseDto>> Login(LoginDto dto, TrigramService ts)
+    public async Task<ActionResult<AuthResponseDto>> Login(LoginDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.Email))
             return BadRequest(new { message = "Email не заполнен" });
@@ -135,10 +135,8 @@ public class AuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(dto.Password))
             return BadRequest(new { message = "Пароль не заполнен" });
 
-        var filter = ts.GenerateBloomFilter(dto.Email);
-
-        var potential = await _context.Users.Include(u => u.Client).Where(c => AppDbContext.BitwiseAndBytes(c.Client!.EmailTrigram, filter) == filter).ToListAsync();
-        var user = potential.Where(u => u.Email == dto.Email).FirstOrDefault();
+        var user = (await _context.Users.Include(u => u.Client).AsNoTracking().ToListAsync())
+            .FirstOrDefault(u => u.Email == dto.Email); // REMAKE
 
         if (user == null || !VerifyPassword(dto.Password, user.PasswordHash))
             return Unauthorized(new { message = "Неверный email или пароль" });

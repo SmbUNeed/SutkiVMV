@@ -97,7 +97,6 @@ namespace SutkiVMVCS.Controllers
                 VersionName = versionName,
                 FileName = uniqueFileName,
                 ReleaseNotes = releaseNotes,
-                UploadedAt = DateTime.UtcNow
             };
             _ctx.AppReleases.Add(release);
             await _ctx.SaveChangesAsync();
