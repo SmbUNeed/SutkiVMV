@@ -77,11 +77,15 @@ public class ClientsController : ControllerBase
         if (client == null) return NotFound();
         client.FullName = updated.FullName;
         client.PhoneNumber = PhoneHelper.Normalize(updated.PhoneNumber)!;
-        if (string.IsNullOrWhiteSpace(client.Email))
-            client.Email = updated.Email;
+        client.Email = updated.Email;
         client.AdminTag = updated.AdminTag;
         client.AdminNote = updated.AdminNote;
         client.InBlackList = updated.InBlackList;
+        if (client.UserId !=  null) {
+            var user = (await _context.Users.ToListAsync()).Find(u => u.Id == client.UserId);
+#pragma warning disable
+            user.Email = updated.Email;
+        }
         await _context.SaveChangesAsync(ct);
         return NoContent();
     }
@@ -108,7 +112,8 @@ public class ClientsController : ControllerBase
         Id = c.Id,
         FullName = c.FullName,
         PhoneNumber = c.PhoneNumber,
-        Email = c.Email ?? "",
+#pragma warning disable
+        Email = c.Email,
         UserId = c.UserId,
         AdminTag = c.AdminTag,
         AdminNote = c.AdminNote,
