@@ -36,9 +36,6 @@ public class AppDbContext : DbContext
     public DbSet<PriceRule>            PriceRules           => Set<PriceRule>();
     public DbSet<AppRelease> AppReleases => Set<AppRelease>();
 
-    public static byte[] BitwiseAndBytes(byte[] a, byte[] b)
-        => throw new NotSupportedException("Этот метод можно вызывать только внутри LINQ-запросов EF Core.");
-
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
         foreach (var entry in ChangeTracker.Entries<Booking>())
@@ -161,14 +158,6 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(n => n.WikiPlaceId)
             .OnDelete(DeleteBehavior.SetNull);
-
-        modelBuilder.HasDbFunction(typeof(AppDbContext).GetMethod(nameof(BitwiseAndBytes))!)
-        .HasTranslation(args => new Microsoft.EntityFrameworkCore.Query.SqlExpressions.SqlBinaryExpression(
-            System.Linq.Expressions.ExpressionType.And,
-            args[0],
-            args[1],
-            args[0].Type,
-            args[0].TypeMapping));
     }
 
     private void UpdateClientTrigrams()

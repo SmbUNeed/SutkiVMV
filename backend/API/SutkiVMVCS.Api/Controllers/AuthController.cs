@@ -7,7 +7,6 @@ using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
 using SutkiVMVCS.Api.Services.Security;
 using SutkiVMVCS.Data;
-using SutkiVMVCS.Services.Security;
 using SutkiVMVCS.Services.Shared;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -40,7 +39,7 @@ public class AuthController : ControllerBase
     // POST api/auth/register
     // ──────────────────────────────────────────────────
     [HttpPost("register")]
-    public async Task<ActionResult> Register(RegisterDto dto, TrigramService ts, CancellationToken ct)
+    public async Task<ActionResult> Register(RegisterDto dto, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(dto.Email))
             return BadRequest(new { message = "Email не заполнен" });
@@ -48,13 +47,7 @@ public class AuthController : ControllerBase
         dto.Email = dto.Email.Trim().ToLowerInvariant();
         dto.PhoneNumber = PhoneHelper.Normalize(dto.PhoneNumber)!;
 
-        byte[] searchFilter = ts.GenerateBloomFilter(dto.Email);
-
-        var potentialMatches = await _context.Clients.Where(c => AppDbContext.BitwiseAndBytes(c.EmailTrigram, searchFilter) == searchFilter).ToListAsync();
-
-        var actuallyMatches = potentialMatches.Where(pm => pm.Email == dto.Email).Any(pm => pm.Email == dto.Email);
-
-        if (actuallyMatches)
+        if ((await _context.Clients.AsNoTracking().ToListAsync()).Any(c => c.Email == dto.Email)) //REMAKE
             return Conflict(new { message = "Пользователь с таким email уже существует" });
 
         if (await _context.PendingRegistrations.AsNoTracking().AnyAsync(p => p.Email == dto.Email, ct))
@@ -142,7 +135,10 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Неверный email или пароль" });
 
         // Ищем связанного клиента
-        var client = await _context.Clients.AsNoTracking().FirstOrDefaultAsync(c => c.UserId == user.Id);
+        var client = (await _context.Clients
+            .AsNoTracking()
+            .ToListAsync())
+            .FirstOrDefault(c => c.UserId == user.Id);
 
         if (client == null) return Unauthorized(new { message = "Клиент не найден" });
 
@@ -294,7 +290,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("confirm-email")]
-    public async Task<ActionResult> ConfirmEmail(ConfirmEmailDto dto, TrigramService ts, CancellationToken ct)
+    public async Task<ActionResult> ConfirmEmail(ConfirmEmailDto dto, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Token))
             return BadRequest(new { message = "Неверные данные" });
@@ -319,11 +315,8 @@ public class AuthController : ControllerBase
         _context.Users.Add(user);
         await _context.SaveChangesAsync(ct);   // теперь user.Id настоящий
 
-        byte[] searchFilter = ts.GenerateBloomFilter(pending.PhoneNumber);
-
-        var potentialMatches = await _context.Clients.Where(c => AppDbContext.BitwiseAndBytes(c.PhoneTrigram, searchFilter) == searchFilter).ToListAsync();
-
-        var client = potentialMatches.Where(pm => pm.PhoneNumber == pending.PhoneNumber).FirstOrDefault(pm => pm.PhoneNumber == pending.PhoneNumber);
+        var client = await _context.Clients
+            .FirstOrDefaultAsync(c => c.PhoneNumber == pending.PhoneNumber, ct);
 
         if (client == null)
         {
@@ -350,20 +343,15 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("change-password-email")]
-    public async Task<ActionResult> ChangeUserPassword([FromBody] string email, TrigramService ts)
+    public async Task<ActionResult> ChangeUserPassword([FromBody] string email)
     {
         if (string.IsNullOrWhiteSpace(email))
             return BadRequest(new { message = "Email не заполнен" });
 
         email = email.Trim().ToLowerInvariant();
 
-        byte[] searchFilter = ts.GenerateBloomFilter(email);
-
-        var potentialMatches = await _context.Clients.Include(c => c.User).Where(c => AppDbContext.BitwiseAndBytes(c.EmailTrigram, searchFilter) == searchFilter).ToListAsync();
-
-        var actuallyMatches = potentialMatches.Where(pm => pm.Email == email).FirstOrDefault(pm => pm.Email == email);
-
-        var user = actuallyMatches?.User; //REMAKE
+        var user = (await _context.Clients.Include(c => c.User).ToListAsync()) 
+            .FirstOrDefault(u => u.Email == email)?.User; //REMAKE
         if (user == null)
             return BadRequest(new { message = "Данный email не зарегистрирован" });
 
@@ -381,7 +369,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("reset-password")]
-    public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordDto dto, TrigramService ts)
+    public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Token) ||
             string.IsNullOrWhiteSpace(dto.NewPassword))
@@ -389,14 +377,10 @@ public class AuthController : ControllerBase
 
         var email = dto.Email.Trim().ToLowerInvariant();
 
-        var searchFilter = ts.GenerateBloomFilter(dto.Email);
-
-        var potentialMatches = await _context.Users.Include(u => u.Client).Where(u => AppDbContext.BitwiseAndBytes(u.Client!.EmailTrigram, searchFilter) == searchFilter).ToListAsync();
-
-        var user = potentialMatches.Where(
-            pm => pm.Email == dto.Email &&
-            pm.PasswordResetToken == dto.Token &&
-            pm.PasswordResetExpiry > DateTime.UtcNow).FirstOrDefault();
+        var user = (await _context.Clients.Include(c => c.User).ToListAsync()).FirstOrDefault(c =>
+            c.Email == email &&
+            c.User?.PasswordResetToken == dto.Token &&
+            c.User?.PasswordResetExpiry > DateTime.UtcNow)?.User; //REMAKE
 
         if (user == null)
             return BadRequest(new { message = "Ссылка недействительна или истекла" });
