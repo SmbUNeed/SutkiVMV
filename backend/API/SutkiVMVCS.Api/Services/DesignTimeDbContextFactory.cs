@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using SutkiVMV.Data;
 using SutkiVMVCS.Api.Services.Security;
+using SutkiVMVCS.Services.Security;
 
 namespace SutkiVMVCS.Services
 {
@@ -22,7 +23,8 @@ namespace SutkiVMVCS.Services
             var dpProvider = DataProtectionProvider.Create("DesignTime");
             var encryptor = new FieldEncryptor(dpProvider);
 
-            return new AppDbContext(options, encryptor);
+            var ts = new TrigramService(new byte[1]);
+            return new AppDbContext(options, encryptor, ts);
         }
     }
 }
