@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SutkiVMV.Models;
 using SutkiVMVCS.Api.Services.Security;
-using SutkiVMVCS.Services.Security;
 using System.Security.Cryptography;
 
 namespace SutkiVMV.Data;
@@ -9,10 +8,8 @@ namespace SutkiVMV.Data;
 public class AppDbContext : DbContext
 {
     private readonly FieldEncryptor _encryptor;
-    private readonly TrigramService _trigramService;
-    public AppDbContext(DbContextOptions<AppDbContext> options, FieldEncryptor encryptor, TrigramService trigramService) : base(options) {
+    public AppDbContext(DbContextOptions<AppDbContext> options, FieldEncryptor encryptor) : base(options) {
         _encryptor = encryptor;
-        _trigramService = trigramService;
     }
 
     public DbSet<Apartment>            Apartments           => Set<Apartment>();
@@ -46,7 +43,6 @@ public class AppDbContext : DbContext
                 entry.Entity.PublicToken = GenerateSecureToken();
             }
         }
-        UpdateClientTrigrams();
         return await base.SaveChangesAsync(ct);
     }
 
@@ -60,20 +56,27 @@ public class AppDbContext : DbContext
                 entry.Entity.PublicToken = GenerateSecureToken();
             }
         }
-        UpdateClientTrigrams();
         return base.SaveChanges();
     }
 
     private static string GenerateSecureToken()
     {
+        // 32 байта = 64 hex-символа, криптографически стойкий
         return Convert.ToHexString(RandomNumberGenerator.GetBytes(32)).ToLower();
+
+        // Альтернатива — URL-safe base64 (короче, 43 символа):
+        // return Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
+        //     .TrimEnd('=').Replace('+', '-').Replace('/', '_');
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // ── Составной ключ для join-таблицы ───────────────────────────
         modelBuilder.Entity<ApartmentAmenity>()
             .HasKey(aa => new { aa.ApartmentId, aa.AmenityId });
 
+        //── Client → User(один - к - одному, необязательный) ────────────
+        //UserId = null означает гостевое бронирование без регистрации
         modelBuilder.Entity<Client>()
             .HasOne(c => c.User)
             .WithOne(u => u.Client)
@@ -138,6 +141,7 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        // ── Индексы для частых запросов ───────────────────────────────
         modelBuilder.Entity<Apartment>()
             .HasIndex(a => new { a.IsActive, a.IsDeleted });   
 
@@ -158,24 +162,5 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(n => n.WikiPlaceId)
             .OnDelete(DeleteBehavior.SetNull);
-    }
-
-    private void UpdateClientTrigrams()
-    {
-        var changedClients = ChangeTracker.Entries<Client>()
-            .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified);
-
-        foreach (var entry in changedClients)
-        {
-            var client = entry.Entity;
-
-            if (entry.State == EntityState.Added ||
-                entry.Property(c => c.FullName).IsModified ||
-                entry.Property(c => c.PhoneNumber).IsModified ||
-                entry.Property(c => c.Email).IsModified)
-            {
-                client.UpdateSearchFilters(_trigramService);
-            }
-        }
     }
 }

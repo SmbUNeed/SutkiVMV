@@ -177,7 +177,7 @@ public class AuthController : ControllerBase
                 return BadRequest(new { message = "Пароль должен содержать минимум 6 символов" });
             user.PasswordHash = HashPassword(dto.NewPassword);
         }
-        user.Client!.FullName    = dto.FullName.Trim();
+        user.Client.FullName    = dto.FullName.Trim();
         user.Client.PhoneNumber = dto.PhoneNumber.Trim();
 
         await _context.SaveChangesAsync(ct);
@@ -410,7 +410,7 @@ public class AuthController : ControllerBase
     {
         Id          = user.Id,
         Email       = user.Email ?? "",
-        FullName    = user.Client!.FullName    ?? "",
+        FullName    = user.Client.FullName    ?? "",
         PhoneNumber = user.Client.PhoneNumber ?? "",
         Role        = user.Role,
         ClientId    = user.Client.Id

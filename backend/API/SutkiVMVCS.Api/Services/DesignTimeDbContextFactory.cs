@@ -22,11 +22,7 @@ namespace SutkiVMVCS.Services
             var dpProvider = DataProtectionProvider.Create("DesignTime");
             var encryptor = new FieldEncryptor(dpProvider);
 
-            //Фейковый сервис
-            var dummyKey = new byte[64];
-            var trigramService = new Security.TrigramService(dummyKey);
-
-            return new AppDbContext(options, encryptor, trigramService);
+            return new AppDbContext(options, encryptor);
         }
     }
 }

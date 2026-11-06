@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using SutkiVMVCS.Data;
-using SutkiVMVCS.Services.Security;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SutkiVMV.Models;
@@ -146,30 +145,15 @@ public class Client
     public string? AdminNote { get; set; } = null;
     public bool InBlackList { get; set; } = false;
 
-    public byte[] NameTrigram { get; private set; } = [];
-    public byte[] PhoneTrigram { get; private set; } = [];
-    public byte[] EmailTrigram { get; private set; } = [];
+    public byte[] NameTrigram { get; set; } = [];
+    public byte[] PhoneTrigram { get; set; } = [];
+    public byte[] EmailTrigram { get; set; } = [];
 
     // null = гостевое бронирование без регистрации
     public int?  UserId { get; set; }
     public User? User   { get; set; }
 
     public ICollection<Booking> Bookings { get; set; } = [];
-
-    public void UpdateSearchFilters(TrigramService trigramService)
-    {
-        NameTrigram = trigramService.GenerateBloomFilter(FullName);
-        PhoneTrigram = trigramService.GenerateBloomFilter(PhoneNumber);
-
-        if (!string.IsNullOrEmpty(Email))
-        {
-            EmailTrigram = trigramService.GenerateBloomFilter(Email);
-        }
-        else
-        {
-            EmailTrigram = Array.Empty<byte>();
-        }
-    }
 }
 
 /// <summary>
