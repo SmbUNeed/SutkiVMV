@@ -196,16 +196,22 @@ public class AppDbContext : DbContext
 
         byte[] filter = _ts.GenerateBloomFilter(query);
 
-        var byFullName = GetClientTrigramExpression(c => c.FullNameTrigram, filter).Body;
-        var byPhone = GetClientTrigramExpression(c => c.PhoneNumberTrigram, filter).Body;
-        var byEmail = GetClientTrigramExpression(c => c.EmailTrigram, filter).Body;
-        var byAdminTag = GetIgnoreCaseContainsExpression(c => c.AdminTag, query).Body;
+        var parameter = Expression.Parameter(typeof(Client), "c");
 
-        var resExpression = 
-            Expression.OrElse(byFullName,
-            Expression.OrElse(byPhone,
-            Expression.OrElse(byEmail,
-            byAdminTag)));
+        var byFullName = GetClientTrigramExpression(c => c.FullNameTrigram, filter);
+        var byPhone = GetClientTrigramExpression(c => c.PhoneNumberTrigram, filter);
+        var byEmail = GetClientTrigramExpression(c => c.EmailTrigram, filter);
+        var byAdminTag = GetIgnoreCaseContainsExpression(c => c.AdminTag, query);
+
+        var expr1 = new ParameterReplacer(byFullName.Parameters[0], parameter).Visit(byFullName.Body);
+        var expr2 = new ParameterReplacer(byPhone.Parameters[0], parameter).Visit(byPhone.Body);
+        var expr3 = new ParameterReplacer(byEmail.Parameters[0], parameter).Visit(byEmail.Body);
+        var expr4 = new ParameterReplacer(byAdminTag.Parameters[0], parameter).Visit(byAdminTag.Body);
+
+        // 3. Теперь склеиваем ТЕЛА (они имеют тип Expression, возвращающий bool)
+        var resExpression = Expression.OrElse(expr1,
+            Expression.OrElse(expr2,
+            Expression.OrElse(expr3, expr4)));
 
         var predicate = Expression.Lambda<Func<Client, bool>>(resExpression, Expression.Parameter(typeof(Client), "c"));
 
