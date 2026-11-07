@@ -1,3 +1,4 @@
+using LinqKit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using SutkiVMV.Models;
@@ -203,19 +204,16 @@ public class AppDbContext : DbContext
         var byEmail = GetClientTrigramExpression(c => c.EmailTrigram, filter);
         var byAdminTag = GetIgnoreCaseContainsExpression(c => c.AdminTag, query);
 
-        var expr1 = new ParameterReplacer(byFullName.Parameters[0], parameter).Visit(byFullName.Body);
-        var expr2 = new ParameterReplacer(byPhone.Parameters[0], parameter).Visit(byPhone.Body);
-        var expr3 = new ParameterReplacer(byEmail.Parameters[0], parameter).Visit(byEmail.Body);
-        var expr4 = new ParameterReplacer(byAdminTag.Parameters[0], parameter).Visit(byAdminTag.Body);
+        var predicate = PredicateBuilder.New<Client>();
+        predicate = predicate.Or(byFullName);
+        predicate = predicate.Or(byPhone);
+        predicate = predicate.Or(byEmail);
+        predicate = predicate.Or(byAdminTag);
 
-        // 3. Теперь склеиваем ТЕЛА (они имеют тип Expression, возвращающий bool)
-        var resExpression = Expression.OrElse(expr1,
-            Expression.OrElse(expr2,
-            Expression.OrElse(expr3, expr4)));
-
-        var predicate = Expression.Lambda<Func<Client, bool>>(resExpression, Expression.Parameter(typeof(Client), "c"));
-
-        var potential = await Clients.Where(predicate).ToListAsync();
+        var potential = await Clients
+            .AsExpandable()
+            .Where(predicate)
+            .ToListAsync();
 
         return FilterClientsInMemory(potential, query,
             c => c.FullName, c => c.PhoneNumber, c => c.Email);
