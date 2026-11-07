@@ -13,6 +13,7 @@ namespace SutkiVMVCS.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20261106002151_emails")]
+    #pragma warning disable
     partial class emails
     {
         /// <inheritdoc />

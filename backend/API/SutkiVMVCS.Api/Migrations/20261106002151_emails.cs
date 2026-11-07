@@ -5,6 +5,7 @@
 namespace SutkiVMVCS.Migrations
 {
     /// <inheritdoc />
+    #pragma warning disable
     public partial class emails : Migration
     {
         /// <inheritdoc />

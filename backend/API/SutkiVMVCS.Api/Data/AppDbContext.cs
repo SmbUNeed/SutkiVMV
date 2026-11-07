@@ -202,6 +202,8 @@ public class AppDbContext : DbContext
 
         var potential = Clients.Where(predicate).ToList();
 
+        Console.WriteLine("Выбрано потенциальных: " + potential.Count);
+
         var parameter = Expression.Parameter(typeof(Client), "c");
         var searchExpression = Expression.Property(parameter, exactParameterName);
         var filterExpression = Expression.Constant(filterString, typeof(string));
