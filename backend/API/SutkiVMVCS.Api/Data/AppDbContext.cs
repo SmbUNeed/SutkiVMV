@@ -204,24 +204,48 @@ public class AppDbContext : DbContext
 
         Console.WriteLine("Выбрано потенциальных: " + potential.Count);
 
+        string cleanFilter = filterString.Replace(" ", "").Replace("+", "");
+
         var parameter = Expression.Parameter(typeof(Client), "c");
-        var searchExpression = Expression.Property(parameter, exactParameterName);
-        var filterExpression = Expression.Constant(filterString.ToLower().Replace(" ", "").Replace("+", ""), typeof(string));
+        var propertyExpression = Expression.Property(parameter, exactParameterName);
+
+        var notNullCheck = Expression.NotEqual(propertyExpression, Expression.Constant(null, typeof(string)));
+
+        MethodInfo replaceMethod = typeof(string).GetMethod(
+            nameof(string.Replace),
+            new[] { typeof(string), typeof(string) }
+        )!;
 
         MethodInfo containsMethod = typeof(string).GetMethod(
             nameof(string.Contains),
-            new[] { typeof(string) }
+            new[] { typeof(string), typeof(StringComparison) }
         )!;
 
-        var containsCall = Expression.Call(
-            searchExpression,
-            containsMethod,
-            filterExpression
+        var withoutSpaces = Expression.Call(
+            propertyExpression,
+            replaceMethod,
+            Expression.Constant(" "),
+            Expression.Constant("")
         );
 
-        var finalPredicate = Expression.Lambda<Func<Client, bool>>(containsCall, parameter);
+        var cleanedProperty = Expression.Call(
+            withoutSpaces,
+            replaceMethod,
+            Expression.Constant("+"),
+            Expression.Constant("")
+        );
 
-        return Clients.Where(finalPredicate).ToList();
+        var containsCall = Expression.Call(
+            cleanedProperty,
+            containsMethod,
+            Expression.Constant(cleanFilter, typeof(string)),
+            Expression.Constant(StringComparison.OrdinalIgnoreCase)
+        );
+
+        var finalBody = Expression.AndAlso(notNullCheck, containsCall);
+        var finalPredicate = Expression.Lambda<Func<Client, bool>>(finalBody, parameter).Compile();
+
+        return potential.Where(finalPredicate).ToList();
     }
 
     private Expression<Func<Client, bool>> GetClientTrigramExpression(
