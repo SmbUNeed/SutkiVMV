@@ -196,10 +196,10 @@ public class AppDbContext : DbContext
 
         byte[] filter = _ts.GenerateBloomFilter(query);
 
-        var byFullName = GetClientTrigramExpression(c => c.FullNameTrigram, filter);
-        var byPhone = GetClientTrigramExpression(c => c.PhoneNumberTrigram, filter);
-        var byEmail = GetClientTrigramExpression(c => c.EmailTrigram, filter);
-        var byAdminTag = GetIgnoreCaseContainsExpression(c => c.AdminTag, query);
+        var byFullName = GetClientTrigramExpression(c => c.FullNameTrigram, filter).Body;
+        var byPhone = GetClientTrigramExpression(c => c.PhoneNumberTrigram, filter).Body;
+        var byEmail = GetClientTrigramExpression(c => c.EmailTrigram, filter).Body;
+        var byAdminTag = GetIgnoreCaseContainsExpression(c => c.AdminTag, query).Body;
 
         var resExpression = 
             Expression.OrElse(byFullName,
