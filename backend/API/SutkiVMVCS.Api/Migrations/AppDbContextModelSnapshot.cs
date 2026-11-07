@@ -294,6 +294,10 @@ namespace SutkiVMVCS.Migrations
                     b.Property<string>("Email")
                         .HasColumnType("text");
 
+                    b.Property<byte[]>("EmailTrigram")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("text");
@@ -308,6 +312,10 @@ namespace SutkiVMVCS.Migrations
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<byte[]>("PhoneNumberTrigram")
+                        .IsRequired()
+                        .HasColumnType("bytea");
 
                     b.Property<int?>("UserId")
                         .HasColumnType("integer");
