@@ -31,14 +31,7 @@ public class ClientsController : ControllerBase
         if (string.IsNullOrWhiteSpace(q)) return Ok(Array.Empty<ClientDto>());
         q = q.Trim().ToLower();
 
-        var allClients = await _context.Clients.AsNoTracking().ToListAsync();
-        // на этом этапе EF уже расшифровал поля через HasConversion — сравнение идёт в памяти C#
-
-        var matched = allClients
-            .Where(c => c.FullName.Contains(q, StringComparison.CurrentCultureIgnoreCase)
-                     || c.PhoneNumber.Contains(q)
-                     || c.Email == null ? false : c.Email.Contains(q, StringComparison.CurrentCultureIgnoreCase))
-            .Take(20);
+        var matched = _context.FilterClientsBy("FullNameTrigram", "FullName", q);
 
         return Ok(matched.Select(ToDto));
     }

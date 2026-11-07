@@ -206,7 +206,7 @@ public class AppDbContext : DbContext
 
         var parameter = Expression.Parameter(typeof(Client), "c");
         var searchExpression = Expression.Property(parameter, exactParameterName);
-        var filterExpression = Expression.Constant(filterString, typeof(string));
+        var filterExpression = Expression.Constant(filterString.ToLower().Replace(" ", "").Replace("+", ""), typeof(string));
 
         MethodInfo containsMethod = typeof(string).GetMethod(
             nameof(string.Contains),
