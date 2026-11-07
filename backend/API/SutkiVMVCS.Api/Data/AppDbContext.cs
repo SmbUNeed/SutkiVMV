@@ -196,14 +196,20 @@ public class AppDbContext : DbContext
 
         byte[] filter = _ts.GenerateBloomFilter(query);
 
+        var parameter = Expression.Parameter(typeof(Client), "c");
+
         var byFullName = GetClientTrigramExpression(c => c.FullNameTrigram, filter);
         var byPhone = GetClientTrigramExpression(c => c.PhoneNumberTrigram, filter);
         var byEmail = GetClientTrigramExpression(c => c.EmailTrigram, filter);
         var byAdminTag = GetIgnoreCaseContainsExpression(c => c.AdminTag, query);
 
-        var resExpression = LinkOrExpressions(byFullName, byPhone, byEmail, byAdminTag);
+        var expressions = new[] { byFullName, byPhone, byEmail, byAdminTag };
 
-        var predicate = Expression.Lambda<Func<Client, bool>>(resExpression, Expression.Parameter(typeof(Client), "c"));
+        var combinedBody = expressions
+            .Select(e => e.Body)
+            .Aggregate((left, right) => Expression.OrElse(left, right));
+
+        var predicate = Expression.Lambda<Func<Client, bool>>(combinedBody, parameter);
 
         var potential = await Clients.Where(predicate).ToListAsync();
 
