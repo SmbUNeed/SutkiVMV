@@ -145,8 +145,7 @@ public class PaymentsController : ControllerBase
         // Ищем существующего гостевого клиента по телефону, иначе создаём нового.
         // ВАЖНО: сверяем только с UserId == null, чтобы случайно не привязать
         // бронь к чужому зарегистрированному аккаунту по совпавшему номеру.
-        var client = (await _context.Clients.ToListAsync(ct))
-            .FirstOrDefault(cl => cl.PhoneNumber == phoneNumber); 
+        var client = await _context.ClientsTrigramsFirstOrDefault(c => c.PhoneNumberTrigram, c => c.PhoneNumber, phoneNumber);
         
         if (client != null && client.InBlackList)
             return BadRequest(new { message = "Бронирование недоступно. Обратитесь в поддержку." });

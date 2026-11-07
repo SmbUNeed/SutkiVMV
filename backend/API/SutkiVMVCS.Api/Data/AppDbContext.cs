@@ -7,6 +7,7 @@ using SutkiVMVCS.Services.Security;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Security.Cryptography;
+using static System.Net.WebRequestMethods;
 
 namespace SutkiVMV.Data;
 
@@ -213,10 +214,36 @@ public class AppDbContext : DbContext
         var potential = await Clients
             .AsExpandableEFCore()
             .Where(predicate)
+            .AsNoTracking()
             .ToListAsync();
 
         return FilterClientsInMemory(potential, query,
             c => c.FullName, c => c.PhoneNumber, c => c.Email);
+    }
+
+    public async Task<bool> ClientsTrigramsAnyAsync(
+        Expression<Func<Client, byte[]>> trigramSelector,
+        Expression<Func<Client, string?>> exactSelector,
+        string filterString) 
+    {
+        var client = await ClientsTrigramsFirstOrDefault(trigramSelector, exactSelector, filterString);
+        return client != null;
+    }
+
+    public async Task<Client> ClientsTrigramsFirstOrDefault(
+        Expression<Func<Client, byte[]>> trigramSelector,
+        Expression<Func<Client, string?>> exactSelector,
+        string filterString) 
+    {
+        var filter = _ts.GenerateBloomFilter(filterString);
+
+        var exactExpression = GetClientTigramExactExpression(trigramSelector, filter);
+
+        var potential = await Clients.Where(exactExpression).ToListAsync();
+
+        var clients = FilterClientsInMemory(potential, filterString, exactSelector);
+
+        return clients.FirstOrDefault();
     }
 
     public async Task<List<Client>> FilterClientsByTrigramsAsync(
@@ -234,6 +261,29 @@ public class AppDbContext : DbContext
         var potential = await Clients.Where(predicate).ToListAsync();
 
         return FilterClientsInMemory(potential, filterString, exactSelector);
+    }
+
+    private static Expression<Func<Client, bool>> GetClientTigramExactExpression(
+        Expression<Func<Client, byte[]>> trigramSelector,
+        byte[] filter)
+    {
+        string trigramParameterName = GetPropertyName(trigramSelector);
+
+        var parameter = Expression.Parameter(typeof(Client), "c");
+
+        var trigramExpression = Expression.Property(parameter, trigramParameterName);
+        var constantExpression = Expression.Constant(filter);
+        var binaryExpression = Expression.Equal(trigramExpression, constantExpression);
+
+        return Expression.Lambda<Func<Client, bool>>(binaryExpression, parameter);
+    }
+
+    private Expression<Func<Client, bool>> GetClientTigramExactExpression(
+        Expression<Func<Client, byte[]>> trigramSelector,
+        string filterString
+    ) {
+        byte[] filter = _ts.GenerateBloomFilter(filterString);
+        return GetClientTigramExactExpression(trigramSelector, filter);
     }
 
     private List<Client> FilterClientsInMemory(
@@ -265,8 +315,8 @@ public class AppDbContext : DbContext
     }
 
     private static Expression<Func<Client, bool>> GetIgnoreCaseContainsExpression(
-    Expression<Func<Client, string?>> selector,
-    string filterString)
+        Expression<Func<Client, string?>> selector,
+        string filterString)
     {
         var propertyName = GetPropertyName(selector);
         return GetIgnoreCaseContainsExpression(propertyName, filterString);

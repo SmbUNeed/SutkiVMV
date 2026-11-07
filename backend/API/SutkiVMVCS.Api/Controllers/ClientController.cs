@@ -75,7 +75,7 @@ public class ClientsController : ControllerBase
         client.AdminNote = updated.AdminNote;
         client.InBlackList = updated.InBlackList;
         if (client.UserId !=  null) {
-            var user = (await _context.Users.ToListAsync()).Find(u => u.Id == client.UserId);
+            var user = await _context.Users.FindAsync(client.UserId);
 #pragma warning disable
             user.Email = updated.Email;
         }
@@ -91,7 +91,7 @@ public class ClientsController : ControllerBase
         if (client == null) return NotFound();
 
         if (client.UserId != null) {
-            var user = (await _context.Users.ToListAsync()).Find(u => u.Id == client.UserId);
+            var user = await _context.Users.FindAsync(client.UserId);
             if (user != null) _context.Users.Remove(user);
         }
 

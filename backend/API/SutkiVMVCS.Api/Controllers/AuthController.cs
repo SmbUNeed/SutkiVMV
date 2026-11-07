@@ -47,7 +47,7 @@ public class AuthController : ControllerBase
         dto.Email = dto.Email.Trim().ToLowerInvariant();
         dto.PhoneNumber = PhoneHelper.Normalize(dto.PhoneNumber)!;
 
-        if ((await _context.Users.AsNoTracking().ToListAsync()).Any(u => u.Email == dto.Email))
+        if (await _context.ClientsTrigramsAnyAsync(c => c.EmailTrigram, c => c.Email, dto.Email))
             return Conflict(new { message = "Пользователь с таким email уже существует" });
 
         if (await _context.PendingRegistrations.AsNoTracking().AnyAsync(p => p.Email == dto.Email, ct))
@@ -129,19 +129,14 @@ public class AuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(dto.Password))
             return BadRequest(new { message = "Пароль не заполнен" });
 
-        var user = (await _context.Users.AsNoTracking().ToListAsync())
-            .FirstOrDefault(u => u.Email == dto.Email);
+        var client = await _context.ClientsTrigramsFirstOrDefault(c => c.EmailTrigram, c => c.Email, dto.Email);
+
+        if (client == null) return Unauthorized(new { message = "Неверный email или пароль" });
+
+        var user = _context.Users.Find(client.UserId);
 
         if (user == null || !VerifyPassword(dto.Password, user.PasswordHash))
             return Unauthorized(new { message = "Неверный email или пароль" });
-
-        // Ищем связанного клиента
-        var client = (await _context.Clients
-            .AsNoTracking()
-            .ToListAsync())
-            .FirstOrDefault(c => c.UserId == user.Id);
-
-        if (client == null) return Unauthorized(new { message = "Клиент не найден" });
 
         return Ok(BuildAuthResponse(user, client));
     }
@@ -327,10 +322,9 @@ public class AuthController : ControllerBase
             EmailConfirmed = true
         };
         _context.Users.Add(user);
-        await _context.SaveChangesAsync(ct);   // теперь user.Id настоящий
+        await _context.SaveChangesAsync(ct);
 
-        var client = await _context.Clients
-            .FirstOrDefaultAsync(c => c.PhoneNumber == pending.PhoneNumber, ct);
+        var client = await _context.ClientsTrigramsFirstOrDefault(c => c.PhoneNumberTrigram, c => c.PhoneNumber, pending.PhoneNumber);
 
         if (client == null)
         {
@@ -364,11 +358,13 @@ public class AuthController : ControllerBase
 
         email = email.Trim().ToLowerInvariant();
 
-        var user = (await _context.Users.ToListAsync()) 
-            .FirstOrDefault(u => u.Email == email);
+        var client = await _context.ClientsTrigramsFirstOrDefault(c => c.EmailTrigram, c => c.Email, email);
+        if (client == null)
+            return BadRequest(new { message = "Клиент не найден" });
+        
+        var user = await _context.Users.FindAsync(client.UserId);
         if (user == null)
-            return BadRequest(new { message = "Данный email не зарегистрирован" });
-
+            return BadRequest(new { message = "Данный e-mail не зарегистрирован" });
 
         string token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
         user.PasswordResetToken = token;
@@ -391,12 +387,15 @@ public class AuthController : ControllerBase
 
         var email = dto.Email.Trim().ToLowerInvariant();
 
-        var user = (await _context.Users.ToListAsync()).FirstOrDefault(u =>
-            u.Email == email &&
-            u.PasswordResetToken == dto.Token &&
-            u.PasswordResetExpiry > DateTime.UtcNow);
+        var client = await _context.ClientsTrigramsFirstOrDefault(c => c.EmailTrigram, c => c.Email, email);
+        if (client == null)
+            return BadRequest(new { message = "Клиент не найден" });
 
-        if (user == null)
+        var user = await _context.Users.FindAsync(client.UserId);
+
+        if (user == null ||
+            user.PasswordResetToken != dto.Token ||
+            user.PasswordResetExpiry <= DateTime.UtcNow)
             return BadRequest(new { message = "Ссылка недействительна или истекла" });
 
         user.PasswordHash = HashPassword(dto.NewPassword);

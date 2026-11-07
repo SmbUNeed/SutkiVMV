@@ -22,19 +22,6 @@ namespace SutkiVMVCS.Controllers
             _appUploadPath = uploadSettings.AppUploadPath;
         }
 
-        [HttpPost("trigram-clients")]
-        public async Task<IActionResult> TrigramClientNames(TrigramService ts) {
-            var clients = await _ctx.Clients.ToListAsync();
-            foreach(var client in clients) {
-                var email = client.Email;
-                var phone = client.PhoneNumber;
-                client.EmailTrigram = ts.GenerateBloomFilter(email ?? "");
-                client.PhoneNumberTrigram = ts.GenerateBloomFilter(phone);
-            }
-            await _ctx.SaveChangesAsync();
-            return Ok();
-        }
-
         [HttpGet("app/latest")]
         public async Task<IActionResult> GetLatestAppVersion() {
             var latest = await _ctx.AppReleases.OrderByDescending(r => r.VersionCode).FirstOrDefaultAsync();
