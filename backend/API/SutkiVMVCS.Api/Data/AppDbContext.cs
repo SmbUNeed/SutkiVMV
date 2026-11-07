@@ -190,10 +190,31 @@ public class AppDbContext : DbContext
             ));
     }
 
+    public async Task<List<Client>> FilterClientsByQuery(string query)
+    {
+        if (query.Length < 3) return new List<Client>();
+
+        byte[] filter = _ts.GenerateBloomFilter(query);
+
+        var byFullName = GetClientTrigramExpression(c => c.FullNameTrigram, filter);
+        var byPhone = GetClientTrigramExpression(c => c.PhoneNumberTrigram, filter);
+        var byEmail = GetClientTrigramExpression(c => c.EmailTrigram, filter);
+        var byAdminTag = GetIgnoreCaseContainsExpression(c => c.AdminTag, query);
+
+        var resExpression = LinkOrExpressions(byFullName, byPhone, byEmail, byAdminTag);
+
+        var predicate = Expression.Lambda<Func<Client, bool>>(resExpression, Expression.Parameter(typeof(Client), "c"));
+
+        var potential = await Clients.Where(predicate).ToListAsync();
+
+        return FilterClientsInMemory(potential, query,
+            c => c.FullName, c => c.PhoneNumber, c => c.Email);
+    }
+
     public async Task<List<Client>> FilterClientsByTrigramsAsync(
-        Expression<Func<Client, byte[]>> trigramSelector,
-        Expression<Func<Client, string?>> exactSelector,
-        string filterString)
+    Expression<Func<Client, byte[]>> trigramSelector,
+    Expression<Func<Client, string?>> exactSelector,
+    string filterString)
     {
         string exactParameterName = GetPropertyName(exactSelector);
 
@@ -204,57 +225,78 @@ public class AppDbContext : DbContext
 
         var potential = await Clients.Where(predicate).ToListAsync();
 
+        return FilterClientsInMemory(potential, filterString, exactSelector);
+    }
+
+    private List<Client> FilterClientsInMemory(
+    List<Client> clients,
+    string filterString,
+    params Expression<Func<Client, string?>>[] propertySelectors)
+    {
         string cleanFilter = filterString.Replace(" ", "").Replace("+", "");
 
+        var compiledSelectors = propertySelectors
+            .Select(selector => selector.Compile())
+            .ToList();
+
+        return clients.Where(client =>
+        {
+            foreach (var selector in compiledSelectors)
+            {
+                var value = selector(client);
+                if (value == null) continue;
+
+                var cleanedValue = value.Replace(" ", "").Replace("+", "");
+                if (cleanedValue.Contains(cleanFilter, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }).ToList();
+    }
+
+    private static Expression<Func<Client, bool>> GetIgnoreCaseContainsExpression(
+    Expression<Func<Client, string?>> selector,
+    string filterString)
+    {
+        var propertyName = GetPropertyName(selector);
+        return GetIgnoreCaseContainsExpression(propertyName, filterString);
+    }
+
+    private static Expression<Func<Client, bool>> GetIgnoreCaseContainsExpression(string propertyName, string filterString)
+    {
         var parameter = Expression.Parameter(typeof(Client), "c");
-        var propertyExpression = Expression.Property(parameter, exactParameterName);
+        var property = Expression.Property(parameter, propertyName);
 
-        var notNullCheck = Expression.NotEqual(propertyExpression, Expression.Constant(null, typeof(string)));
+        var pattern = Expression.Constant($"%{filterString}%", typeof(string));
 
-        MethodInfo replaceMethod = typeof(string).GetMethod(
-            nameof(string.Replace),
-            new[] { typeof(string), typeof(string) }
+        var efFunctions = Expression.Property(null, typeof(EF), nameof(EF.Functions));
+
+        var iLikeMethod = typeof(NpgsqlDbFunctionsExtensions).GetMethod(
+            nameof(NpgsqlDbFunctionsExtensions.ILike),
+            new[] { typeof(DbFunctions), typeof(string), typeof(string) }
         )!;
 
-        MethodInfo containsMethod = typeof(string).GetMethod(
-            nameof(string.Contains),
-            new[] { typeof(string), typeof(StringComparison) }
-        )!;
+        var iLikeCall = Expression.Call(iLikeMethod, efFunctions, property, pattern);
 
-        var withoutSpaces = Expression.Call(
-            propertyExpression,
-            replaceMethod,
-            Expression.Constant(" "),
-            Expression.Constant("")
-        );
-
-        var cleanedProperty = Expression.Call(
-            withoutSpaces,
-            replaceMethod,
-            Expression.Constant("+"),
-            Expression.Constant("")
-        );
-
-        var containsCall = Expression.Call(
-            cleanedProperty,
-            containsMethod,
-            Expression.Constant(cleanFilter, typeof(string)),
-            Expression.Constant(StringComparison.OrdinalIgnoreCase)
-        );
-
-        var finalBody = Expression.AndAlso(notNullCheck, containsCall);
-        var finalPredicate = Expression.Lambda<Func<Client, bool>>(finalBody, parameter).Compile();
-
-        return potential.Where(finalPredicate).ToList();
+        return Expression.Lambda<Func<Client, bool>>(iLikeCall, parameter);
     }
 
     private Expression<Func<Client, bool>> GetClientTrigramExpression(
         Expression<Func<Client, byte[]>> trigramSelector,
-        string filterString) 
+        string filterString
+    ) {
+        var filter = _ts.GenerateBloomFilter(filterString);
+        return GetClientTrigramExpression(trigramSelector, filter);
+    }
+
+    private Expression<Func<Client, bool>> GetClientTrigramExpression(
+        Expression<Func<Client, byte[]>> trigramSelector,
+        byte[] filter) 
     {
         string trigramParameterName = GetPropertyName(trigramSelector);
 
-        var filter = _ts.GenerateBloomFilter(filterString);
         var bitwiseAndMethod = typeof(AppDbContext).GetMethod(nameof(AppDbContext.BitwiseAndBytes))!;
 
         var parameter = Expression.Parameter(typeof(Client), "c");
@@ -273,7 +315,7 @@ public class AppDbContext : DbContext
         return Expression.Lambda<Func<Client, bool>>(resultExpression, parameter);
     }
 
-    private string GetPropertyName<T, TProperty>(Expression<Func<T, TProperty>> selector) {
+    private static string GetPropertyName<T, TProperty>(Expression<Func<T, TProperty>> selector) {
         var body = selector.Body;
 
         if (body is UnaryExpression unaryExpression) {
@@ -288,19 +330,32 @@ public class AppDbContext : DbContext
         throw new ArgumentException("Выражение должно указывать на свойство", nameof(selector));
     }
 
-    private class ParameterReplacer : ExpressionVisitor
+    private static Expression<Func<Client, bool>> LinkOrExpressions(params Expression<Func<Client, bool>>[] expressions) {
+        if (expressions == null || expressions.Length == 0)
+            return c => false;
+
+        if (expressions.Length == 1)
+            return expressions[0];
+
+        var parameter = Expression.Parameter(typeof(Client), "c");
+        Expression? combinedBody = null;
+
+        foreach (var expr in expressions)
+        {
+            var replacedBody = new ParameterReplacer(expr.Parameters[0], parameter).Visit(expr.Body);
+
+            combinedBody = combinedBody == null
+                ? replacedBody
+                : Expression.OrElse(combinedBody, replacedBody);
+        }
+
+        return Expression.Lambda<Func<Client, bool>>(combinedBody!, parameter);
+    }
+
+    private class ParameterReplacer(ParameterExpression oldParam, ParameterExpression newParam) : ExpressionVisitor
     {
-        private readonly ParameterExpression _targetParameter;
-
-        public ParameterReplacer(ParameterExpression targetParameter)
-        {
-            _targetParameter = targetParameter;
-        }
-
         protected override Expression VisitParameter(ParameterExpression node)
-        {
-            return _targetParameter;
-        }
+            => node == oldParam ? newParam : base.VisitParameter(node);
     }
 
     public static byte[] BitwiseAndBytes(byte[] a, byte[] b)
