@@ -211,7 +211,7 @@ public class AppDbContext : DbContext
         predicate = predicate.Or(byAdminTag);
 
         var potential = await Clients
-            .AsExpandableEF()
+            .AsExpandableEFCore()
             .Where(predicate)
             .ToListAsync();
 

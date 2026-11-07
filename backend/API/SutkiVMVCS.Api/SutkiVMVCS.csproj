@@ -10,7 +10,7 @@
     <!-- JWT -->
     <PackageReference Include="FirebaseAdmin" Version="3.5.0" />
     <PackageReference Include="Ical.Net" Version="5.2.1" />
-    <PackageReference Include="LinqKit" Version="1.4.1" />
+    <PackageReference Include="LinqKit.Microsoft.EntityFrameworkCore" Version="9.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.3" />
 
     <!-- Entity Framework Core + PostgreSQL -->
