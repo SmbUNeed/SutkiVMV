@@ -4,6 +4,7 @@ using SutkiVMV.Models;
 using SutkiVMVCS.Api.Services.Security;
 using SutkiVMVCS.Services.Security;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Security.Cryptography;
 
 namespace SutkiVMV.Data;
@@ -189,36 +190,74 @@ public class AppDbContext : DbContext
             ));
     }
 
-    public List<Client> FilterClients(
-    Expression<Func<Client, byte[]>> bloomSelector,
-    Expression<Func<Client, string>> exactSelector, 
-    string filterString)
+    public List<Client> FilterClientsBy(
+        string trigramParameterName,
+        string exactParameterName,
+        string filterString)
+    {
+        var predicate = GetClientTrigramExpression(
+            trigramParameterName,
+            filterString
+        );
+
+        var potential = Clients.Where(predicate).ToList();
+
+        var parameter = Expression.Parameter(typeof(Client), "c");
+        var searchExpression = Expression.Property(parameter, exactParameterName);
+        var filterExpression = Expression.Constant(filterString, typeof(string));
+
+        MethodInfo containsMethod = typeof(string).GetMethod(
+            nameof(string.Contains),
+            new[] { typeof(string) }
+        )!;
+
+        var containsCall = Expression.Call(
+            searchExpression,
+            containsMethod,
+            filterExpression
+        );
+
+        var finalPredicate = Expression.Lambda<Func<Client, bool>>(containsCall, parameter);
+
+        return Clients.Where(finalPredicate).ToList();
+    }
+
+    private Expression<Func<Client, bool>> GetClientTrigramExpression(
+        string trigramParameterName,
+        string filterString) 
     {
         var filter = _ts.GenerateBloomFilter(filterString);
-        var bitwiseAndMethod = typeof(AppDbContext).GetMethod(nameof(AppDbContext.BitwiseAndBytes));
+        var bitwiseAndMethod = typeof(AppDbContext).GetMethod(nameof(AppDbContext.BitwiseAndBytes))!;
 
-        var bitwiseAndCall = Expression.Call(
+        var parameter = Expression.Parameter(typeof(Client), "c");
+
+        var clientExpression = Expression.Property(parameter, trigramParameterName);
+        var bloomExpression = Expression.Constant(filter);
+
+        var bitwiseExpression = Expression.Call(
             bitwiseAndMethod,
-            bloomSelector.Body,
-            Expression.Constant(filter));
-
-        var bloomPredicate = Expression.Lambda<Func<Client, bool>>(
-            Expression.Equal(bitwiseAndCall, Expression.Constant(filter)),
-            bloomSelector.Parameters
+            bloomExpression,
+            clientExpression
         );
 
-        var exactPredicate = Expression.Lambda<Func<Client, bool>>(
-            Expression.Equal(exactSelector.Body, Expression.Constant(filterString)),
-            exactSelector.Parameters
-        );
+        var resultExpression = Expression.Equal(bitwiseExpression, bloomExpression);
 
-        var combinedBody = Expression.AndAlso(bloomPredicate.Body, exactPredicate.Body);
-        var combinedPredicate = Expression.Lambda<Func<Client, bool>>(
-            combinedBody,
-            bloomPredicate.Parameters
-        );
+        return Expression.Lambda<Func<Client, bool>>(resultExpression, parameter);
+    }
 
-        return Clients.Where(combinedPredicate).ToList();
+    private class ParameterReplacer : ExpressionVisitor
+    {
+        private readonly ParameterExpression _targetParameter;
+
+        public ParameterReplacer(ParameterExpression targetParameter)
+        {
+            _targetParameter = targetParameter;
+        }
+
+        protected override Expression VisitParameter(ParameterExpression node)
+        {
+            return _targetParameter;
+        }
     }
 
     public static byte[] BitwiseAndBytes(byte[] a, byte[] b)

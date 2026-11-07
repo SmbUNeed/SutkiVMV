@@ -5,6 +5,7 @@ using SutkiVMV.Data;
 using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
 using SutkiVMVCS.Services.Security;
+using System.Text;
 
 namespace SutkiVMVCS.Controllers
 {
@@ -29,10 +30,53 @@ namespace SutkiVMVCS.Controllers
                 client.FullNameTrigram = ts.GenerateBloomFilter(fullName);
             }
             await _ctx.SaveChangesAsync();
-
-
-
             return Ok();
+        }
+
+        [HttpGet("test-trigram-search")]
+        public async Task<string> MetricTrigramSearch(){
+            var query1 = "смо";
+            var query2 = "тру";
+            var query3 = "ова";
+
+            var actual1 = (await _ctx.Clients.AsNoTracking().ToListAsync()).Where(c => c.FullName.Contains(query1)).ToList();
+            var test1 = _ctx.FilterClientsBy("FullNameTrigram", "FullName", query1);
+
+            var actual2 = (await _ctx.Clients.AsNoTracking().ToListAsync()).Where(c => c.FullName.Contains(query2)).ToList();
+            var test2 = _ctx.FilterClientsBy("FullNameTrigram", "FullName", query2);
+
+            var actual3 = (await _ctx.Clients.AsNoTracking().ToListAsync()).Where(c => c.FullName.Contains(query3)).ToList();
+            var test3 = _ctx.FilterClientsBy("FullNameTrigram", "FullName", query3);
+
+            var sb = new StringBuilder();
+
+            sb.Append("============ Тест 1: поиск по \"" + query1 + "\"");
+            for(int i = 0; i < actual1.Count(); i++) {
+                sb.Append($"\nАктуальный: {actual1[i].FullName}");
+            }
+            for (int i = 0; i < test1.Count(); i++)
+            {
+                sb.Append($"\nАктуальный: {test1[i].FullName}");
+            }
+            sb.Append("============ Тест 2: поиск по \"" + query2 + "\"");
+            for (int i = 0; i < actual2.Count(); i++)
+            {
+                sb.Append($"\nАктуальный: {actual2[i].FullName}");
+            }
+            for (int i = 0; i < test2.Count(); i++)
+            {
+                sb.Append($"\nАктуальный: {test2[i].FullName}");
+            }
+            sb.Append("============ Тест 3: поиск по \"" + query3 + "\"");
+            for (int i = 0; i < actual3.Count(); i++)
+            {
+                sb.Append($"\nАктуальный: {actual3[i].FullName}");
+            }
+            for (int i = 0; i < test3.Count(); i++)
+            {
+                sb.Append($"\nАктуальный: {test3[i].FullName}");
+            }
+            return sb.ToString();
         }
 
         [HttpGet("app/latest")]
