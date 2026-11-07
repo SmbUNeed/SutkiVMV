@@ -34,8 +34,9 @@ public class ClientsController : ControllerBase
         var byFullName = await _context.FilterClientsByTrigramsAsync(c => c.FullNameTrigram, c => c.FullName, q);
         var byEmail = await _context.FilterClientsByTrigramsAsync(c => c.EmailTrigram, c => c.Email, q);
         var byPhone = await _context.FilterClientsByTrigramsAsync(c => c.PhoneNumberTrigram, c => c.PhoneNumber, q);
-        
-        var matched = byFullName.Concat(byEmail.Concat(byPhone));
+        var byAdminTag = await _context.Clients.Where(c => c.AdminTag == null ? false : c.AdminTag.Contains(q)).ToListAsync();
+
+        var matched = byFullName.Concat(byEmail).Concat(byPhone).Concat(byAdminTag).Distinct();
 
         return Ok(matched.Select(ToDto));
     }
