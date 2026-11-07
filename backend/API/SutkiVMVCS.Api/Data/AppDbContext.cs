@@ -212,7 +212,7 @@ public class AppDbContext : DbContext
 
         var potential = await Clients
             .AsExpandable()
-            .Where(predicate)
+            .Where((Expression<Func<Client, bool>>)predicate.Expand())
             .ToListAsync();
 
         return FilterClientsInMemory(potential, query,
