@@ -196,20 +196,18 @@ public class AppDbContext : DbContext
 
         byte[] filter = _ts.GenerateBloomFilter(query);
 
-        var parameter = Expression.Parameter(typeof(Client), "c");
-
         var byFullName = GetClientTrigramExpression(c => c.FullNameTrigram, filter);
         var byPhone = GetClientTrigramExpression(c => c.PhoneNumberTrigram, filter);
         var byEmail = GetClientTrigramExpression(c => c.EmailTrigram, filter);
         var byAdminTag = GetIgnoreCaseContainsExpression(c => c.AdminTag, query);
 
-        var expressions = new[] { byFullName, byPhone, byEmail, byAdminTag };
+        var resExpression = 
+            Expression.OrElse(byFullName,
+            Expression.OrElse(byPhone,
+            Expression.OrElse(byEmail,
+            byAdminTag)));
 
-        var combinedBody = expressions
-            .Select(e => e.Body)
-            .Aggregate((left, right) => Expression.OrElse(left, right));
-
-        var predicate = Expression.Lambda<Func<Client, bool>>(combinedBody, parameter);
+        var predicate = Expression.Lambda<Func<Client, bool>>(resExpression, Expression.Parameter(typeof(Client), "c"));
 
         var potential = await Clients.Where(predicate).ToListAsync();
 
@@ -334,28 +332,6 @@ public class AppDbContext : DbContext
         }
 
         throw new ArgumentException("Выражение должно указывать на свойство", nameof(selector));
-    }
-
-    private static Expression<Func<Client, bool>> LinkOrExpressions(params Expression<Func<Client, bool>>[] expressions) {
-        if (expressions == null || expressions.Length == 0)
-            return c => false;
-
-        if (expressions.Length == 1)
-            return expressions[0];
-
-        var parameter = Expression.Parameter(typeof(Client), "c");
-        Expression? combinedBody = null;
-
-        foreach (var expr in expressions)
-        {
-            var replacedBody = new ParameterReplacer(expr.Parameters[0], parameter).Visit(expr.Body);
-
-            combinedBody = combinedBody == null
-                ? replacedBody
-                : Expression.OrElse(combinedBody, replacedBody);
-        }
-
-        return Expression.Lambda<Func<Client, bool>>(combinedBody!, parameter);
     }
 
     private class ParameterReplacer(ParameterExpression oldParam, ParameterExpression newParam) : ExpressionVisitor
