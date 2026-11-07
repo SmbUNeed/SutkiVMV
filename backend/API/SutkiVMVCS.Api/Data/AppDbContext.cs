@@ -211,8 +211,8 @@ public class AppDbContext : DbContext
         predicate = predicate.Or(byAdminTag);
 
         var potential = await Clients
-            .AsExpandable()
-            .Where((Expression<Func<Client, bool>>)predicate.Expand())
+            .AsExpandableEF()
+            .Where(predicate)
             .ToListAsync();
 
         return FilterClientsInMemory(potential, query,
