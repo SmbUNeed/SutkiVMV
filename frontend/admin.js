@@ -39,30 +39,9 @@ function toast(msg, type = 'ok') {
 
 
 /* ── TESTS ───────────────────────────────────────────── */
-async function trigramClients() {
-    try {
-        const res = await api('/admin/trigram-client-names', {
-            method: 'POST'
-        });
-        toast('Запрос trigram-clients выполнен успешно');
-        console.log('trigram-clients response:', res);
-    } catch (err) {
-        toast(err.message, 'er');
-    }
-}
 
-async function testSearch() {
-    const resultBlock = document.getElementById('testSearchResult');
-    resultBlock.innerHTML = '<div class="ld"><i class="fa-solid fa-spinner fa-spin"></i> Выполняется запрос...</div>';
-    try {
-        const url = '/admin/test-trigram-search';
-        const res = await api(url, { method: 'GET' });
-        resultBlock.innerHTML = `<pre style="background:#f4f6f8;padding:16px;border-radius:8px;overflow-x:auto;font-size:0.9rem;">${JSON.stringify(res, null, 2)}</pre>`;
-        toast('Ответ получен');
-    } catch (err) {
-        resultBlock.innerHTML = `<div style="color:#d33;padding:12px;background:#fdeaea;border-radius:8px;">Ошибка: ${err.message}</div>`;
-        toast(err.message, 'er');
-    }
+async function trigramClients() {
+    await api("/admin/trigram-clients", { method: 'POST' } )
 }
 
 /* ── API ─────────────────────────────────────────────── */

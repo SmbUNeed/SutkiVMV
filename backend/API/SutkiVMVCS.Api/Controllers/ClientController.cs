@@ -31,7 +31,11 @@ public class ClientsController : ControllerBase
         if (string.IsNullOrWhiteSpace(q)) return Ok(Array.Empty<ClientDto>());
         q = q.Trim().ToLower();
 
-        var matched = _context.FilterClientsBy("FullNameTrigram", "FullName", q);
+        var byFullName = await _context.FilterClientsByTrigramsAsync(c => c.FullNameTrigram, c => c.FullName, q);
+        var byEmail = await _context.FilterClientsByTrigramsAsync(c => c.EmailTrigram, c => c.Email, q);
+        var byPhone = await _context.FilterClientsByTrigramsAsync(c => c.PhoneNumberTrigram, c => c.PhoneNumber, q);
+        
+        var matched = byFullName.Concat(byEmail.Concat(byPhone));
 
         return Ok(matched.Select(ToDto));
     }

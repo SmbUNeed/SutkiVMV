@@ -190,19 +190,19 @@ public class AppDbContext : DbContext
             ));
     }
 
-    public List<Client> FilterClientsBy(
-        string trigramParameterName,
-        string exactParameterName,
+    public async Task<List<Client>> FilterClientsByTrigramsAsync(
+        Expression<Func<Client, byte[]>> trigramSelector,
+        Expression<Func<Client, string?>> exactSelector,
         string filterString)
     {
+        string exactParameterName = GetPropertyName(exactSelector);
+
         var predicate = GetClientTrigramExpression(
-            trigramParameterName,
+            trigramSelector,
             filterString
         );
 
-        var potential = Clients.Where(predicate).ToList();
-
-        Console.WriteLine("Выбрано потенциальных: " + potential.Count);
+        var potential = await Clients.Where(predicate).ToListAsync();
 
         string cleanFilter = filterString.Replace(" ", "").Replace("+", "");
 
@@ -249,9 +249,11 @@ public class AppDbContext : DbContext
     }
 
     private Expression<Func<Client, bool>> GetClientTrigramExpression(
-        string trigramParameterName,
+        Expression<Func<Client, byte[]>> trigramSelector,
         string filterString) 
     {
+        string trigramParameterName = GetPropertyName(trigramSelector);
+
         var filter = _ts.GenerateBloomFilter(filterString);
         var bitwiseAndMethod = typeof(AppDbContext).GetMethod(nameof(AppDbContext.BitwiseAndBytes))!;
 
@@ -269,6 +271,21 @@ public class AppDbContext : DbContext
         var resultExpression = Expression.Equal(bitwiseExpression, bloomExpression);
 
         return Expression.Lambda<Func<Client, bool>>(resultExpression, parameter);
+    }
+
+    private string GetPropertyName<T, TProperty>(Expression<Func<T, TProperty>> selector) {
+        var body = selector.Body;
+
+        if (body is UnaryExpression unaryExpression) {
+            body = unaryExpression.Operand;
+        }
+
+        if (body is MemberExpression memberExpression)
+        {
+            return memberExpression.Member.Name;
+        }
+
+        throw new ArgumentException("Выражение должно указывать на свойство", nameof(selector));
     }
 
     private class ParameterReplacer : ExpressionVisitor

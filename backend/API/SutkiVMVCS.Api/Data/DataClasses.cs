@@ -147,6 +147,8 @@ public class Client
     public bool InBlackList { get; set; } = false;
 
     public byte[] FullNameTrigram { get; set; } = null!;
+    public byte[] PhoneNumberTrigram { get; set; } = null!;
+    public byte[] EmailTrigram { get; set; } = null!;
 
     // null = гостевое бронирование без регистрации
     public int?  UserId { get; set; }
