@@ -43,6 +43,7 @@ public class AppDbContext : DbContext
 
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
+        UpdateClientTrigrams();
         foreach (var entry in ChangeTracker.Entries<Booking>())
         {
             if (entry.State == EntityState.Added
@@ -56,6 +57,7 @@ public class AppDbContext : DbContext
 
     public override int SaveChanges()
     {
+        UpdateClientTrigrams();
         foreach (var entry in ChangeTracker.Entries<Booking>())
         {
             if (entry.State == EntityState.Added
@@ -65,6 +67,26 @@ public class AppDbContext : DbContext
             }
         }
         return base.SaveChanges();
+    }
+
+    private void UpdateClientTrigrams()
+    {
+        byte[] bloom(string n) => _ts.GenerateBloomFilter(n); 
+        foreach (var entry in ChangeTracker.Entries<Client>()
+                     .Where(e => e.State is EntityState.Added or EntityState.Modified))
+        {
+            var client = entry.Entity;
+            bool added = entry.State == EntityState.Added;
+
+            if (added || entry.Property(c => c.Email).IsModified)
+                client.EmailTrigram = bloom(client.Email ?? "");
+
+            if (added || entry.Property(c => c.PhoneNumber).IsModified)
+                client.PhoneNumberTrigram = bloom(client.PhoneNumber);
+
+            if (added || entry.Property(c => c.FullName).IsModified)
+                client.FullNameTrigram = bloom(client.FullName);
+        }
     }
 
     private static string GenerateSecureToken()
