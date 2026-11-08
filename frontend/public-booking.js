@@ -184,9 +184,7 @@ function renderBooking(booking) {
 
     // 8b. Оплата
     const total = booking.totalPrice || 0;
-    const paid = booking.paidAmount || 0;
     const prepay = booking.prepaymentAmount || 0;
-    const remaining = booking.remainingAmount ?? Math.max(0, total - paid);
     const payBlock = document.getElementById('bookingPayBlock');
     const fmt = n => n.toLocaleString('ru-RU') + ' ₽';
 
