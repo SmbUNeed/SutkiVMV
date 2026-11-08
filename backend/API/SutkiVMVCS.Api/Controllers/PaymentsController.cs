@@ -78,8 +78,6 @@ public class PaymentsController : ControllerBase
 
         payment.PaidAt = DateTime.UtcNow;
         payment.Paid = dto.PaidAmount;
-
-        _context.Payments.Add(payment);
         await _context.SaveChangesAsync();
         return Created();
     }
