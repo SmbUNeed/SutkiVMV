@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <meta name="referrer" content="same-origin">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Бронирование — SutkiVMV</title>
@@ -119,6 +120,7 @@
                         <div class="booking-summary" id="bookingSummary" style="margin-top:14px;"></div>
 
                         <div id="bookingStatusBlock" style="margin-top:14px;"></div>
+                        <div id="bookingPayBlock" style="margin-top:14px;"></div>
 
                         <!-- Плашка для неавторизованных -->
                         <div id="bookingAuthGate" class="auth-gate" style="display:none;margin-top:18px;">
@@ -139,7 +141,7 @@
                         </div>
 
                         <!-- Кнопка "Скопировать ссылку" -->
-                        <button class="btn-book" style="margin-top:18px;background:var(--paper-3);color:var(--ink-2);border:1.5px solid var(--border);" onclick="copyBookingLink()">
+                        <button class="btn-book btn-copy-link" style="margin-top:18px;background:var(--paper-3);color:var(--ink-2);border:1.5px solid var(--border);" onclick="copyBookingLink()">
                             <i class="fa-solid fa-link"></i> Скопировать ссылку
                         </button>
 

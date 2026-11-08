@@ -233,6 +233,9 @@ public class BookingsController : ControllerBase
             guests = booking.Guests,
             prepaymentAmount = booking.PrepaymentAmount,
             paidAmount = booking.PaidAmount,
+            remainingAmount = booking.RemainingAmount,
+            canPay = GetPayBlockReason(booking) == null,
+            hasPendingPayment = HasActivePendingPayment(booking),
             totalPrice = booking.TotalPrice,
             fullName = booking.Client?.FullName ?? "Гость",
             apartment = new
@@ -276,43 +279,45 @@ public class BookingsController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPost("{id}/public/{token}/pay")]
-    public async Task<IActionResult> PayPublic(int id, string token, [FromBody] PayPublicRequest dto, IYooKassaService yooKassa, CancellationToken ct)
+    [HttpPost("{id:int}/public/{token}/pay")]
+    [AllowAnonymous]
+    public async Task<IActionResult> PayPublic(
+    int id, string token, [FromBody] PayPublicRequest dto,
+    IYooKassaService yooKassa, CancellationToken ct)
     {
-        // 1. Находим бронь и валидируем токен
-        // (используем тот же механизм, что и в GET-методе просмотра брони)
         var booking = await _context.Bookings
             .Include(b => b.Apartment)
             .Include(b => b.Payments)
             .Include(b => b.Client)
             .FirstOrDefaultAsync(b => b.Id == id, ct);
 
-        if (booking == null)
-            return NotFound(new { message = "Бронь не найдена" });
+        // 404 и для несуществующей брони, и для неверного токена
+        if (booking == null || booking.PublicToken != token)
+            return NotFound(new { message = "Бронирование не найдено или ссылка недействительна" });
 
-        // ВАЖНО: замени на реальное имя поля токена в твоей модели
-        // (например, booking.ViewToken, booking.PublicToken, booking.ShareToken)
-        if (booking.PublicToken != token)
-            return StatusCode(403, new { message = "Недействительная ссылка" });
+        var reason = GetPayBlockReason(booking);
+        if (reason != null)
+            return BadRequest(new { message = reason });
 
-        if (booking.Status == BookingStatus.Canceled)
-            return BadRequest(new { message = "Бронь отменена" });
+        if (HasActivePendingPayment(booking))
+            return Conflict(new { message = "Платёж уже создан. Завершите его или подождите немного." });
 
-        // 2. Считаем остаток (та же логика, что и в /api/payments/create)
+        if (string.IsNullOrWhiteSpace(booking.Client?.Email) &&
+            string.IsNullOrWhiteSpace(booking.Client?.PhoneNumber))
+            return BadRequest(new { message = "Не указаны контакты для чека. Обратитесь в поддержку." });
+
         decimal remaining = booking.RemainingAmount;
-        if (remaining <= 0)
-            return BadRequest(new { message = "Бронь полностью оплачена" });
-
         decimal amountToCharge;
         PaymentType paymentType;
 
         if (booking.PaidAmount > 0)
         {
-            // Уже есть предоплата → доплачиваем остаток (флаг игнорируем)
             paymentType = PaymentType.Balance;
             amountToCharge = remaining;
         }
-        else if (dto.PayInFull)
+        else if (dto.PayInFull
+                 || booking.PrepaymentAmount <= 0
+                 || booking.PrepaymentAmount >= remaining)
         {
             paymentType = PaymentType.Full;
             amountToCharge = remaining;
@@ -323,21 +328,18 @@ public class BookingsController : ControllerBase
             amountToCharge = booking.PrepaymentAmount;
         }
 
-        // 3. Создаём платёж в ЮKassa
         var result = await yooKassa.CreatePaymentAsync(
             booking,
             $"Бронь #{booking.Id} — {booking.Apartment.Title}",
             amountToCharge,
-            booking.Client.PhoneNumber,
+            booking.Client!.PhoneNumber,
             booking.Client.Email,
-            ct
-        );
+            ct);
 
         if (!result.Success || result.PaymentId == null)
             return BadRequest(new { message = result.Error });
 
-        // 4. Сохраняем запись о платеже
-        var payment = new Payment
+        _context.Payments.Add(new Payment
         {
             BookingId = booking.Id,
             PaymentId = result.PaymentId,
@@ -345,18 +347,28 @@ public class BookingsController : ControllerBase
             Status = PaymentStatus.Pending,
             Type = paymentType,
             CreatedAt = DateTime.UtcNow
-        };
-
-        _context.Payments.Add(payment);
+        });
         await _context.SaveChangesAsync(ct);
 
-        return Ok(new
-        {
-            url = result.ConfirmationUrl,
-            paymentId = result.PaymentId,
-            amount = amountToCharge
-        });
+        return Ok(new { url = result.ConfirmationUrl, paymentId = result.PaymentId, amount = amountToCharge });
     }
+
+    private static string? GetPayBlockReason(Booking b)
+    {
+        if (b.Status == BookingStatus.Canceled)
+            return "Бронь отменена";
+        if (b.RemainingAmount <= 0)
+            return "Бронь полностью оплачена";
+        if (b.EndDate.Date < DateTime.UtcNow.Date)
+            return "Срок бронирования истёк";
+        if (b.Status == BookingStatus.Pending && b.CreatedAt < DateTime.UtcNow.AddHours(-24))
+            return "Срок бронирования истёк";
+        return null;
+    }
+
+    private static bool HasActivePendingPayment(Booking b) =>
+        b.Payments.Any(p => p.Status == PaymentStatus.Pending
+                         && p.CreatedAt > DateTime.UtcNow.AddMinutes(-60));
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 

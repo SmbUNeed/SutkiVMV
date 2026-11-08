@@ -33,10 +33,9 @@ function pluralNights(n) {
 function statusLabel(status) {
     const key = status ? status.toLowerCase() : '';
     const map = {
-        pending: { text: 'Ожидает подтверждения', cls: 'status-pending', icon: 'fa-clock' },
+        pending: { text: 'Ожидает оплаты', cls: 'status-pending', icon: 'fa-credit-card' },
         confirmed: { text: 'Подтверждено', cls: 'status-confirmed', icon: 'fa-circle-check' },
-        cancelled: { text: 'Отменено', cls: 'status-cancelled', icon: 'fa-circle-xmark' },
-        awaitingpayment: { text: 'Ожидает оплаты', cls: 'status-pending', icon: 'fa-credit-card' } // Добавлен статус
+        canceled: { text: 'Отменено', cls: 'status-cancelled', icon: 'fa-circle-xmark' }
     };
     return map[key] || { text: status || 'Неизвестно', cls: 'status-pending', icon: 'fa-question' };
 }
@@ -164,6 +163,12 @@ function renderBooking(booking) {
         rows.push(`<div class="row"><span>Гость</span><strong>${booking.fullName}</strong></div>`);
     }
 
+    const paid = booking.paidAmount || 0;
+    const remaining = booking.remainingAmount ?? Math.max(0, (booking.totalPrice || 0) - paid);
+    if (paid > 0) {
+        rows.push(`<div class="row"><span>Оплачено</span><strong>${paid.toLocaleString('ru-RU')} ₽</strong></div>`);
+        rows.push(`<div class="row"><span>Осталось</span><strong>${remaining.toLocaleString('ru-RU')} ₽</strong></div>`);
+    }
     rows.push(`<div class="row total"><span>Итого</span><strong>${(booking.totalPrice || 0).toLocaleString('ru-RU')} ₽</strong></div>`);
     document.getElementById('bookingSummary').innerHTML = rows.join('');
 
@@ -175,6 +180,28 @@ function renderBooking(booking) {
                 <i class="fa-solid ${st.icon}"></i> ${st.text}
             </span>
         `;
+    }
+
+    // 8b. Оплата
+    const total = booking.totalPrice || 0;
+    const prepay = booking.prepaymentAmount || 0;
+    const payBlock = document.getElementById('bookingPayBlock');
+
+    if (booking.canPay && booking.hasPendingPayment) {
+        payBlock.innerHTML = '<p style="color:var(--ink-3);"><i class="fa-solid fa-clock"></i> Платёж в обработке. Обновите страницу через пару минут.</p>';
+    } else if (booking.canPay) {
+        const btns = [];
+        if (paid === 0 && prepay > 0 && prepay < remaining) {
+            btns.push(`<button class="btn-book" onclick="initiatePublicPayment(${booking.id}, false, this)">
+            <i class="fa-solid fa-credit-card"></i> Внести предоплату ${prepay.toLocaleString('ru-RU')} ₽</button>`);
+        }
+        btns.push(`<button class="btn-book" onclick="initiatePublicPayment(${booking.id}, true, this)">
+        <i class="fa-solid fa-credit-card"></i> ${paid > 0 ? 'Оплатить остаток' : 'Оплатить полностью'} ${remaining.toLocaleString('ru-RU')} ₽</button>`);
+        payBlock.innerHTML = btns.join('');
+    } else if (total > 0 && remaining <= 0 && (booking.status || '').toLowerCase() !== 'canceled') {
+        payBlock.innerHTML = '<p style="color:var(--ink-3);"><i class="fa-solid fa-circle-check"></i> Бронь полностью оплачена</p>';
+    } else {
+        payBlock.innerHTML = '';
     }
 
     // 9. Авторизация
@@ -192,18 +219,16 @@ function renderBooking(booking) {
     if (content) content.style.display = 'grid';
 }
 
-async function initiatePublicPayment(bookingId, payInFull) {
+async function initiatePublicPayment(bookingId, payInFull, btn) {
     const confirmMsg = payInFull
-        ? 'Перейти к оплате оставшейся суммы?'
+        ? 'Перейти к оплате?'
         : 'Перейти к внесению предоплаты?';
     if (!confirm(confirmMsg)) return;
 
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
-    if (!token) {
-        alert('Ссылка повреждена: отсутствует токен бронирования');
-        return;
-    }
+    const token = new URLSearchParams(window.location.search).get('token');
+    if (!token) { alert('Ссылка повреждена: отсутствует токен бронирования'); return; }
+
+    document.querySelectorAll('#bookingPayBlock button').forEach(b => b.disabled = true);
 
     try {
         const res = await fetch(`${API_URL}/bookings/${bookingId}/public/${token}/pay`, {
@@ -211,20 +236,16 @@ async function initiatePublicPayment(bookingId, payInFull) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ payInFull })
         });
-
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
             throw new Error(err.message || 'Ошибка создания платежа');
         }
-
         const data = await res.json();
-        if (data.url) {
-            window.location.href = data.url;
-        } else {
-            alert('Платёж создан, но ссылка для оплаты не получена');
-        }
+        if (!data.url) throw new Error('Платёж создан, но ссылка для оплаты не получена');
+        window.location.href = data.url;
     } catch (err) {
         alert(err.message);
+        document.querySelectorAll('#bookingPayBlock button').forEach(b => b.disabled = false);
     }
 }
 
@@ -232,6 +253,11 @@ function showError(msg) {
     document.getElementById('bookingLoading').style.display = 'none';
     document.getElementById('bookingErrorMsg').textContent = msg;
     document.getElementById('bookingError').style.display = 'flex';
+}
+
+function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 // ── Табы ────────────────────────────────────────────────
