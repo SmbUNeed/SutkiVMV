@@ -163,8 +163,7 @@ public class AppDbContext : DbContext
                 .HasConversion<string>()
                 .HasMaxLength(30);
             entity.Property(x => x.PaymentId)
-                .HasMaxLength(100)
-                .IsRequired();
+                .HasMaxLength(100);
             entity.HasOne(x => x.Booking)
                 .WithMany(b => b.Payments)
                 .HasForeignKey(x => x.BookingId)

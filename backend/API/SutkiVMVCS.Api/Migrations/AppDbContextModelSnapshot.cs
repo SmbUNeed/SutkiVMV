@@ -468,7 +468,6 @@ namespace SutkiVMVCS.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PaymentId")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
