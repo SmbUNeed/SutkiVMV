@@ -184,25 +184,48 @@ function renderBooking(booking) {
 
     // 8b. Оплата
     const total = booking.totalPrice || 0;
+    const paid = booking.paidAmount || 0;
     const prepay = booking.prepaymentAmount || 0;
+    const remaining = booking.remainingAmount ?? Math.max(0, total - paid);
     const payBlock = document.getElementById('bookingPayBlock');
+    const fmt = n => n.toLocaleString('ru-RU') + ' ₽';
+
+    let html = '';
+
+    // Прогресс оплаты (показываем, если сумма известна)
+    if (total > 0) {
+        const percent = Math.min(100, Math.round(paid / total * 100));
+        const state = paid <= 0 ? 'unpaid' : (paid >= total ? '' : 'partial');
+        html += `
+        <div class="booking-payment">
+            <div class="booking-payment-row">
+                <span>Оплачено</span>
+                <span class="paid-amount ${state}">${fmt(paid)} из ${fmt(total)}</span>
+            </div>
+            <div class="booking-payment-bar">
+                <div class="booking-payment-bar-fill ${state}" style="width:${percent}%"></div>
+            </div>
+        </div>`;
+    }
 
     if (booking.canPay && booking.hasPendingPayment) {
-        payBlock.innerHTML = '<p style="color:var(--ink-3);"><i class="fa-solid fa-clock"></i> Платёж в обработке. Обновите страницу через пару минут.</p>';
+        html += `<p style="margin-top:14px;color:var(--ink-3);font-size:0.875rem;">
+        <i class="fa-solid fa-clock"></i> Платёж в обработке. Обновите страницу через пару минут.</p>`;
     } else if (booking.canPay) {
-        const btns = [];
-        if (paid === 0 && prepay > 0 && prepay < remaining) {
-            btns.push(`<button class="btn-book" onclick="initiatePublicPayment(${booking.id}, false, this)">
-            <i class="fa-solid fa-credit-card"></i> Внести предоплату ${prepay.toLocaleString('ru-RU')} ₽</button>`);
+        const showPrepay = paid === 0 && prepay > 0 && prepay < remaining;
+
+        if (showPrepay) {
+            html += `<button class="booking-pay-btn" onclick="initiatePublicPayment(${booking.id}, false, this)">
+            <i class="fa-solid fa-credit-card"></i> Внести предоплату ${fmt(prepay)}</button>`;
         }
-        btns.push(`<button class="btn-book" onclick="initiatePublicPayment(${booking.id}, true, this)">
-        <i class="fa-solid fa-credit-card"></i> ${paid > 0 ? 'Оплатить остаток' : 'Оплатить полностью'} ${remaining.toLocaleString('ru-RU')} ₽</button>`);
-        payBlock.innerHTML = btns.join('');
+        html += `<button class="booking-pay-btn${showPrepay ? ' booking-pay-btn-secondary' : ''}" onclick="initiatePublicPayment(${booking.id}, true, this)">
+        <i class="fa-solid fa-credit-card"></i> ${paid > 0 ? 'Оплатить остаток' : 'Оплатить полностью'} ${fmt(remaining)}</button>`;
     } else if (total > 0 && remaining <= 0 && (booking.status || '').toLowerCase() !== 'canceled') {
-        payBlock.innerHTML = '<p style="color:var(--ink-3);"><i class="fa-solid fa-circle-check"></i> Бронь полностью оплачена</p>';
-    } else {
-        payBlock.innerHTML = '';
+        html += `<p style="margin-top:14px;color:var(--green);font-size:0.875rem;font-weight:700;">
+        <i class="fa-solid fa-circle-check"></i> Бронь полностью оплачена</p>`;
     }
+
+    payBlock.innerHTML = html;
 
     // 9. Авторизация
     const authGate = document.getElementById('bookingAuthGate');
