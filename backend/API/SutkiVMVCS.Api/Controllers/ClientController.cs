@@ -64,10 +64,17 @@ public class ClientsController : ControllerBase
 
     // PUT /api/clients/{id}
     [HttpPut("{id:int}")]
-    public async Task<ActionResult> Update(int id, Client updated, CancellationToken ct)
+    public async Task<ActionResult> Update(int id, CreateClientDto updated, CancellationToken ct)
     {
         var client = await _context.Clients.FindAsync(id);
         if (client == null) return NotFound();
+        Console.WriteLine($"Обновление клиента ID {client.Id}: " +
+    $"Name: '{client.FullName}' -> '{updated.FullName}', " +
+    $"Phone: '{client.PhoneNumber}' -> '{PhoneHelper.Normalize(updated.PhoneNumber)}', " +
+    $"Email: '{client.Email}' -> '{updated.Email}', " +
+    $"Tag: '{client.AdminTag}' -> '{updated.AdminTag}', " +
+    $"Note: '{client.AdminNote}' -> '{updated.AdminNote}', " +
+    $"Blacklist: {client.InBlackList} -> {updated.InBlackList}");
         client.FullName = updated.FullName;
         client.PhoneNumber = PhoneHelper.Normalize(updated.PhoneNumber)!;
         client.Email = updated.Email;
