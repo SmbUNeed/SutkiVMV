@@ -154,7 +154,6 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Payment>(entity =>
         {
             entity.HasIndex(p => p.BookingId);
-            entity.HasIndex(x => x.PaymentId).IsUnique();
             entity.Property(p => p.Paid).HasPrecision(12, 2);
             entity.Property(x => x.Status)
             .HasConversion<string>()

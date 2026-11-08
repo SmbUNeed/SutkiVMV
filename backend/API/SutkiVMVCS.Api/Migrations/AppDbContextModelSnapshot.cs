@@ -488,9 +488,6 @@ namespace SutkiVMVCS.Migrations
 
                     b.HasIndex("BookingId");
 
-                    b.HasIndex("PaymentId")
-                        .IsUnique();
-
                     b.ToTable("Payments");
                 });
 
