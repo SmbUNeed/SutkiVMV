@@ -56,6 +56,31 @@ public class PaymentsController : ControllerBase
 
         _context.Payments.Add(payment);
         await _context.SaveChangesAsync();
+
+        return Created();
+    }
+
+    [HttpPatch("cash/{id:int}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UpdateCashPayment(int id, CreateAdminPaymentDto dto, CancellationToken ct)
+    {   
+        var booking = await _context.Bookings.Include(b => b.Payments).FirstAsync(b => b.Id == dto.BookingId);
+        if (booking == null)
+            return NotFound(new { message = "Бронь не найдена" });
+
+        if (booking.RemainingAmount < dto.PaidAmount)
+            return BadRequest(new { message = "Платеж должен быть меньше чем остаток для полной оплаты брони" });
+
+        var payment = await _context.Payments.FindAsync(id);
+
+        if (payment == null)
+            return NotFound("Платеж не найден");
+
+        payment.PaidAt = DateTime.UtcNow;
+        payment.Paid = dto.PaidAmount;
+
+        _context.Payments.Add(payment);
+        await _context.SaveChangesAsync();
         return Created();
     }
 
