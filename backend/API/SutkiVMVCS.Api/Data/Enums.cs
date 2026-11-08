@@ -15,6 +15,7 @@
     }
 
     public enum PaymentType {
+        Cash,
         Full,
         Prepayment,
         Balance,

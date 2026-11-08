@@ -337,12 +337,13 @@ public class CreatePriceRuleDto
 public record ResetPasswordDto(string Email, string Token, string NewPassword);
 public record BusyPeriodDto(string StartDate, string EndDate);
 public record CreatePaymentDto(int BookingId, bool PayInFull = true);
+public record CreateAdminPaymentDto(int BookingId, decimal PaidAmount);
 public class PayPublicRequest { public bool PayInFull { get; set; } }
 
-public interface IDetailedBooking {
+public interface IDetailedBooking
+{
     public int ApartmentId { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public int Guests { get; set; }
 }
-

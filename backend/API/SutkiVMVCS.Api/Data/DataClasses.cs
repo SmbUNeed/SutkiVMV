@@ -84,7 +84,7 @@ public class Booking
 
 public class Payment {
     public int Id { get; set; }
-    public string PaymentId { get; set; } = "";
+    public string? PaymentId { get; set; } = null;
     public int BookingId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime PaidAt { get; set; }

@@ -34,6 +34,47 @@ public class PaymentsController : ControllerBase
         return Ok(payments);
     }
 
+    [HttpPost("cash")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> CreateCashPayment(CreateAdminPaymentDto dto, CancellationToken ct) {
+        var booking = await _context.Bookings.Include(b => b.Payments).FirstAsync(b => b.Id == dto.BookingId);
+        if (booking == null)
+            return NotFound(new { message = "Бронь не найдена"} );
+
+        if (booking.RemainingAmount < dto.PaidAmount)
+            return BadRequest(new { message = "Платеж должен быть меньше чем остаток для полной оплаты брони" });
+
+        var payment = new Payment
+        {
+            BookingId = dto.BookingId,
+            CreatedAt = DateTime.UtcNow,
+            PaidAt = DateTime.UtcNow,
+            Paid = dto.PaidAmount,
+            Status = PaymentStatus.Succeeded,
+            Type = PaymentType.Cash,
+        };
+
+        _context.Payments.Add(payment);
+        await _context.SaveChangesAsync();
+        return Created();
+    }
+
+    [HttpDelete("cash")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> DeleteCashPayment(int id) {
+        var payment = await _context.Payments.FindAsync(id);
+        if (payment == null) 
+            return NotFound(new { message = "Платеж не найден" });
+        
+        if (payment.Type != PaymentType.Cash && payment.Status == PaymentStatus.Succeeded)
+            return BadRequest(new { message = "Нельзя удалить подтвержденный платеж от ЮКасса" });
+        
+        _context.Payments.Remove(payment);
+        await _context.SaveChangesAsync();
+        
+        return NoContent();
+    }
+
     [HttpGet("booking/{id:int}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetPaymentsByBooking(int id, CancellationToken ct) {
