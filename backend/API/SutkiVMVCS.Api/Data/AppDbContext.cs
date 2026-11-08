@@ -83,15 +83,6 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ApartmentAmenity>()
             .HasKey(aa => new { aa.ApartmentId, aa.AmenityId });
 
-        // ── User: уникальный email ────────────────────────────────────
-        modelBuilder.Entity<User>()
-            .HasIndex(u => u.Email)
-            .IsUnique();
-
-        modelBuilder.Entity<User>()
-            .Property(u => u.Email)
-            .HasConversion(v => _encryptor.Encrypt(v), v => _encryptor.Decrypt(v));
-
         //── Client → User(один - к - одному, необязательный) ────────────
         //UserId = null означает гостевое бронирование без регистрации
         modelBuilder.Entity<Client>()
@@ -224,22 +215,28 @@ public class AppDbContext : DbContext
     public async Task<bool> ClientsTrigramsAnyAsync(
         Expression<Func<Client, byte[]>> trigramSelector,
         Expression<Func<Client, string?>> exactSelector,
-        string filterString) 
+        string filterString,
+        Func<IQueryable<Client>, IQueryable<Client>>? configure = null) 
     {
-        var client = await ClientsTrigramsFirstOrDefault(trigramSelector, exactSelector, filterString);
+        var client = await ClientsTrigramsFirstOrDefault(trigramSelector, exactSelector, filterString, configure);
         return client != null;
     }
 
     public async Task<Client> ClientsTrigramsFirstOrDefault(
         Expression<Func<Client, byte[]>> trigramSelector,
         Expression<Func<Client, string?>> exactSelector,
-        string filterString) 
+        string filterString,
+        Func<IQueryable<Client>, IQueryable<Client>>? configure = null)
     {
         var filter = _ts.GenerateBloomFilter(filterString);
 
         var exactExpression = GetClientTigramExactExpression(trigramSelector, filter);
 
-        var potential = await Clients.Where(exactExpression).ToListAsync();
+        IQueryable<Client> query = Clients.Where(exactExpression);
+        if (configure != null)
+            query = configure(query);
+
+        var potential = await query.ToListAsync();
 
         var clients = FilterClientsInMemory(potential, filterString, exactSelector);
 

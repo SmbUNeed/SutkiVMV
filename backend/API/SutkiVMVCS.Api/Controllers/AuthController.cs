@@ -5,14 +5,12 @@ using Microsoft.IdentityModel.Tokens;
 using SutkiVMV.Data;
 using SutkiVMV.Models;
 using SutkiVMV.ModelsDTO;
-using SutkiVMVCS.Api.Services.Security;
 using SutkiVMVCS.Data;
 using SutkiVMVCS.Services.Shared;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SutkiVMV.Controllers;
 
@@ -43,11 +41,13 @@ public class AuthController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(dto.Email))
             return BadRequest(new { message = "Email не заполнен" });
+        if (string.IsNullOrWhiteSpace(dto.Password) || dto.Password.Length < 6)
+            return BadRequest(new { message = "Пароль должен содержать минимум 6 символов" });
 
         dto.Email = dto.Email.Trim().ToLowerInvariant();
         dto.PhoneNumber = PhoneHelper.Normalize(dto.PhoneNumber)!;
 
-        if (await _context.ClientsTrigramsAnyAsync(c => c.EmailTrigram, c => c.Email, dto.Email))
+        if (await _context.ClientsTrigramsAnyAsync(c => c.EmailTrigram, c => c.Email, dto.Email, q => q.Where(cl => cl.UserId != null)))
             return Conflict(new { message = "Пользователь с таким email уже существует" });
 
         if (await _context.PendingRegistrations.AsNoTracking().AnyAsync(p => p.Email == dto.Email, ct))
@@ -58,9 +58,6 @@ public class AuthController : ControllerBase
             if (old != null)
                 _context.PendingRegistrations.Remove(old);
         }
-
-        if (string.IsNullOrWhiteSpace(dto.Password) || dto.Password.Length < 6)
-            return BadRequest(new { message = "Пароль должен содержать минимум 6 символов" });
 
         var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
 
@@ -94,24 +91,20 @@ public class AuthController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UsersList()
     {
-        var users = await _context.Users.AsNoTracking().OrderBy(u => u.Id)
-            .Select(u => new { u.Id, u.Email, u.Role, u.CreatedAt, u.EmailConfirmed })
-            .ToListAsync();
-
-        var clients = await _context.Clients.AsNoTracking()
+        var clientsQuery = _context.Clients.AsNoTracking()
             .Where(c => c.UserId != null)
-            .Select(c => new { c.UserId, c.FullName, c.PhoneNumber })
-            .ToListAsync();
+            .Include(c => c.User);
 
-        var result = users.Select(u => new
+        var result = await clientsQuery.Select(c => new
         {
-            u.Id,
-            u.Email,
-            u.Role,
-            u.CreatedAt,
-            u.EmailConfirmed,
-            Client = clients.FirstOrDefault(c => c.UserId == u.Id)
-        });
+            c.Id,
+            c.Email,
+            c.FullName,
+            c.PhoneNumber,
+            c.User!.Role,
+            c.User.CreatedAt,
+            c.User.EmailConfirmed
+        }).ToListAsync();
 
         return Ok(result);
     }
@@ -129,16 +122,14 @@ public class AuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(dto.Password))
             return BadRequest(new { message = "Пароль не заполнен" });
 
-        var client = await _context.ClientsTrigramsFirstOrDefault(c => c.EmailTrigram, c => c.Email, dto.Email);
+        var client = await _context.ClientsTrigramsFirstOrDefault(c => c.EmailTrigram, c => c.Email, dto.Email, q => q.Include(c => c.User));
 
-        if (client == null) return Unauthorized(new { message = "Неверный email или пароль" });
-
-        var user = _context.Users.Find(client.UserId);
+        var user = client?.User;
 
         if (user == null || !VerifyPassword(dto.Password, user.PasswordHash))
             return Unauthorized(new { message = "Неверный email или пароль" });
 
-        return Ok(BuildAuthResponse(user, client));
+        return Ok(BuildAuthResponse(client!));
     }
 
     // ──────────────────────────────────────────────────
@@ -149,14 +140,14 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<UserDto>> GetMe()
     {
         var userId = GetUserId();
-        var user   = await _context.Users.FindAsync(userId);
-        if (user == null) return NotFound();
 
         var client = await _context.Clients
             .AsNoTracking()
+            .Include(c => c.User)
             .FirstOrDefaultAsync(c => c.UserId == userId);
+        if (client?.User == null) return NotFound();
 
-        return Ok(ToUserDto(user, client));
+        return Ok(ToUserDto(client));
     }
 
     // ──────────────────────────────────────────────────
@@ -167,29 +158,32 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<UserDto>> UpdateProfile(UpdateProfileDto dto, CancellationToken ct)
     {
         var userId = GetUserId();
-        var user = await _context.Users.FindAsync(userId);
-        if (user == null) return NotFound();
 
-        // Обновляем пароль если передан
+        // Обновляем данные в связанном Client
+        var client = await _context.Clients
+            .Include(c => c.User)
+            .FirstOrDefaultAsync(c => c.UserId == userId, ct);
+
+        if (client?.User == null) return NotFound();
+
         if (!string.IsNullOrWhiteSpace(dto.NewPassword))
         {
             if (dto.NewPassword.Length < 6)
                 return BadRequest(new { message = "Пароль должен содержать минимум 6 символов" });
-            user.PasswordHash = HashPassword(dto.NewPassword);
+            client.User.PasswordHash = HashPassword(dto.NewPassword);
         }
 
-        // Обновляем данные в связанном Client
-        var client = await _context.Clients
-            .FirstOrDefaultAsync(c => c.UserId == userId, ct);
+        client.FullName    = dto.FullName.Trim();
 
-        if (client != null)
-        {
-            client.FullName    = dto.FullName.Trim();
-            client.PhoneNumber = dto.PhoneNumber.Trim();
-        }
+        var normalizedPhone = PhoneHelper.Normalize(dto.PhoneNumber.Trim());
+        if (normalizedPhone == null 
+            || await _context.ClientsTrigramsAnyAsync(c => c.PhoneNumberTrigram, c => c.PhoneNumber, normalizedPhone)) 
+                return BadRequest("Некорректный номер телефона");
+
+        client.PhoneNumber = normalizedPhone;
 
         await _context.SaveChangesAsync(ct);
-        return Ok(ToUserDto(user, client));
+        return Ok(ToUserDto(client));
     }
 
     // ──────────────────────────────────────────────────
@@ -315,7 +309,6 @@ public class AuthController : ControllerBase
 
         var user = new User
         {
-            Email = pending.Email,
             PasswordHash = pending.PasswordHash,
             Role = "User",
             CreatedAt = DateTime.UtcNow,
@@ -358,11 +351,11 @@ public class AuthController : ControllerBase
 
         email = email.Trim().ToLowerInvariant();
 
-        var client = await _context.ClientsTrigramsFirstOrDefault(c => c.EmailTrigram, c => c.Email, email);
+        var client = await _context.ClientsTrigramsFirstOrDefault(c => c.EmailTrigram, c => c.Email, email, q => q.Include(cl => cl.User));
         if (client == null)
             return BadRequest(new { message = "Клиент не найден" });
         
-        var user = await _context.Users.FindAsync(client.UserId);
+        var user = client.User;
         if (user == null)
             return BadRequest(new { message = "Данный e-mail не зарегистрирован" });
 
@@ -382,16 +375,17 @@ public class AuthController : ControllerBase
     public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Token) ||
-            string.IsNullOrWhiteSpace(dto.NewPassword))
+            string.IsNullOrWhiteSpace(dto.NewPassword) || dto.NewPassword.Length < 6)
             return BadRequest(new { message = "Неверные данные" });
 
         var email = dto.Email.Trim().ToLowerInvariant();
 
-        var client = await _context.ClientsTrigramsFirstOrDefault(c => c.EmailTrigram, c => c.Email, email);
+        var client = await _context.ClientsTrigramsFirstOrDefault(c => c.EmailTrigram, c => c.Email, email, 
+            q => q.Include(cl => cl.User));
         if (client == null)
             return BadRequest(new { message = "Клиент не найден" });
 
-        var user = await _context.Users.FindAsync(client.UserId);
+        var user = client.User;
 
         if (user == null ||
             user.PasswordResetToken != dto.Token ||
@@ -413,30 +407,30 @@ public class AuthController : ControllerBase
     private int GetUserId() =>
         int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-    private AuthResponseDto BuildAuthResponse(User user, Client? client) => new()
+    private AuthResponseDto BuildAuthResponse(Client client) => new()
     {
-        Token = GenerateToken(user),
-        User  = ToUserDto(user, client)
+        Token = GenerateToken(client.User!, client.Email ?? ""),
+        User = ToUserDto(client)
     };
 
-    private static UserDto ToUserDto(User user, Client? client) => new()
+    private static UserDto ToUserDto(Client client) => new()
     {
-        Id          = user.Id,
-        Email       = user.Email,
-        FullName    = client?.FullName    ?? "",
-        PhoneNumber = client?.PhoneNumber ?? "",
-        Role        = user.Role,
-        ClientId    = client?.Id
+        Id = client.User!.Id,
+        Email = client.Email ?? "",
+        FullName = client.FullName ?? "",
+        PhoneNumber = client.PhoneNumber ?? "",
+        Role = client.User.Role,
+        ClientId = client.Id
     };
 
-    private string GenerateToken(User user)
+    private string GenerateToken(User user, string email)
     {
         var key   = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Email, email),
             new Claim(ClaimTypes.Role, user.Role)
         };
         var token = new JwtSecurityToken(

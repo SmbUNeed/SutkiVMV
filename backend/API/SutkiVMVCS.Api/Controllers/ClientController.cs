@@ -74,11 +74,6 @@ public class ClientsController : ControllerBase
         client.AdminTag = updated.AdminTag;
         client.AdminNote = updated.AdminNote;
         client.InBlackList = updated.InBlackList;
-        if (client.UserId !=  null) {
-            var user = await _context.Users.FindAsync(client.UserId);
-#pragma warning disable
-            user.Email = updated.Email;
-        }
         await _context.SaveChangesAsync(ct);
         return NoContent();
     }

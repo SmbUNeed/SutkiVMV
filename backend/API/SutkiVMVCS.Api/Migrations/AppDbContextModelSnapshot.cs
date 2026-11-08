@@ -624,10 +624,6 @@ namespace SutkiVMVCS.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("EmailConfirmToken")
                         .HasColumnType("text");
 
@@ -655,9 +651,6 @@ namespace SutkiVMVCS.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Email")
-                        .IsUnique();
 
                     b.ToTable("Users");
                 });
