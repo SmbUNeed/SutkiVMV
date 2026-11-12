@@ -8,13 +8,19 @@ namespace SutkiVMVCS.Services.Shared
     {
         public FcmService(IConfiguration config)
         {
-            FirebaseApp.Create(new AppOptions
+            if (FirebaseApp.DefaultInstance == null)
             {
-#pragma warning disable
-                Credential = GoogleCredential
-                    .FromFile(config["Firebase:ServiceAccountPath"]!)
-                    .CreateScoped("https://www.googleapis.com/auth/firebase.messaging")
-            });
+                var path = config["Firebase:ServiceAccountPath"]
+                    ?? throw new InvalidOperationException("Firebase:ServiceAccountPath is not configured.");
+
+                FirebaseApp.Create(new AppOptions
+                {
+                    Credential = CredentialFactory
+                        .FromFile<ServiceAccountCredential>(path)
+                        .ToGoogleCredential()
+                        .CreateScoped("https://www.googleapis.com/auth/firebase.messaging")
+                });
+            }
         }
 
         public async Task<bool> SendAsync(string token, string title, string body,
