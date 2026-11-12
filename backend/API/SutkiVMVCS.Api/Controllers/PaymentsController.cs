@@ -10,7 +10,6 @@ using SutkiVMVCS.Services.YooKassa;
 using System.Globalization;
 using System.Security.Claims;
 using System.Text.Json;
-using Telegram.Bot.Requests.Abstractions;
 
 [ApiController]
 [Route("api/payments")]
@@ -82,7 +81,7 @@ public class PaymentsController : ControllerBase
         return Created();
     }
 
-    [HttpDelete("cash")]
+    [HttpDelete("cash/{id:int}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteCashPayment(int id) {
         var payment = await _context.Payments.FindAsync(id);
