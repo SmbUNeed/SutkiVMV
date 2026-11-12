@@ -285,7 +285,12 @@ public class AuthController : ControllerBase
 
         foreach (var token in tokens)
         {
-            await _fcm.SendAsync(token, "Новая бронь", $"{apartment.Title}: {dto.StartDate:dd.MM} — {dto.EndDate:dd.MM}", data);
+            bool isSuccess = await _fcm.SendAsync(token, "Новая бронь", $"{apartment.Title}: {dto.StartDate:dd.MM} — {dto.EndDate:dd.MM}", data);
+            
+            if (!isSuccess) {
+                await _context.DeviceTokens.Where(d => d.Token == token).ExecuteDeleteAsync();
+                await _context.SaveChangesAsync();
+            }
         }
 
         return Ok(booking);

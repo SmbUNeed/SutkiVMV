@@ -478,7 +478,12 @@ public class PaymentsController : ControllerBase
             var fcm = scope.ServiceProvider.GetRequiredService<FcmService>();
             
             foreach(var token in tokens) {
-                await fcm.SendAsync(token, $"{pay}", $"{booking.Apartment?.Title ?? ""}: ${booking.StartDate} - ${booking.EndDate}");
+                bool isSuccess = await fcm.SendAsync(token, $"{pay}", $"{booking.Apartment?.Title ?? ""}: ${booking.StartDate} - ${booking.EndDate}");
+
+                if (!isSuccess) {
+                    await _context.DeviceTokens.Where(dt => dt.Token == token).ExecuteDeleteAsync();
+                    await _context.SaveChangesAsync();
+                }
             }
         } catch (Exception ex) { Console.WriteLine($"[Payments] Fcm error: {ex.Message}"); }
     }

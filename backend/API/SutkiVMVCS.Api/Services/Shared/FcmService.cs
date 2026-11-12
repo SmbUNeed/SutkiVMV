@@ -17,7 +17,7 @@ namespace SutkiVMVCS.Services.Shared
             });
         }
 
-        public async Task SendAsync(string token, string title, string body,
+        public async Task<bool> SendAsync(string token, string title, string body,
         Dictionary<string, string>? data = null)
         {
             var message = new Message
@@ -27,7 +27,21 @@ namespace SutkiVMVCS.Services.Shared
                 Data = data ?? new Dictionary<string, string>()
             };
 
-            await FirebaseMessaging.DefaultInstance.SendAsync(message);
+            try
+            {
+                await FirebaseMessaging.DefaultInstance.SendAsync(message);
+                return true;
+            }
+            catch (FirebaseMessagingException e)
+            {
+                if (e.MessagingErrorCode == MessagingErrorCode.Unregistered)
+                {
+                    return false;
+                }
+
+                Console.WriteLine($"Ошибка FCM (не Unregistered): {e.Message}");
+                throw;
+            }
         }
     }
 }

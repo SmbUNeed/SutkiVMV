@@ -128,8 +128,15 @@ public class ICalService
 
             try { await _max.SendNotificationAsync(msg); } catch { }
 
-            foreach (var token in tokens)
-                try { await _fcm.SendAsync(token, "Новая внешняя бронь", $"{aptName}: {info}"); } catch { }
+            foreach (var token in tokens) {
+                bool isSuccess = await _fcm.SendAsync(token, "Новая внешняя бронь", $"{aptName}: {info}");
+
+                if (!isSuccess)
+                {
+                    await _context.DeviceTokens.Where(dt => dt.Token == token).ExecuteDeleteAsync();
+                    await _context.SaveChangesAsync();
+                }
+            }
         }
 
         foreach (var info in changedBookings)
@@ -138,8 +145,15 @@ public class ICalService
 
             try { await _max.SendNotificationAsync(msg); } catch { }
 
-            foreach (var token in tokens)
-                try { await _fcm.SendAsync(token, "Изменение брони", $"{aptName}: {info}"); } catch { }
+            foreach (var token in tokens) {
+                bool isSuccess = await _fcm.SendAsync(token, "Изменение брони", $"{aptName}: {info}");
+
+                if (!isSuccess)
+                {
+                    await _context.DeviceTokens.Where(dt => dt.Token == token).ExecuteDeleteAsync();
+                    await _context.SaveChangesAsync();
+                }
+            }
         }
     }
 }
